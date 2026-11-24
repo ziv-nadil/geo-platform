@@ -1,5 +1,5 @@
-import { ENGINE_BY_ID } from "@/lib/mock/engines";
-import type { EngineId } from "@/lib/mock/types";
+import { ENGINE_BY_ID } from "@/lib/ui/engines";
+import type { EngineId } from "@/lib/ui/data-types";
 import { cn } from "@/lib/ui/cn";
 
 /** Engine identity: colored dot + name. Text stays in ink, the dot carries the color. */

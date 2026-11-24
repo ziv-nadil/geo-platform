@@ -4,7 +4,7 @@ import * as DM from "@radix-ui/react-dropdown-menu";
 import { Check, ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
 import { OrgMark } from "@/components/ui/avatar";
-import type { Org } from "@/lib/mock/types";
+import type { Org } from "@/lib/ui/data-types";
 
 export function OrgSwitcher({ org, orgs, canSwitch }: { org: Org; orgs: Org[]; canSwitch: boolean }) {
   const trigger = (

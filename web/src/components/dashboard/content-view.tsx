@@ -11,7 +11,7 @@ import { Field, Input, Textarea } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Table, TableWrap, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { BrandKit, ContentDraft } from "@/lib/mock/types";
+import type { BrandKit, ContentDraft } from "@/lib/ui/data-types";
 import { fmtDate } from "@/lib/ui/format";
 
 const TONES: { key: keyof BrandKit["tone"]; left: string; right: string }[] = [

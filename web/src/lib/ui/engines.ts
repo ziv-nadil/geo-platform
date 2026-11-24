@@ -1,5 +1,5 @@
 import { SERIES } from "@/lib/ui/chart-colors";
-import type { Engine, EngineId } from "./types";
+import type { Engine, EngineId } from "./data-types";
 
 export const ENGINES: Engine[] = [
   { id: "chatgpt", name: "ChatGPT", short: "ChatGPT", vendor: "OpenAI", color: SERIES[0] },

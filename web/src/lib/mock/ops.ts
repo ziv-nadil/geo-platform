@@ -23,7 +23,7 @@ import type {
   SiteTask,
   TrendPoint,
   User,
-} from "./types";
+} from "@/lib/ui/data-types";
 
 const rngFor = (orgId: string, k: string) => mulberry32(hashString(`${orgId}:${k}`));
 const brandOf = (orgId: string) => CATALOG[orgId]?.brand;

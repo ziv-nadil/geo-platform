@@ -10,7 +10,7 @@ import { Select } from "@/components/ui/select";
 import { SeverityBadge } from "@/components/ui/status";
 import { Table, TableWrap, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
 import { SegmentedList, SegmentedTrigger, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { SiteIssue, SitePage, SiteProperty, SiteTask } from "@/lib/mock/types";
+import type { SiteIssue, SitePage, SiteProperty, SiteTask } from "@/lib/ui/data-types";
 import { cn } from "@/lib/ui/cn";
 import { fmtDate, fmtDateTime } from "@/lib/ui/format";
 

@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Logo } from "@/components/ui/logo";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/ui/cn";
-import type { Org } from "@/lib/mock/types";
+import type { Org } from "@/lib/ui/data-types";
 import { NAV } from "./nav";
 import { OrgSwitcher } from "./org-switcher";
 

@@ -13,8 +13,8 @@ import { MetricHelp } from "@/components/ui/metric-help";
 import { Select } from "@/components/ui/select";
 import { Table, TableWrap, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
 import { Tooltip } from "@/components/ui/tooltip";
-import { ENGINES } from "@/lib/mock/engines";
-import type { DiscoverySuggestion, Funnel, PromptRow } from "@/lib/mock/types";
+import { ENGINES } from "@/lib/ui/engines";
+import type { DiscoverySuggestion, Funnel, PromptRow } from "@/lib/ui/data-types";
 import { cn } from "@/lib/ui/cn";
 import { fmtNumber } from "@/lib/ui/format";
 

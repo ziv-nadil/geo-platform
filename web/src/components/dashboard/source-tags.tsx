@@ -7,7 +7,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field, Input, Textarea } from "@/components/ui/input";
-import type { SourceTag } from "@/lib/mock/types";
+import type { SourceTag } from "@/lib/ui/data-types";
 import { SERIES } from "@/lib/ui/chart-colors";
 
 const COLORS = [SERIES[0], SERIES[1], SERIES[6], SERIES[2], SERIES[4], SERIES[3]];

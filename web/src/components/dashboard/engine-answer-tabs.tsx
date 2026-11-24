@@ -5,8 +5,8 @@ import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { StatusPill } from "@/components/ui/status";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ENGINE_BY_ID } from "@/lib/mock/engines";
-import type { Citation, EngineId, Sentiment } from "@/lib/mock/types";
+import { ENGINE_BY_ID } from "@/lib/ui/engines";
+import type { Citation, EngineId, Sentiment } from "@/lib/ui/data-types";
 
 export function EngineAnswerTabs({
   answers,

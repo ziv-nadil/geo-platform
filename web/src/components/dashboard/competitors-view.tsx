@@ -13,7 +13,7 @@ import { MetricHelp } from "@/components/ui/metric-help";
 import { Select } from "@/components/ui/select";
 import { Table, TableWrap, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
 import type { SovRow } from "@/lib/mock/analytics";
-import type { EngineId, TrendPoint } from "@/lib/mock/types";
+import type { EngineId, TrendPoint } from "@/lib/ui/data-types";
 import { COMPETITOR_SERIES } from "@/lib/ui/chart-colors";
 import { cn } from "@/lib/ui/cn";
 

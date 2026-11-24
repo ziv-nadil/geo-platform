@@ -1,7 +1,7 @@
 import { CATALOG, DOMAIN_POOLS } from "./catalog";
-import { ENGINE_IDS } from "./engines";
+import { ENGINE_IDS } from "@/lib/ui/engines";
 import { between, daysBack, hashString, mulberry32, pick, type Rng } from "./rng";
-import type { Citation, Competitor, EngineId, Prompt, Run, Sentiment } from "./types";
+import type { Citation, Competitor, EngineId, Prompt, Run, Sentiment } from "@/lib/ui/data-types";
 
 /** Days of history generated per org. The UI exposes up to 30, the rest feeds "previous period" deltas. */
 export const HISTORY_DAYS = 60;

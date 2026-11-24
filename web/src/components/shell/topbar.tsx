@@ -7,8 +7,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/ui/cn";
-import type { User } from "@/lib/mock/types";
-import { ENGINES } from "@/lib/mock/engines";
+import type { User } from "@/lib/ui/data-types";
+import { ENGINES } from "@/lib/ui/engines";
 import { exitViewAs } from "@/app/admin/actions";
 
 const RANGES = [

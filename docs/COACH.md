@@ -31,5 +31,10 @@ Read this first when resuming in a fresh or compacted session.
   - New agents run as VISIBLE remote sessions (create_session, tag beacon-geo). First: "Engines pipeline agent" -> branch claude/engines-pipeline.
   - The backend and frontend in-process agents were redirected (not restarted).
 
+- Visible sessions (tag beacon-geo): Engines pipeline (session_01AWqBEXPhmfmvrcnkUfKwUp → claude/engines-pipeline),
+  Questions for you (session_01AWqBEZjxUMnzpYy76Q3AvZ → claude/user-decisions, docs/DECISIONS.md),
+  Accounts & logins (session_01AWqBEZWemsMjuvf2amBhJz → claude/access-checklist, docs/ACCESS.md).
+  User wants the lead's context kept light: route all questions and login asks through those two sessions.
+
 ## Next
 - Wave 2: QA + security review + integrate. Deploy once VERCEL_TOKEN exists.

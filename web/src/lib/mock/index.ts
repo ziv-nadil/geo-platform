@@ -6,12 +6,12 @@
  */
 export * from "./analytics";
 export * from "./ops";
-export { ENGINES, ENGINE_BY_ID, ENGINE_IDS } from "./engines";
+export { ENGINES, ENGINE_BY_ID, ENGINE_IDS } from "@/lib/ui/engines";
 export { onboardingPlaceholders } from "./catalog";
-export type * from "./types";
+export type * from "@/lib/ui/data-types";
 
-import { ENGINE_IDS } from "./engines";
-import type { EngineId, Filters } from "./types";
+import { ENGINE_IDS } from "@/lib/ui/engines";
+import type { EngineId, Filters } from "@/lib/ui/data-types";
 
 export const IS_DEMO_DATA = true;
 

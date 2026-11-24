@@ -1,5 +1,5 @@
 import { BRAND_SERIES, COMPETITOR_SERIES } from "@/lib/ui/chart-colors";
-import type { Competitor, Funnel, Org, PlatformSettings, SourceType, User } from "./types";
+import type { Competitor, Funnel, Org, PlatformSettings, SourceType, User } from "@/lib/ui/data-types";
 
 /**
  * Static demo catalog: client accounts, the demo session user, competitors, tracked

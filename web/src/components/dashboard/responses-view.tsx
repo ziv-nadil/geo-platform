@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { SegmentedList, SegmentedTrigger, Tabs } from "@/components/ui/tabs";
-import type { EngineId, Sentiment } from "@/lib/mock/types";
+import type { EngineId, Sentiment } from "@/lib/ui/data-types";
 import { cn } from "@/lib/ui/cn";
 import { fmtDay } from "@/lib/ui/format";
 

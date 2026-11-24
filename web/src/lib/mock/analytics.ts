@@ -1,4 +1,4 @@
-import { ENGINE_IDS } from "./engines";
+import { ENGINE_IDS } from "@/lib/ui/engines";
 import { composeAnswer, getDataset, type OrgDataset } from "./generate";
 import { hashString, mulberry32, pick, TODAY } from "./rng";
 import type {
@@ -17,7 +17,7 @@ import type {
   SourceType,
   TrendPoint,
   UrlStat,
-} from "./types";
+} from "@/lib/ui/data-types";
 
 /* ------------------------------------------------------------------ helpers */
 
