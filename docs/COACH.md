@@ -36,5 +36,7 @@ Read this first when resuming in a fresh or compacted session.
   Accounts & logins (session_01AWqBEZWemsMjuvf2amBhJz → claude/access-checklist, docs/ACCESS.md).
   User wants the lead's context kept light: route all questions and login asks through those two sessions.
 
+- USER RULE: never use Explorium company accounts, connectors or branding (Claude excepted). All services go on the user's PERSONAL accounts.
+
 ## Next
 - Wave 2: QA + security review + integrate. Deploy once VERCEL_TOKEN exists.

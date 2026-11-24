@@ -31,6 +31,8 @@ Decisions were made so work didn't stop. Each item says what I chose and what yo
 
 ## Decided for you (review when convenient)
 
+- **All services go on your personal accounts** (personal email, new personal orgs). No Explorium accounts, connectors or branding. Claude is the only exception.
+
 - Name "Beacon GEO" → subdomain `beacon-geo.vercel.app`.
 - Vercel Hobby is non-commercial. Upgrade to Pro before paying clients use it.
 - Our agency email address for the "give our email access" option: placeholder `geo-ops@<yourdomain>`. Tell me the real one.
