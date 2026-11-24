@@ -17,7 +17,7 @@ As of 2026-11-24. Owner: Finance/Ops agent. Source of truth for budgets and upgr
 | Gemini grounding | 5,000 grounded requests/mo free, then $14 per 1,000 (S) | Above 5,000 Gemini grounded calls/mo (the full scenario exceeds this) | Accounted for below |
 | Perplexity API | No free API credit; the Pro-subscription API perk ended Feb 2026 (S) | Always, so budget from day one | Accounted for below |
 
-**Identity design risk.** PLAN.md says "a machine identity per worker scoped to one project". If that means one identity per (worker, client project), identity count goes to roughly 20 × workers. At 2 workers that is 40 identities, about $920/mo at $23, and may exceed the Pro cap. Recommend one machine identity per worker with project-level role grants across the 20 projects, and confirm Infisical allows that before the Security agent finalises the design.
+**Identity design (decided by coordinator).** Do not create one identity per client per worker: at 2 workers × 20 clients that is 40 identities, about $920/mo at $23, and it blows the Free cap immediately. Use a small fixed set instead (an app-writer identity plus one identity per worker type), each granted a role on many projects. Per-org scoping is enforced in our fetch-by-reference tool and audit logs. Infisical's docs (S, via search) describe one machine identity added to multiple projects with a separate role per project, so this is supported. The cost model below assumes this fixed set (6 identities at launch, 10 at full scale).
 
 ---
 
