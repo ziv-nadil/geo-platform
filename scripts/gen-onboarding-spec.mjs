@@ -1,4 +1,4 @@
-import {ONBOARDING_STEPS as S} from '/home/user/geo-platform/web/src/config/onboarding.ts';
+import {ONBOARDING_STEPS as S} from '../web/src/config/onboarding.ts';
 const out=[];
 let tot=0;
 const flds=(f,ind='')=>f.flatMap(x=>[`${ind}| \`${x.id}\` | ${x.label} | ${x.type}${x.required?' (required)':''} | ${[x.showIf?`shown if \`${x.showIf.field}\` = ${[].concat(x.showIf.equals).join('/')}`:'',x.help||''].filter(Boolean).join('; ').replace(/\|/g,'/')} |`,...(x.columns?flds(x.columns,'↳ '):[]),...(x.fields?flds(x.fields,'↳ '):[])]);
