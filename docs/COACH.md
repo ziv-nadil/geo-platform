@@ -43,5 +43,7 @@ Read this first when resuming in a fresh or compacted session.
 - BUDGET: the user said to stay under the 5h limit and use lower models and effort. Paused new spawns until about 01:50 UTC; check-in moved to 01:55 UTC.
 - New module requested: Content Gap → Listicles (backlog 12b).
 
+- 22:25 UTC: paused at 86% usage. Backend/frontend subagents stopped, Engines interrupted. Work is snapshotted. On reset: resume them (SendMessage to the backend/frontend agents; send_message to Engines) on cheaper settings.
+
 ## Next
 - Wave 2: QA + security review + integrate. Deploy once VERCEL_TOKEN exists.

@@ -1,32 +1,22 @@
 import 'server-only';
-import { createSupabaseServerClient, type TypedSupabaseClient } from './supabase/server';
-import { createSupabaseAdminClient } from './supabase/admin';
-import { ENV } from './env';
-import type { Database, Json } from '@/lib/db.types';
+import { currentClaims, dbConfigured, withService, type JwtClaims } from './db';
 
 /**
  * Authorization for route handlers. Mirrors the SQL helpers in schema `private`
  * (docs/architecture/security.md §3): members by role rank; staff only with an aal2 session AND
  * an unexpired per-org grant (view = read, act = write). Identity comes from getClaims()
- * (JWT verified), never getSession().
+ * (JWT verified; via currentClaims()), never getSession().
  */
 
-export type OrgRole = Database['public']['Enums']['org_role'];
+export type OrgRole = 'owner' | 'admin' | 'member' | 'viewer';
 const RANK: Record<OrgRole, number> = { owner: 4, admin: 3, member: 2, viewer: 1 };
 
-export type Caller = {
-  userId: string;
-  aal: string;
-  email: string | null;
-  supabase: TypedSupabaseClient; // user-scoped (RLS applies)
-};
-
+export type Caller = { userId: string; aal: string; claims: JwtClaims };
 export type OrgCaller = Caller & {
   orgId: string;
-  role: OrgRole | null; // null when acting as staff through a grant
+  role: OrgRole | null; // null when staff act through a grant
   staff: { mode: 'view' | 'act'; grantId: string } | null;
 };
-
 type Fail = { ok: false; response: Response };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -41,78 +31,58 @@ export function notConfiguredResponse(missing: readonly string[]): Response {
 }
 
 export async function requireUser(): Promise<({ ok: true } & Caller) | Fail> {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) return { ok: false, response: notConfiguredResponse(ENV.supabasePublic) };
-  const { data, error } = await supabase.auth.getClaims();
-  const claims = data?.claims as { sub?: string; aal?: string; email?: string } | undefined;
-  if (error || !claims?.sub) return { ok: false, response: json({ error: 'unauthenticated' }, 401) };
-  return { ok: true, userId: claims.sub, aal: claims.aal ?? 'aal1', email: claims.email ?? null, supabase };
-}
-
-/** Staff = row in platform_admins, not disabled, AND an aal2 session. Read with the secret key. */
-async function isPlatformAdmin(userId: string, aal: string): Promise<boolean> {
-  if (aal !== 'aal2') return false;
-  const admin = createSupabaseAdminClient();
-  if (!admin) return false;
-  const { data } = await admin.from('platform_admins').select('user_id').eq('user_id', userId).is('disabled_at', null).maybeSingle();
-  return !!data;
-}
-
-async function activeGrant(userId: string, orgId: string): Promise<{ id: string; mode: 'view' | 'act' } | null> {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return null;
-  const { data } = await admin
-    .from('platform_access_grants')
-    .select('id, mode, expires_at')
-    .eq('admin_user_id', userId)
-    .eq('org_id', orgId)
-    .is('ended_at', null)
-    .gt('expires_at', new Date().toISOString())
-    .order('mode', { ascending: true }) // 'act' before 'view'
-    .limit(1)
-    .maybeSingle();
-  return data ? { id: data.id, mode: data.mode as 'view' | 'act' } : null;
+  if (!dbConfigured()) return { ok: false, response: notConfiguredResponse(['DATABASE_URL']) };
+  const claims = await currentClaims();
+  if (!claims) return { ok: false, response: json({ error: 'unauthenticated' }, 401) };
+  return { ok: true, userId: claims.sub, aal: claims.aal ?? 'aal1', claims };
 }
 
 /**
- * Require at least `minRole` in the org. Reads use minRole 'viewer'.
- * Staff pass with a 'view' grant for viewer-level reads and an 'act' grant for anything else.
- * No access => 404 (doesn't reveal which org ids exist); read-only access to a write => 403.
+ * Require at least `minRole` in the org ('viewer' for reads). Staff pass with a 'view' grant for
+ * viewer-level reads and an 'act' grant for anything else. No access => 404 (doesn't reveal which
+ * org ids exist); insufficient role => 403.
  */
 export async function requireOrgAccess(orgId: string, minRole: OrgRole): Promise<({ ok: true } & OrgCaller) | Fail> {
   if (!isUuid(orgId)) return { ok: false, response: json({ error: 'not_found' }, 404) };
   const auth = await requireUser();
   if (!auth.ok) return auth;
-  const { ok: _ok, ...caller } = auth;
-  void _ok;
+  const caller: Caller = { userId: auth.userId, aal: auth.aal, claims: auth.claims };
 
-  const { data: m } = await auth.supabase
-    .from('memberships')
-    .select('role')
-    .eq('org_id', orgId)
-    .eq('user_id', auth.userId)
-    .maybeSingle();
-  if (m) {
-    if (RANK[m.role] >= RANK[minRole]) return { ok: true, ...caller, orgId, role: m.role, staff: null };
+  const found = await withService(async (sql) => {
+    const [m] = await sql`select role::text as role from public.memberships where org_id = ${orgId} and user_id = ${auth.userId}`;
+    if (m) return { role: m.role as OrgRole, grant: null };
+    if (auth.aal !== 'aal2') return { role: null, grant: null };
+    const [g] = await sql`
+      select g.id, g.mode from public.platform_access_grants g
+      join public.platform_admins pa on pa.user_id = g.admin_user_id and pa.disabled_at is null
+      where g.admin_user_id = ${auth.userId} and g.org_id = ${orgId} and g.ended_at is null and g.expires_at > now()
+      order by g.mode asc limit 1`;
+    return { role: null, grant: g ? { id: g.id as string, mode: g.mode as 'view' | 'act' } : null };
+  });
+
+  if (found.role) {
+    if (RANK[found.role] >= RANK[minRole]) return { ok: true, ...caller, orgId, role: found.role, staff: null };
     return { ok: false, response: json({ error: 'forbidden', required_role: minRole }, 403) };
   }
-
-  if (await isPlatformAdmin(auth.userId, auth.aal)) {
-    const grant = await activeGrant(auth.userId, orgId);
-    if (grant && (minRole === 'viewer' || grant.mode === 'act')) {
-      return { ok: true, ...caller, orgId, role: null, staff: { mode: grant.mode, grantId: grant.id } };
+  if (found.grant) {
+    if (minRole === 'viewer' || found.grant.mode === 'act') {
+      return { ok: true, ...caller, orgId, role: null, staff: { mode: found.grant.mode, grantId: found.grant.id } };
     }
-    if (grant) return { ok: false, response: json({ error: 'forbidden', detail: 'view-as grant is read-only' }, 403) };
+    return { ok: false, response: json({ error: 'forbidden', detail: 'view-as grant is read-only' }, 403) };
   }
   return { ok: false, response: json({ error: 'not_found' }, 404) };
 }
 
-/** Fleet-wide staff routes (admin console). aal2 + active platform_admins row. */
+/** Fleet-wide staff routes (admin console): aal2 + active platform_admins row. */
 export async function requirePlatformAdmin(): Promise<({ ok: true } & Caller) | Fail> {
   const auth = await requireUser();
   if (!auth.ok) return auth;
   if (auth.aal !== 'aal2') return { ok: false, response: json({ error: 'mfa_required' }, 403) };
-  if (!(await isPlatformAdmin(auth.userId, auth.aal))) return { ok: false, response: json({ error: 'not_found' }, 404) };
+  const isStaff = await withService(async (sql) => {
+    const [r] = await sql`select 1 from public.platform_admins where user_id = ${auth.userId} and disabled_at is null`;
+    return !!r;
+  });
+  if (!isStaff) return { ok: false, response: json({ error: 'not_found' }, 404) };
   return auth;
 }
 
@@ -120,8 +90,8 @@ export async function requirePlatformAdmin(): Promise<({ ok: true } & Caller) | 
 export function checkOrigin(request: Request, requiredHeader?: string): Response | null {
   const origin = request.headers.get('origin');
   const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
   const allowed = new Set<string>();
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
   if (appUrl) allowed.add(new URL(appUrl).origin);
   if (host) {
     allowed.add(`https://${host}`);
@@ -133,32 +103,35 @@ export function checkOrigin(request: Request, requiredHeader?: string): Response
 }
 
 // ---------------------------------------------------------------------------
-// Audit (server key). Client-visible events mask staff (DB trigger); staff trail is separate.
+// Audit (server path). Client-visible events mask staff; staff trail goes to platform_audit_log.
 // Metadata must never contain secret values.
 // ---------------------------------------------------------------------------
+type JsonValue = string | number | boolean | null | JsonValue[] | { [k: string]: JsonValue };
+
 export async function auditEvent(e: {
   orgId: string;
   caller: { userId: string; staff?: OrgCaller['staff'] } | null;
   action: string;
   targetType?: string;
   targetId?: string;
-  metadata?: Record<string, Json>;
+  metadata?: Record<string, JsonValue>;
+  request?: Request;
 }): Promise<void> {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return;
   const isStaff = !!e.caller?.staff;
-  await admin.from('audit_events').insert({
-    org_id: e.orgId,
-    actor_user_id: isStaff ? null : (e.caller?.userId ?? null),
-    actor_kind: isStaff ? 'agency' : e.caller ? 'member' : 'system',
-    action: e.action,
-    target_type: e.targetType ?? null,
-    target_id: e.targetId ?? null,
-    metadata: e.metadata ?? {},
+  const meta = e.metadata ?? {};
+  await withService(async (sql) => {
+    await sql`
+      insert into public.audit_events (org_id, actor_user_id, actor_kind, action, target_type, target_id, metadata)
+      values (${e.orgId}, ${isStaff ? null : (e.caller?.userId ?? null)}, ${isStaff ? 'agency' : e.caller ? 'member' : 'system'},
+              ${e.action}, ${e.targetType ?? null}, ${e.targetId ?? null}, ${sql.json(meta)})`;
+    if (isStaff) {
+      await sql`
+        insert into public.platform_audit_log (actor_user_id, action, org_id, target_type, target_id, metadata, user_agent, request_id)
+        values (${e.caller!.userId}, ${e.action}, ${e.orgId}, ${e.targetType ?? null}, ${e.targetId ?? null},
+                ${sql.json({ ...meta, grant_id: e.caller!.staff!.grantId })},
+                ${e.request?.headers.get('user-agent')?.slice(0, 300) ?? null}, ${e.request?.headers.get('x-vercel-id') ?? null})`;
+    }
   });
-  if (isStaff) {
-    await platformAudit({ actorUserId: e.caller!.userId, action: e.action, orgId: e.orgId, targetType: e.targetType, targetId: e.targetId, metadata: { ...(e.metadata ?? {}), grant_id: e.caller!.staff!.grantId } });
-  }
 }
 
 export async function platformAudit(e: {
@@ -167,25 +140,20 @@ export async function platformAudit(e: {
   orgId?: string | null;
   targetType?: string;
   targetId?: string;
-  metadata?: Record<string, Json>;
+  metadata?: Record<string, JsonValue>;
   request?: Request;
 }): Promise<void> {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return;
-  await admin.from('platform_audit_log').insert({
-    actor_user_id: e.actorUserId,
-    action: e.action,
-    org_id: e.orgId ?? null,
-    target_type: e.targetType ?? null,
-    target_id: e.targetId ?? null,
-    metadata: e.metadata ?? {},
-    user_agent: e.request?.headers.get('user-agent')?.slice(0, 300) ?? null,
-    request_id: e.request?.headers.get('x-vercel-id') ?? null,
+  await withService(async (sql) => {
+    await sql`
+      insert into public.platform_audit_log (actor_user_id, action, org_id, target_type, target_id, metadata, user_agent, request_id)
+      values (${e.actorUserId}, ${e.action}, ${e.orgId ?? null}, ${e.targetType ?? null}, ${e.targetId ?? null},
+              ${sql.json(e.metadata ?? {})}, ${e.request?.headers.get('user-agent')?.slice(0, 300) ?? null},
+              ${e.request?.headers.get('x-vercel-id') ?? null})`;
   });
 }
 
 // ---------------------------------------------------------------------------
-// Best-effort per-instance rate limiter (security.md §6.2 asks for 20/min/user on intake).
+// Best-effort per-instance rate limiter (security.md §6.2: intake 20/min/user, tests 10/min/org).
 // Serverless instances don't share memory: pair with a Vercel Firewall rule in production.
 // ---------------------------------------------------------------------------
 const buckets = new Map<string, number[]>();
