@@ -43,3 +43,12 @@ Decisions were made so work didn't stop. Each item says what I chose and what yo
 
 - **Infisical identities (finance):** the free tier caps us at 5 machine identities (projects are unlimited). Design: a fixed identity set
   (app-writer + one per worker type) added to each client project with a project role. Expect Pro (~$18–23 per identity per month) at launch.
+
+### Product agent (onboarding spec) — open questions
+- Real agency email for `{{AGENCY_EMAIL}}` (placeholder geo-ops@<yourdomain>), GitHub login for `{{AGENCY_GITHUB_USER}}`, AWS principal ARN for the cross-account role, and our Google Ads manager (MCC) ID plus a developer token (apply for Basic access; approval takes days). The wizard can't go live without these.
+- Google Indexing API officially supports only JobPosting/BroadcastEvent pages. Keep it in step 9 as best-effort, or drop it?
+- Bing: confirm "Administrator" is the intended Owner-equivalent; verify current Bing Webmaster UI path with a real login (could not confirm online).
+- Peec.ai and Profound API endpoints for the key test are unverified; need a trial account each. Also Cloudflare AI Crawl Control REST path.
+- Domain-user access mode stores a password and TOTP secret in the vault. Accept the risk, or restrict to agency-email mode only? (Security agent should review.)
+- Step 4 (GitHub) has no skip logic in the config. Should the UI skip it automatically for non-Git CMS clients?
+- Wix, Framer, HubSpot, Shopify grant steps need a real-account walkthrough before launch.
