@@ -21,6 +21,8 @@ Decisions were made so work didn't stop. Each item says what I chose and what yo
 3. **Network allowlist.** If the environment is on "Limited" network, allow: `api.vercel.com`, `api.supabase.com`,
    `*.supabase.co`, `app.infisical.com`, `api.stripe.com`, `api.openai.com`, `api.perplexity.ai`,
    `generativelanguage.googleapis.com`, `api.dataforseo.com`.
+   Confirmed needed: agents could NOT reach infisical.com, vercel.com, supabase.com, stripe.com, dataforseo.com, openai.com
+   or ai.google.dev from this session, so pricing and docs were taken from search snippets.
 
 4. **AthenaHQ teardown is paused.** My permission system blocked the agent that would reverse-engineer AthenaHQ
    through your connected AthenaHQ account. Decide whether to approve that explicitly (and whether public-web research only
@@ -38,3 +40,6 @@ Decisions were made so work didn't stop. Each item says what I chose and what yo
 
 ## Found during the build
 (agents append below)
+
+- **Infisical identities (finance):** the free tier caps us at 5 machine identities (projects are unlimited). Design: a fixed identity set
+  (app-writer + one per worker type) added to each client project with a project role. Expect Pro (~$18–23 per identity per month) at launch.
