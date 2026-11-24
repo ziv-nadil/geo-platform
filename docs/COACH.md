@@ -18,5 +18,8 @@ Read this first when resuming in a fresh or compacted session.
   frontend app, finance. See docs/PLAN.md for the roster.
 - Branch: claude/zealous-hamilton-nlkizt.
 
+- AthenaHQ teardown agent was DENIED by the permission classifier (undermining oversight). Not relaunched; waiting on the user.
+- Running: engines research, onboarding spec, security, finance, backend, frontend.
+
 ## Next
 - Wave 2: QA + security review + integrate. Deploy once VERCEL_TOKEN exists.

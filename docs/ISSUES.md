@@ -22,6 +22,11 @@ Decisions were made so work didn't stop. Each item says what I chose and what yo
    `*.supabase.co`, `app.infisical.com`, `api.stripe.com`, `api.openai.com`, `api.perplexity.ai`,
    `generativelanguage.googleapis.com`, `api.dataforseo.com`.
 
+4. **AthenaHQ teardown is paused.** My permission system blocked the agent that would reverse-engineer AthenaHQ
+   through your connected AthenaHQ account. Decide whether to approve that explicitly (and whether public-web research only
+   is fine). Until then the dashboard tabs are built from my own knowledge of GEO tools plus the AthenaHQ connector's
+   tool list (brand kit, competitors, prompt discovery, site health, source tags, creators, outreach, API keys).
+
 ## Decided for you (review when convenient)
 
 - Name "Beacon GEO" → subdomain `beacon-geo.vercel.app`.
