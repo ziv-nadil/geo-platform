@@ -1,0 +1,35 @@
+# Waiting on you (review queue)
+
+Decisions were made so work didn't stop. Each item says what I chose and what you need to do.
+
+## Blocking (needs your action)
+
+1. **Connect your computer for the AthenaHQ UI teardown.** Open the Claude desktop app → Settings → Claude Code →
+   Remote Control and share a folder, or run `claude remote-control` in a terminal. Then tell me, and I'll
+   browse AthenaHQ while you're logged in. Until then the teardown uses the AthenaHQ MCP connector + public docs.
+2. **Accounts + tokens.** Add each token in the cloud environment settings (session title bar → environment → Edit →
+   Network secrets / environment variables). Never paste tokens in chat. A new session picks them up.
+   | Service | Create | Env var I read |
+   |---|---|---|
+   | Vercel | Free Hobby account → Account Settings → Tokens | `VERCEL_TOKEN` |
+   | Supabase | Free org + project "beacon-geo" → Account → Access Tokens | `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF` |
+   | Infisical Cloud | Free org → Organization → Machine Identities (Universal Auth, org admin for project creation) | `INFISICAL_CLIENT_ID`, `INFISICAL_CLIENT_SECRET` |
+   | Stripe | Test-mode account → Developers → API keys (restricted key ok) | `STRIPE_SECRET_KEY` |
+   | Google OAuth (SSO + GSC/GA4 checks) | GCP project → OAuth client (Web) | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
+   | OpenAI / Perplexity / Gemini / Anthropic | API keys for engine monitoring | `OPENAI_API_KEY`, `PERPLEXITY_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY` (env var only) |
+   | DataForSEO | Account (pay-as-you-go, $50 min) | `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD` |
+3. **Network allowlist.** If the environment is on "Limited" network, allow: `api.vercel.com`, `api.supabase.com`,
+   `*.supabase.co`, `app.infisical.com`, `api.stripe.com`, `api.openai.com`, `api.perplexity.ai`,
+   `generativelanguage.googleapis.com`, `api.dataforseo.com`.
+
+## Decided for you (review when convenient)
+
+- Name "Beacon GEO" → subdomain `beacon-geo.vercel.app`.
+- Vercel Hobby is non-commercial. Upgrade to Pro before paying clients use it.
+- Our agency email address for the "give our email access" option: placeholder `geo-ops@<yourdomain>`. Tell me the real one.
+- Anchor Browser / agentic signups: not used. Signups need your email verification and payment details, so a one-time manual
+  setup (table above) is safer than storing your logins in a third-party browser.
+- "Coach lane" was read as a rolling memory file: `docs/COACH.md`.
+
+## Found during the build
+(agents append below)
