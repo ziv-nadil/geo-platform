@@ -9,7 +9,7 @@ DB=${DB:-beacon_validate}
 P=(psql -v ON_ERROR_STOP=1 -q -X)
 
 "${P[@]}" -d postgres -c "drop database if exists $DB" -c "create database $DB"
-"${P[@]}" -d "$DB" -f "$here/00_supabase_stub.sql"
+"${P[@]}" -d "$DB" -f "$root/dev/compat.sql"
 for f in "$root"/migrations/*.sql; do
   echo "migration: $(basename "$f")"
   "${P[@]}" -d "$DB" -1 -f "$f"

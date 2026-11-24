@@ -14,5 +14,10 @@
 | 10 | Billing: Stripe products/plans setup script, portal, seat limits, webhooks tests | session "Billing" (sonnet/high) | 4 | 1h |
 | 11 | Prompt discovery: GSC/KW planner/LLM generation by persona × funnel | session "Discovery" (sonnet/high) | 3 | 1h |
 | 12 | Marketing site + docs/help center for clients | session "Site" (sonnet/medium) | 8 | 1h |
+| 12b | **Content Gap → Listicles**: find prompts where competitors are cited and we aren't, cluster them into gaps, generate brand-kit-compliant listicle drafts, review/approve, publish to the CMS/GitHub blog | session "Content gaps" (sonnet/medium) | 3, onboarding CMS | 1.5h |
 | 13 | Provision + deploy to Vercel/Supabase/Infisical | lead | tokens + network (Access) | 30m |
 | 14 | AthenaHQ visual parity pass | session "Athena UI" | user computer connected + approval | 2h |
+
+## Budget rule (user, 2026-11-24)
+Stay under the 5-hour usage limit (it was at 77% at 22:16 UTC and resets about 01:50 UTC). Start no new sessions until it resets.
+Default to sonnet/haiku at low or medium effort; opus only for security review.

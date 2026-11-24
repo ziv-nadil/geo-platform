@@ -40,5 +40,8 @@ Read this first when resuming in a fresh or compacted session.
 
 - Session naming rule: short descriptive titles, no project prefix (e.g. "Engines", "Questions", "Access", "QA").
 
+- BUDGET: the user said to stay under the 5h limit and use lower models and effort. Paused new spawns until about 01:50 UTC; check-in moved to 01:55 UTC.
+- New module requested: Content Gap → Listicles (backlog 12b).
+
 ## Next
 - Wave 2: QA + security review + integrate. Deploy once VERCEL_TOKEN exists.

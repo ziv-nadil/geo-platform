@@ -1,5 +1,6 @@
--- Minimal stand-in for the Supabase platform schemas so the migrations can be validated on a
--- vanilla Postgres (no Docker). NOT a migration; used only by supabase/tests/local/run.sh.
+-- Minimal stand-in for the Supabase platform schemas so the real migrations run on a vanilla
+-- PostgreSQL 16 (no Docker). NOT a migration. Used by scripts/dev-db.sh and supabase/tests/local/run.sh.
+-- Idempotent. On hosted Supabase all of this already exists.
 -- Mirrors: roles anon/authenticated/service_role, auth.users + auth.uid()/jwt()/role(),
 -- storage.buckets/objects + storage.foldername(), schema extensions, default grants.
 

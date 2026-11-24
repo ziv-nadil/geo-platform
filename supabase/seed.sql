@@ -183,12 +183,35 @@ from (values
   ('10000000-0000-4000-b000-000000000002', '30000000-0000-4000-d000-000000000002', '32000000-0000-4000-d000-000000000011', null, 'Dermatologist recommended ceramide serums', 'consideration', 'US', 'discovered'),
   ('10000000-0000-4000-b000-000000000002', '30000000-0000-4000-d000-000000000002', '32000000-0000-4000-d000-000000000012', '20000000-0000-4000-c000-000000000003', 'Best mineral sunscreen that does not leave a white cast', 'consideration', 'US', 'manual'),
   ('10000000-0000-4000-b000-000000000002', '30000000-0000-4000-d000-000000000002', '32000000-0000-4000-d000-000000000012', null, 'Mineral vs chemical sunscreen for sensitive skin', 'awareness', 'GB', 'suggested'),
-  ('10000000-0000-4000-b000-000000000002', '30000000-0000-4000-d000-000000000002', '32000000-0000-4000-d000-000000000012', null, 'Dewly vs Lumen SPF 50', 'decision', 'GB', 'manual')
+  ('10000000-0000-4000-b000-000000000002', '30000000-0000-4000-d000-000000000002', '32000000-0000-4000-d000-000000000012', null, 'Dewly vs Lumen SPF 50', 'decision', 'GB', 'manual'),
+  ('10000000-0000-4000-b000-000000000001', '30000000-0000-4000-d000-000000000001', '32000000-0000-4000-d000-000000000001', '20000000-0000-4000-c000-000000000001', 'Top alternatives to Mixpanel for startups', 'consideration', 'US', 'discovered'),
+  ('10000000-0000-4000-b000-000000000001', '30000000-0000-4000-d000-000000000001', '32000000-0000-4000-d000-000000000001', null, 'Cheapest product analytics tool with session replay', 'consideration', 'US', 'manual'),
+  ('10000000-0000-4000-b000-000000000001', '30000000-0000-4000-d000-000000000001', '32000000-0000-4000-d000-000000000001', '20000000-0000-4000-c000-000000000001', 'Which analytics tools integrate with Segment?', 'awareness', 'US', 'suggested'),
+  ('10000000-0000-4000-b000-000000000001', '30000000-0000-4000-d000-000000000001', '32000000-0000-4000-d000-000000000001', null, 'Best product analytics for PLG companies', 'consideration', 'GB', 'manual'),
+  ('10000000-0000-4000-b000-000000000001', '30000000-0000-4000-d000-000000000001', '32000000-0000-4000-d000-000000000002', '20000000-0000-4000-c000-000000000001', 'How to calculate cohort retention in a SaaS app', 'awareness', 'US', 'manual'),
+  ('10000000-0000-4000-b000-000000000001', '30000000-0000-4000-d000-000000000001', '32000000-0000-4000-d000-000000000002', '20000000-0000-4000-c000-000000000001', 'What is a good activation rate for B2B SaaS?', 'awareness', 'US', 'discovered'),
+  ('10000000-0000-4000-b000-000000000001', '30000000-0000-4000-d000-000000000001', '32000000-0000-4000-d000-000000000002', null, 'Tools to track feature adoption', 'consideration', 'US', 'manual'),
+  ('10000000-0000-4000-b000-000000000001', '30000000-0000-4000-d000-000000000001', '32000000-0000-4000-d000-000000000002', '20000000-0000-4000-c000-000000000001', 'How to build a north star metric dashboard', 'awareness', 'DE', 'suggested'),
+  ('10000000-0000-4000-b000-000000000001', '30000000-0000-4000-d000-000000000001', '32000000-0000-4000-d000-000000000003', '20000000-0000-4000-c000-000000000002', 'BigQuery native product analytics tools', 'consideration', 'US', 'manual'),
+  ('10000000-0000-4000-b000-000000000001', '30000000-0000-4000-d000-000000000001', '32000000-0000-4000-d000-000000000003', '20000000-0000-4000-c000-000000000002', 'Reverse ETL vs warehouse-native analytics', 'awareness', 'US', 'manual'),
+  ('10000000-0000-4000-b000-000000000001', '30000000-0000-4000-d000-000000000001', '32000000-0000-4000-d000-000000000003', '20000000-0000-4000-c000-000000000002', 'Northwind pricing compared to Graphwise', 'decision', 'US', 'manual'),
+  ('10000000-0000-4000-b000-000000000001', '30000000-0000-4000-d000-000000000001', '32000000-0000-4000-d000-000000000003', null, 'Is Northwind GDPR compliant for EU data?', 'decision', 'DE', 'manual'),
+  ('10000000-0000-4000-b000-000000000002', '30000000-0000-4000-d000-000000000002', '32000000-0000-4000-d000-000000000011', '20000000-0000-4000-c000-000000000003', 'Best moisturizer for sensitive skin without fragrance', 'consideration', 'GB', 'manual'),
+  ('10000000-0000-4000-b000-000000000002', '30000000-0000-4000-d000-000000000002', '32000000-0000-4000-d000-000000000011', '20000000-0000-4000-c000-000000000003', 'What ingredients should I avoid with rosacea?', 'awareness', 'GB', 'discovered'),
+  ('10000000-0000-4000-b000-000000000002', '30000000-0000-4000-d000-000000000002', '32000000-0000-4000-d000-000000000011', null, 'Ceramide serum vs niacinamide for redness', 'consideration', 'US', 'manual'),
+  ('10000000-0000-4000-b000-000000000002', '30000000-0000-4000-d000-000000000002', '32000000-0000-4000-d000-000000000011', '20000000-0000-4000-c000-000000000003', 'Gentle skincare brands recommended by dermatologists UK', 'consideration', 'GB', 'manual'),
+  ('10000000-0000-4000-b000-000000000002', '30000000-0000-4000-d000-000000000002', '32000000-0000-4000-d000-000000000011', null, 'Lumen Barrier Repair Serum reviews', 'decision', 'GB', 'manual'),
+  ('10000000-0000-4000-b000-000000000002', '30000000-0000-4000-d000-000000000002', '32000000-0000-4000-d000-000000000011', '20000000-0000-4000-c000-000000000003', 'Minimal skincare routine for reactive skin', 'awareness', 'US', 'suggested'),
+  ('10000000-0000-4000-b000-000000000002', '30000000-0000-4000-d000-000000000002', '32000000-0000-4000-d000-000000000012', '20000000-0000-4000-c000-000000000003', 'Best SPF for sensitive skin under makeup', 'consideration', 'GB', 'manual'),
+  ('10000000-0000-4000-b000-000000000002', '30000000-0000-4000-d000-000000000002', '32000000-0000-4000-d000-000000000012', null, 'Reef safe mineral sunscreen brands', 'consideration', 'US', 'discovered'),
+  ('10000000-0000-4000-b000-000000000002', '30000000-0000-4000-d000-000000000002', '32000000-0000-4000-d000-000000000012', '20000000-0000-4000-c000-000000000003', 'Is zinc oxide sunscreen safe for daily use?', 'awareness', 'US', 'manual'),
+  ('10000000-0000-4000-b000-000000000002', '30000000-0000-4000-d000-000000000002', '32000000-0000-4000-d000-000000000012', null, 'Lumen Daily Mineral SPF 50 vs Skinwell', 'decision', 'GB', 'manual'),
+  ('10000000-0000-4000-b000-000000000002', '30000000-0000-4000-d000-000000000002', '32000000-0000-4000-d000-000000000012', null, 'Tinted mineral sunscreen for darker skin tones', 'consideration', 'US', 'suggested')
 ) v(org, brand, topic, persona, txt, stage, country, src)
 on conflict (id) do nothing;
 
 -- ---------------------------------------------------------------------------
--- Prompt runs: every 2 days for 30 days, 4 API engines + AI Overviews
+-- Prompt runs: daily for 30 days, 4 API engines + AI Overviews
 -- ---------------------------------------------------------------------------
 insert into public.prompt_runs (id, org_id, prompt_id, engine_id, run_at, model, status, error, latency_ms, cost_usd)
 select md5('run' || p.id || e.id || d)::uuid, p.org_id, p.id, e.id,
@@ -202,7 +225,7 @@ select md5('run' || p.id || e.id || d)::uuid, p.org_id, p.id, e.id,
 from public.prompts p
 join public.organizations o on o.id = p.org_id and o.settings ->> 'demo' = 'true'
 cross join public.engines e
-cross join generate_series(0, 28, 2) d
+cross join generate_series(0, 29) d
 where e.id in ('chatgpt', 'perplexity', 'gemini', 'claude', 'google_aio')
 on conflict (id) do nothing;
 
@@ -404,13 +427,18 @@ insert into public.content_items (org_id, brand_id, prompt_id, title, content_ty
 insert into public.creators (org_id, platform, handle, display_name, url, followers, avg_views, relevance_score, topics, cited_count, status) values
   ('10000000-0000-4000-b000-000000000001', 'youtube', '@saasmetricsdemo', 'SaaS Metrics Demo', 'https://youtube.example/@saasmetricsdemo', 84000, 12000, 82.5, '{analytics,saas}', 7, 'shortlisted'),
   ('10000000-0000-4000-b000-000000000002', 'tiktok', '@dermdemo', 'Derm Demo', 'https://tiktok.example/@dermdemo', 420000, 90000, 91.0, '{skincare,sensitive skin}', 12, 'new'),
-  ('10000000-0000-4000-b000-000000000002', 'youtube', '@skinlabdemo', 'Skin Lab Demo', 'https://youtube.example/@skinlabdemo', 150000, 30000, 76.0, '{skincare}', 4, 'contacted')
+  ('10000000-0000-4000-b000-000000000002', 'youtube', '@skinlabdemo', 'Skin Lab Demo', 'https://youtube.example/@skinlabdemo', 150000, 30000, 76.0, '{skincare}', 4, 'contacted'),
+  ('10000000-0000-4000-b000-000000000001', 'youtube', '@dataopsdemo', 'DataOps Weekly (demo)', 'https://youtube.example/@dataopsdemo', 52000, 8000, 74.0, '{data engineering,warehouse}', 3, 'new'),
+  ('10000000-0000-4000-b000-000000000001', 'tiktok', '@pmtipsdemo', 'PM Tips (demo)', 'https://tiktok.example/@pmtipsdemo', 210000, 45000, 68.5, '{product management}', 2, 'new'),
+  ('10000000-0000-4000-b000-000000000002', 'tiktok', '@spfdailydemo', 'SPF Daily (demo)', 'https://tiktok.example/@spfdailydemo', 98000, 22000, 80.0, '{sunscreen}', 6, 'shortlisted')
 on conflict do nothing;
 
 insert into public.outreach_contacts (org_id, name, email, publication, url, domain, role_title, status, citation_count) values
   ('10000000-0000-4000-b000-000000000001', 'Alex Rivera', 'alex@techradar.example', 'TechRadar (demo)', 'https://techradar.example/best/product-analytics-tools', 'techradar.example', 'Software editor', 'contacted', 31),
   ('10000000-0000-4000-b000-000000000001', 'Jordan Lee', null, 'G2 (demo)', 'https://g2.example/categories/product-analytics', 'g2.example', 'Category manager', 'new', 44),
-  ('10000000-0000-4000-b000-000000000002', 'Priya Nair', 'priya@byrdie.example', 'Byrdie (demo)', 'https://byrdie.example/best-serums-sensitive-skin', 'byrdie.example', 'Beauty writer', 'replied', 22);
+  ('10000000-0000-4000-b000-000000000002', 'Priya Nair', 'priya@byrdie.example', 'Byrdie (demo)', 'https://byrdie.example/best-serums-sensitive-skin', 'byrdie.example', 'Beauty writer', 'replied', 22),
+  ('10000000-0000-4000-b000-000000000002', 'Tom Hale', null, 'Healthline (demo)', 'https://healthline.example/health/sensitive-skin', 'healthline.example', 'Medical reviewer', 'new', 17),
+  ('10000000-0000-4000-b000-000000000001', 'Mia Chen', 'mia@saasweekly.example', 'SaaS Weekly (demo)', 'https://saasweekly.example/analytics-roundup', 'saasweekly.example', 'Editor', 'won', 9);
 
 insert into public.reports (org_id, title, report_type, period_start, period_end, status, schedule, data) values
   ('10000000-0000-4000-b000-000000000001', 'Monthly visibility report (demo)', 'visibility', (now() - interval '30 days')::date, now()::date, 'succeeded', 'monthly', '{"demo": true}'),

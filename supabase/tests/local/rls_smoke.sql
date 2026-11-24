@@ -131,7 +131,7 @@ set local role authenticated;
 do $$
 declare n int;
 begin
-  select count(*) into n from public.prompts;      assert n = 7, 'leo reads lumen prompts, got ' || n;
+  select count(*) into n from public.prompts;      assert n = 18, 'leo reads lumen prompts, got ' || n;
   select count(*) into n from public.secret_refs;  assert n = 0, 'no refs seeded';
   begin
     insert into public.prompts (org_id, text) values ('10000000-0000-4000-b000-000000000002', 'viewer write');
@@ -155,7 +155,7 @@ select set_config('request.jwt.claims', json_build_object('sub', :'leo', 'role',
 do $$
 declare n int;
 begin
-  select count(*) into n from public.prompts; assert n = 7, 'aal2 restores access, got ' || n;
+  select count(*) into n from public.prompts; assert n = 18, 'aal2 restores access, got ' || n;
 end $$;
 select set_config('request.jwt.claims', json_build_object('sub', :'dana', 'role', 'authenticated', 'aal', 'aal1')::text, true);
 do $$
@@ -209,7 +209,7 @@ do $$
 declare n int;
 begin
   select count(*) into n from public.organizations; assert n = 1, 'view grant: exactly lumen, got ' || n;
-  select count(*) into n from public.prompts;       assert n = 7, 'view grant: lumen prompts';
+  select count(*) into n from public.prompts;       assert n = 18, 'view grant: lumen prompts';
   select count(*) into n from public.platform_access_grants; assert n = 2, 'staff sees own grants';
   begin
     insert into public.prompts (org_id, text) values ('10000000-0000-4000-b000-000000000002', 'staff write');
