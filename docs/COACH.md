@@ -19,7 +19,11 @@ Read this first when resuming in a fresh or compacted session.
 - Branch: claude/zealous-hamilton-nlkizt.
 
 - AthenaHQ teardown agent was DENIED by the permission classifier (undermining oversight). Not relaunched; waiting on the user.
-- Running: engines research, onboarding spec, security, finance, backend, frontend.
+- DONE: finance (docs/ops/costs.md), onboarding spec (15 steps / 41 tests, web/src/config/onboarding.ts), engines
+  (docs/research/ai-engine-methodology.md: ~$95 per client per month, Perplexity Agent API), security (docs/architecture/security.md,
+  supabase/policies_reference.sql: no blanket super-admin bypass; MFA + time-boxed audited grants; 3 Infisical identities; JWE intake).
+- Backend was told to reconcile its migrations with the security reference. Frontend was given the onboarding UI requirements.
+- Running: backend, frontend.
 
 ## Next
 - Wave 2: QA + security review + integrate. Deploy once VERCEL_TOKEN exists.
