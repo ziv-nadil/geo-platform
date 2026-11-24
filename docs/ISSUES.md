@@ -57,3 +57,31 @@ Decisions were made so work didn't stop. Each item says what I chose and what yo
 - **DataForSEO "LLM Scraper"** scrapes the ChatGPT/Gemini consumer UIs, so I EXCLUDED it per your API-only choice. Tell me if you want it as a "UI parity" add-on.
 - **Engine models:** the research names gpt-5.4-mini and Claude Haiku 4.5. Backend will use the cheapest current search-capable model per vendor
   (Claude Haiku 5.5) and verify the [V?] items with live calls once API keys + network access exist.
+
+### Security agent: decisions needed (details in docs/architecture/security.md)
+- **Infisical Pro before the first real client credential.** Audit logs are Pro+ only (not Free). The design uses
+  3 machine identities + 1–2 humans (4–5 identities; Free caps at 5 incl. humans). Recommend Pro from the first paying client,
+  about 5 × $18–23/mo (verify on infisical.com/pricing). OK?
+- **Accept the shared-worker residual risk.** One `beacon-worker` identity can read all clients' machine credentials. Our
+  broker enforces per-org scoping, with dual audit and alerts. Per-client identities cost ~+$20/client/mo. Accept for launch, and upgrade
+  per client only if a contract demands hard isolation?
+- **Org creation: invite-only at launch.** An Infisical project is created only after email verification **and** (Stripe
+  checkout complete **or** platform-admin approval). Do you want open self-serve signup at all?
+- **Staff visibility to clients.** Staff never appear in member lists. Staff *writes* show in the client audit as "Agency team"
+  (no name). Staff *reads* (view-as) are logged only in our internal log. Your client contract/DPA should state that agency
+  staff may access account data for support. Do you want the client to see "Agency team viewed your account" entries instead?
+- **Domain-user access mode (product agent's question).** Allowed, but agency-email access is the default. Client passwords and
+  TOTP seeds go in a separate `beacon-<slug>-logins` Infisical project with no machine identity, so agents never use them. OK?
+- **Infisical region.** US cloud by default. Any EU clients needing EU data residency? (The EU region is a separate org/URL; decide before
+  creating projects.)
+- **Needed from you for the delegated-access design:** an AWS account for our cross-account role principal (no stored client AWS
+  keys), a GitHub App and Slack app registered under the agency, and a separate registrable domain for user content (or accept
+  `beacon-geo-usercontent.vercel.app` for now).
+- **Vercel OIDC → Infisical OIDC auth** removes static Infisical secrets. Verify Vercel OIDC federation is available on the plan we
+  use (team vs Hobby). Fallback: Universal Auth client secrets in Vercel Sensitive env vars.
+- **Network allowlist.** Add `infisical.com` and `supabase.com` (docs/pricing) so agents can verify vendor facts directly. This
+  wave read their docs via GitHub instead.
+- **For the backend agent (no user action):** integrate `supabase/policies_reference.sql`. It is tested on a local Postgres 16 with a
+  Supabase stub; cross-tenant, viewer, staff aal1/aal2/grant and MFA cases all behave. The draft `public.is_platform_admin()`
+  grants every staff session silent all-tenant access without MFA, and `public.client_visible_actor()` is RPC-callable (reveals
+  staff). See security.md §3.4.
