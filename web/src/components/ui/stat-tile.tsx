@@ -48,7 +48,7 @@ export function StatTile({
           <span className="font-display text-2xl font-semibold tracking-tight text-ink tabular">{value}</span>
           {unit ? <span className="text-md font-medium text-ink-3">{unit}</span> : null}
         </div>
-        {trend && trend.length > 1 ? <Sparkline data={trend} className="mb-1 h-8 w-24" /> : null}
+        {trend && trend.length > 1 ? <Sparkline data={trend} invert={!upIsGood} className="mb-1 h-8 w-24" /> : null}
       </div>
       {delta !== undefined ? (
         <div className="flex items-center gap-1.5 text-xs">

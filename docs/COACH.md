@@ -25,5 +25,11 @@ Read this first when resuming in a fresh or compacted session.
 - Backend was told to reconcile its migrations with the security reference. Frontend was given the onboarding UI requirements.
 - Running: backend, frontend.
 
+- USER (2026-11-24 22:10): "no mocks, real infra; I don't see the sub sessions". Decisions:
+  - Real Postgres everywhere: local PG16 dev DB (scripts/dev-db.sh + Supabase auth compat stub), seed data in the DB,
+    server queries via the `postgres` driver with withRls() emulating Supabase JWT claims. Prod = Supabase pooler URL. Docker image pulls are blocked.
+  - New agents run as VISIBLE remote sessions (create_session, tag beacon-geo). First: "Engines pipeline agent" -> branch claude/engines-pipeline.
+  - The backend and frontend in-process agents were redirected (not restarted).
+
 ## Next
 - Wave 2: QA + security review + integrate. Deploy once VERCEL_TOKEN exists.

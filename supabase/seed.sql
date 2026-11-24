@@ -439,11 +439,15 @@ group by 1, 3
 on conflict (org_id, metric, period_start) do update set value = excluded.value;
 
 -- ---------------------------------------------------------------------------
--- Audit log: one client-visible entry and one staff entry (hidden from clients)
+-- Audit: one client-visible member event, one staff action (masked to 'agency' by trigger),
+-- and the staff trail in platform_audit_log (never visible to clients)
 -- ---------------------------------------------------------------------------
-insert into public.audit_log (org_id, actor_id, action, target_type, target_id, metadata) values
-  ('10000000-0000-4000-b000-000000000001', '00000000-0000-4000-a000-000000000011', 'member.invite', 'invitation', 'priya@northwind.example', '{"role":"member"}'),
-  ('10000000-0000-4000-b000-000000000001', '00000000-0000-4000-a000-000000000001', 'org.plan_change', 'organization', '10000000-0000-4000-b000-000000000001', '{"from":"starter","to":"growth"}');
+insert into public.audit_events (org_id, actor_user_id, actor_kind, action, target_type, target_id, metadata) values
+  ('10000000-0000-4000-b000-000000000001', '00000000-0000-4000-a000-000000000011', 'member', 'member.invited', 'invitation', 'priya@northwind.example', '{"role":"member"}'),
+  ('10000000-0000-4000-b000-000000000001', '00000000-0000-4000-a000-000000000001', 'member', 'org.plan_changed', 'organization', '10000000-0000-4000-b000-000000000001', '{"from":"starter","to":"growth"}');
+
+insert into public.platform_audit_log (actor_user_id, action, org_id, target_type, target_id, metadata) values
+  ('00000000-0000-4000-a000-000000000001', 'org.plan_change', '10000000-0000-4000-b000-000000000001', 'organization', '10000000-0000-4000-b000-000000000001', '{"from":"starter","to":"growth","demo":true}');
 
 -- ---------------------------------------------------------------------------
 -- Materialized metrics

@@ -32,11 +32,12 @@ export function optionalEnv(name: string): string | undefined {
   return v && v.trim() !== '' ? v.trim() : undefined;
 }
 
-/** Env vars each server capability needs (documented in docs/ops and the backend report). */
+/** Env vars each server capability needs (see docs/ISSUES.md and the backend report). */
 export const ENV = {
-  supabasePublic: ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY'],
-  supabaseAdmin: ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'],
-  infisical: ['INFISICAL_CLIENT_ID', 'INFISICAL_CLIENT_SECRET'],
+  // New Supabase API key names (legacy anon/service_role keys are deprecated; security.md §4).
+  supabasePublic: ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY'],
+  supabaseAdmin: ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SECRET_KEY'],
   stripe: ['STRIPE_SECRET_KEY'],
   stripeWebhook: ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'],
+  intakeKey: ['INTAKE_JWE_PRIVATE_JWK'],
 } as const;

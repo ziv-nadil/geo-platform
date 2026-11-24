@@ -119,10 +119,12 @@ export function getDataset(orgId: string): OrgDataset | null {
     const launchLift = di > HISTORY_DAYS - 15 ? 0.08 : 0;
     for (const p of prompts) {
       const base = promptStrength.get(p.id)!;
+      // Per-prompt drift: some prompts gain, a few lose ground to competitors over the period.
+      const drift = ((hashString(p.id) % 7) - 2) * 0.05 * t;
       for (const engine of ENGINE_IDS) {
         const ef = ENGINE_FACTOR[engine];
         const lift = engine === "chatgpt" || engine === "perplexity" ? launchLift : launchLift / 3;
-        const pBrand = Math.min(0.97, Math.max(0.02, base * ef * (0.82 + 0.28 * t) + lift + (rng() - 0.5) * 0.12));
+        const pBrand = Math.min(0.97, Math.max(0.02, base * ef * (0.82 + 0.28 * t) + drift + lift + (rng() - 0.5) * 0.12));
         const mentioned = rng() < pBrand;
 
         const named: { id: string; score: number }[] = [];

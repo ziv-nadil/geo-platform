@@ -23,11 +23,11 @@ create table public.onboarding_progress (
   primary key (org_id, step_id)
 );
 create trigger onboarding_progress_updated_at before update on public.onboarding_progress
-  for each row execute function public.tg_set_updated_at();
+  for each row execute function private.tg_set_updated_at();
 create trigger onboarding_progress_actor before insert or update on public.onboarding_progress
-  for each row execute function public.tg_stamp_actor('updated_by');
+  for each row execute function private.tg_stamp_actor('updated_by');
 
-create or replace function public.tg_onboarding_completed_at()
+create or replace function private.tg_onboarding_completed_at()
 returns trigger
 language plpgsql
 set search_path = ''
@@ -42,7 +42,7 @@ begin
 end;
 $$;
 create trigger onboarding_progress_completed_at before insert or update on public.onboarding_progress
-  for each row execute function public.tg_onboarding_completed_at();
+  for each row execute function private.tg_onboarding_completed_at();
 
 -- Pointer to a secret stored in Infisical. NEVER the value.
 create table public.secret_refs (
@@ -54,6 +54,7 @@ create table public.secret_refs (
   environment           text not null default 'prod',
   secret_path           text not null default '/' check (secret_path ~ '^/[A-Za-z0-9_/-]*$'),
   secret_name           text not null check (secret_name ~ '^[A-Z0-9_]{1,128}$'),
+  infisical_secret_version integer,
   last_tested_at        timestamptz,
   test_status           public.integration_test_status,
   test_message          text,
@@ -63,9 +64,9 @@ create table public.secret_refs (
   unique (org_id, step_id, field_id)
 );
 create trigger secret_refs_updated_at before update on public.secret_refs
-  for each row execute function public.tg_set_updated_at();
+  for each row execute function private.tg_set_updated_at();
 create trigger secret_refs_actor before insert on public.secret_refs
-  for each row execute function public.tg_stamp_actor('created_by');
+  for each row execute function private.tg_stamp_actor('created_by');
 
 -- History of "Test connection" runs. checks = [{id,label,ok,detail}], missing = ["scope x", ...]
 create table public.integration_tests (
@@ -81,7 +82,20 @@ create table public.integration_tests (
 );
 create index integration_tests_org_step_idx on public.integration_tests (org_id, step_id, created_at desc);
 create trigger integration_tests_actor before insert on public.integration_tests
-  for each row execute function public.tg_stamp_actor('triggered_by');
+  for each row execute function private.tg_stamp_actor('triggered_by');
+
+-- Every broker read of a client secret, written BEFORE the Infisical call (security.md §1.5).
+create table public.secret_access_log (
+  id             bigint generated always as identity primary key,
+  at             timestamptz not null default now(),
+  org_id         uuid not null references public.organizations (id) on delete cascade,
+  secret_ref_id  uuid references public.secret_refs (id) on delete set null,
+  purpose        text not null check (purpose in ('connection_test', 'job', 'agent_tool', 'rotation')),
+  job_id         text,
+  worker         text not null,             -- e.g. 'beacon-worker@vercel:prod'
+  outcome        text not null default 'requested' check (outcome in ('requested', 'ok', 'denied', 'error'))
+);
+create index secret_access_log_org_idx on public.secret_access_log (org_id, at desc);
 
 -- ---------------------------------------------------------------------------
 -- Brand book
@@ -108,9 +122,9 @@ create table public.brand_profiles (
   updated_at       timestamptz not null default now()
 );
 create trigger brand_profiles_updated_at before update on public.brand_profiles
-  for each row execute function public.tg_set_updated_at();
+  for each row execute function private.tg_set_updated_at();
 create trigger brand_profiles_actor before insert or update on public.brand_profiles
-  for each row execute function public.tg_stamp_actor('updated_by');
+  for each row execute function private.tg_stamp_actor('updated_by');
 
 create table public.brand_personas (
   id           uuid primary key default gen_random_uuid(),
@@ -128,7 +142,7 @@ create table public.brand_personas (
 );
 create index brand_personas_org_idx on public.brand_personas (org_id);
 create trigger brand_personas_updated_at before update on public.brand_personas
-  for each row execute function public.tg_set_updated_at();
+  for each row execute function private.tg_set_updated_at();
 
 create type public.messaging_kind as enum ('pillar', 'claim', 'proof_point', 'boilerplate', 'cta', 'faq');
 
@@ -145,7 +159,7 @@ create table public.brand_messaging (
 );
 create index brand_messaging_org_idx on public.brand_messaging (org_id);
 create trigger brand_messaging_updated_at before update on public.brand_messaging
-  for each row execute function public.tg_set_updated_at();
+  for each row execute function private.tg_set_updated_at();
 
 create type public.voice_term_kind as enum ('use', 'avoid', 'trademark', 'glossary', 'tone');
 
@@ -177,7 +191,7 @@ create table public.brand_assets (
 );
 create index brand_assets_org_idx on public.brand_assets (org_id);
 create trigger brand_assets_actor before insert on public.brand_assets
-  for each row execute function public.tg_stamp_actor('uploaded_by');
+  for each row execute function private.tg_stamp_actor('uploaded_by');
 
 -- ---------------------------------------------------------------------------
 -- Storage bucket (private) + policies on storage.objects
@@ -186,38 +200,47 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 values (
   'brand-assets', 'brand-assets', false, 52428800,
   array['image/png','image/jpeg','image/svg+xml','image/webp','image/gif','application/pdf',
-        'font/woff','font/woff2','font/ttf','font/otf','application/zip','text/plain','text/markdown']
+        'font/woff','font/woff2','font/ttf','font/otf','text/plain','text/markdown']
 )
 on conflict (id) do update set public = false;
 
+-- NOTE (security.md §3.4/§6.3): SVG and other active formats are stored but must never be rendered
+-- inline on the app origin. Serve via signed URL with Content-Disposition: attachment, or rasterize.
 create policy "brand-assets: members read"
   on storage.objects for select to authenticated
   using (
     bucket_id = 'brand-assets'
-    and public.can_read_org(public.try_uuid((storage.foldername(name))[1]))
+    and (select private.can_read(private.try_uuid((storage.foldername(name))[1])))
   );
 
 create policy "brand-assets: editors upload"
   on storage.objects for insert to authenticated
   with check (
     bucket_id = 'brand-assets'
-    and public.can_edit_org(public.try_uuid((storage.foldername(name))[1]))
+    and (select private.can_write(private.try_uuid((storage.foldername(name))[1]), 'member'))
   );
 
 create policy "brand-assets: editors update"
   on storage.objects for update to authenticated
   using (
     bucket_id = 'brand-assets'
-    and public.can_edit_org(public.try_uuid((storage.foldername(name))[1]))
+    and (select private.can_write(private.try_uuid((storage.foldername(name))[1]), 'member'))
   )
   with check (
     bucket_id = 'brand-assets'
-    and public.can_edit_org(public.try_uuid((storage.foldername(name))[1]))
+    and (select private.can_write(private.try_uuid((storage.foldername(name))[1]), 'member'))
   );
 
 create policy "brand-assets: admins delete"
   on storage.objects for delete to authenticated
   using (
     bucket_id = 'brand-assets'
-    and public.can_admin_org(public.try_uuid((storage.foldername(name))[1]))
+    and (select private.can_write(private.try_uuid((storage.foldername(name))[1]), 'admin'))
   );
+
+-- untrusted-html: private bucket for design-system HTML uploads. NO policies for authenticated:
+-- uploads go through a server route issuing a signed upload URL for '<org_id>/<uuid>.html', and
+-- serving goes through the separate usercontent origin (security.md §6.3).
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('untrusted-html', 'untrusted-html', false, 2097152, array['text/html'])
+on conflict (id) do update set public = false, file_size_limit = 2097152, allowed_mime_types = array['text/html'];

@@ -58,49 +58,43 @@ export type Database = {
           },
         ]
       }
-      audit_log: {
+      audit_events: {
         Row: {
           id: number
-          org_id: string | null
-          actor_id: string | null
-          actor_kind: Database["public"]["Enums"]["actor_kind"]
+          org_id: string
+          at: string
+          actor_user_id: string | null
+          actor_kind: string
           action: string
           target_type: string | null
           target_id: string | null
           metadata: Json
-          visibility: Database["public"]["Enums"]["audit_visibility"]
-          ip: string | null
-          created_at: string
         }
         Insert: {
           id?: number
-          org_id?: string | null
-          actor_id?: string | null
-          actor_kind?: Database["public"]["Enums"]["actor_kind"]
+          org_id: string
+          at?: string
+          actor_user_id?: string | null
+          actor_kind: string
           action: string
           target_type?: string | null
           target_id?: string | null
           metadata?: Json
-          visibility?: Database["public"]["Enums"]["audit_visibility"]
-          ip?: string | null
-          created_at?: string
         }
         Update: {
           id?: number
-          org_id?: string | null
-          actor_id?: string | null
-          actor_kind?: Database["public"]["Enums"]["actor_kind"]
+          org_id?: string
+          at?: string
+          actor_user_id?: string | null
+          actor_kind?: string
           action?: string
           target_type?: string | null
           target_id?: string | null
           metadata?: Json
-          visibility?: Database["public"]["Enums"]["audit_visibility"]
-          ip?: string | null
-          created_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "audit_log_org_id_fkey"
+            foreignKeyName: "audit_events_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1211,21 +1205,121 @@ export type Database = {
         Relationships: [
         ]
       }
+      platform_access_grants: {
+        Row: {
+          id: string
+          admin_user_id: string
+          org_id: string
+          mode: string
+          reason: string
+          ticket_ref: string | null
+          created_at: string
+          expires_at: string
+          ended_at: string | null
+        }
+        Insert: {
+          id?: string
+          admin_user_id: string
+          org_id: string
+          mode: string
+          reason: string
+          ticket_ref?: string | null
+          created_at?: string
+          expires_at: string
+          ended_at?: string | null
+        }
+        Update: {
+          id?: string
+          admin_user_id?: string
+          org_id?: string
+          mode?: string
+          reason?: string
+          ticket_ref?: string | null
+          created_at?: string
+          expires_at?: string
+          ended_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_access_grants_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "platform_admins"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "platform_access_grants_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_admins: {
         Row: {
           user_id: string
           note: string | null
+          granted_by: string | null
+          disabled_at: string | null
           created_at: string
         }
         Insert: {
           user_id: string
           note?: string | null
+          granted_by?: string | null
+          disabled_at?: string | null
           created_at?: string
         }
         Update: {
           user_id?: string
           note?: string | null
+          granted_by?: string | null
+          disabled_at?: string | null
           created_at?: string
+        }
+        Relationships: [
+        ]
+      }
+      platform_audit_log: {
+        Row: {
+          id: number
+          at: string
+          actor_user_id: string | null
+          action: string
+          org_id: string | null
+          target_type: string | null
+          target_id: string | null
+          metadata: Json
+          ip: string | null
+          user_agent: string | null
+          request_id: string | null
+        }
+        Insert: {
+          id?: number
+          at?: string
+          actor_user_id?: string | null
+          action: string
+          org_id?: string | null
+          target_type?: string | null
+          target_id?: string | null
+          metadata?: Json
+          ip?: string | null
+          user_agent?: string | null
+          request_id?: string | null
+        }
+        Update: {
+          id?: number
+          at?: string
+          actor_user_id?: string | null
+          action?: string
+          org_id?: string | null
+          target_type?: string | null
+          target_id?: string | null
+          metadata?: Json
+          ip?: string | null
+          user_agent?: string | null
+          request_id?: string | null
         }
         Relationships: [
         ]
@@ -1509,6 +1603,54 @@ export type Database = {
           },
         ]
       }
+      secret_access_log: {
+        Row: {
+          id: number
+          at: string
+          org_id: string
+          secret_ref_id: string | null
+          purpose: string
+          job_id: string | null
+          worker: string
+          outcome: string
+        }
+        Insert: {
+          id?: number
+          at?: string
+          org_id: string
+          secret_ref_id?: string | null
+          purpose: string
+          job_id?: string | null
+          worker: string
+          outcome?: string
+        }
+        Update: {
+          id?: number
+          at?: string
+          org_id?: string
+          secret_ref_id?: string | null
+          purpose?: string
+          job_id?: string | null
+          worker?: string
+          outcome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secret_access_log_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secret_access_log_secret_ref_id_fkey"
+            columns: ["secret_ref_id"]
+            isOneToOne: false
+            referencedRelation: "secret_refs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       secret_refs: {
         Row: {
           id: string
@@ -1519,6 +1661,7 @@ export type Database = {
           environment: string
           secret_path: string
           secret_name: string
+          infisical_secret_version: number | null
           last_tested_at: string | null
           test_status: Database["public"]["Enums"]["integration_test_status"] | null
           test_message: string | null
@@ -1535,6 +1678,7 @@ export type Database = {
           environment?: string
           secret_path?: string
           secret_name: string
+          infisical_secret_version?: number | null
           last_tested_at?: string | null
           test_status?: Database["public"]["Enums"]["integration_test_status"] | null
           test_message?: string | null
@@ -1551,6 +1695,7 @@ export type Database = {
           environment?: string
           secret_path?: string
           secret_name?: string
+          infisical_secret_version?: number | null
           last_tested_at?: string | null
           test_status?: Database["public"]["Enums"]["integration_test_status"] | null
           test_message?: string | null
@@ -2131,37 +2276,6 @@ export type Database = {
         }
         Returns: string
       }
-      can_admin_org: {
-        Args: {
-          org: string
-        }
-        Returns: boolean
-      }
-      can_edit_org: {
-        Args: {
-          org: string
-        }
-        Returns: boolean
-      }
-      can_read_org: {
-        Args: {
-          org: string
-        }
-        Returns: boolean
-      }
-      client_visible_actor: {
-        Args: {
-          actor: string
-        }
-        Returns: string
-      }
-      has_role: {
-        Args: {
-          org: string
-          roles: Database["public"]["Enums"]["org_role"][]
-        }
-        Returns: boolean
-      }
       increment_usage: {
         Args: {
           p_org_id: string
@@ -2171,46 +2285,12 @@ export type Database = {
         }
         Returns: number
       }
-      is_member: {
-        Args: {
-          org: string
-        }
-        Returns: boolean
-      }
-      is_platform_admin: {
-        Args: never
-        Returns: boolean
-      }
       refresh_metrics: {
         Args: never
         Returns: undefined
       }
-      shares_org_with: {
-        Args: {
-          other: string
-        }
-        Returns: boolean
-      }
-      try_uuid: {
-        Args: {
-          v: string
-        }
-        Returns: string
-      }
-      write_audit: {
-        Args: {
-          p_org_id: string
-          p_action: string
-          p_target_type?: string
-          p_target_id?: string
-          p_metadata?: Json
-        }
-        Returns: undefined
-      }
     }
     Enums: {
-      actor_kind: "user" | "platform_admin" | "system"
-      audit_visibility: "org" | "platform"
       brand_asset_kind: "logo" | "brand_book" | "font" | "image" | "document" | "other"
       content_status: "idea" | "draft" | "in_review" | "approved" | "published" | "archived"
       creator_platform: "youtube" | "tiktok"
@@ -2249,8 +2329,6 @@ export type Enums<T extends keyof PublicSchema["Enums"]> = PublicSchema["Enums"]
 export const Constants = {
   public: {
     Enums: {
-      actor_kind: ["user", "platform_admin", "system"],
-      audit_visibility: ["org", "platform"],
       brand_asset_kind: ["logo", "brand_book", "font", "image", "document", "other"],
       content_status: ["idea", "draft", "in_review", "approved", "published", "archived"],
       creator_platform: ["youtube", "tiktok"],

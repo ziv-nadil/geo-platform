@@ -144,8 +144,14 @@
         "allowed_mime_types": [
           "image/png", "image/jpeg", "image/svg+xml", "image/webp", "image/gif",
           "application/pdf", "font/woff", "font/woff2", "font/ttf", "font/otf",
-          "application/zip", "text/plain", "text/markdown"
+          "text/plain", "text/markdown"
         ]
+      },
+      // Design-system HTML uploads; never served from the app origin (docs/architecture/security.md §6.3).
+      "untrusted-html": {
+        "public": false,
+        "file_size_limit": "2MiB",
+        "allowed_mime_types": ["text/html"]
       }
     },
 

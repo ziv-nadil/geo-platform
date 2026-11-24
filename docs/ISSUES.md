@@ -85,3 +85,4 @@ Decisions were made so work didn't stop. Each item says what I chose and what yo
   Supabase stub; cross-tenant, viewer, staff aal1/aal2/grant and MFA cases all behave. The draft `public.is_platform_admin()`
   grants every staff session silent all-tenant access without MFA, and `public.client_visible_actor()` is RPC-callable (reveals
   staff). See security.md §3.4.
+- **No credentials or vendor network yet:** no tokens set, and api.vercel.com, api.supabase.com, app.infisical.com and api.stripe.com are all unreachable from the session. Everything is built and tested against a local Postgres. `scripts/provision.sh` deploys once the tokens and network allowlist exist.

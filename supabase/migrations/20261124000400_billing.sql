@@ -48,7 +48,7 @@ create table public.subscriptions (
 );
 create index subscriptions_org_idx on public.subscriptions (org_id);
 create trigger subscriptions_updated_at before update on public.subscriptions
-  for each row execute function public.tg_set_updated_at();
+  for each row execute function private.tg_set_updated_at();
 
 -- Monthly (or daily) counters, e.g. metric = 'prompt_runs', 'content_generations', 'seats'.
 create table public.usage_counters (

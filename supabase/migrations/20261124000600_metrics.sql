@@ -10,7 +10,7 @@
 -- Two layers:
 --   * analytics.org_engine_daily: MATERIALIZED view (fast; refreshed by public.refresh_metrics()).
 --     It lives in a schema that is NOT exposed through the API, and is read through
---     public.metrics_daily, which filters rows with can_read_org().
+--     public.metrics_daily, which filters rows with private.can_read().
 --   * Plain security_invoker views (RLS of the base tables applies): competitor share of voice,
 --     citation domains, prompt-level visibility. Always fresh, fine at ~20 orgs.
 
@@ -76,12 +76,14 @@ with no data;
 create unique index org_engine_daily_pk on analytics.org_engine_daily (org_id, engine_id, day);
 
 -- Tenant-filtered window onto the materialized view (definer view: owner reads analytics,
--- the WHERE clause enforces tenancy for the caller).
+-- the WHERE clause enforces tenancy + MFA rules for the caller, same as table RLS).
 create view public.metrics_daily
 with (security_barrier = true)
 as
 select * from analytics.org_engine_daily d
-where public.can_read_org(d.org_id);
+where private.can_read(d.org_id)
+  and private.aal_ok()
+  and private.org_mfa_ok(d.org_id);
 
 revoke all on public.metrics_daily from anon;
 grant select on public.metrics_daily to authenticated;

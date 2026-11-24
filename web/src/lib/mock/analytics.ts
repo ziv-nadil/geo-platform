@@ -127,8 +127,10 @@ export async function getKpis(orgId: string, f: Filters): Promise<KpiSet> {
 /** Daily visibility per engine (and overall) — the main trend chart. */
 export async function getVisibilityTrend(orgId: string, f: Filters): Promise<TrendPoint[]> {
   const ds = need(orgId);
+  // Trailing 3-day window per point smooths day-to-day sampling noise (40 prompts per engine per day).
   return windowDates(ds, f.range).map((date) => {
-    const day = ds.byDate.get(date) ?? [];
+    const idx = ds.dates.indexOf(date);
+    const day = ds.dates.slice(Math.max(0, idx - 2), idx + 1).flatMap((d) => ds.byDate.get(d) ?? []);
     const point: TrendPoint = { date };
     for (const e of ENGINE_IDS) {
       if (f.engine !== "all" && e !== f.engine) continue;

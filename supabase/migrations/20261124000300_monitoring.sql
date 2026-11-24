@@ -26,7 +26,7 @@ create table public.brands (
 );
 create unique index brands_one_primary on public.brands (org_id) where is_primary;
 create trigger brands_updated_at before update on public.brands
-  for each row execute function public.tg_set_updated_at();
+  for each row execute function private.tg_set_updated_at();
 
 create table public.competitors (
   id          uuid primary key default gen_random_uuid(),
@@ -44,7 +44,7 @@ create table public.competitors (
 );
 create index competitors_org_idx on public.competitors (org_id);
 create trigger competitors_updated_at before update on public.competitors
-  for each row execute function public.tg_set_updated_at();
+  for each row execute function private.tg_set_updated_at();
 
 -- ---------------------------------------------------------------------------
 -- Prompts
@@ -79,9 +79,9 @@ create table public.prompts (
 create index prompts_org_active_idx on public.prompts (org_id) where active;
 create index prompts_topic_idx on public.prompts (topic_id);
 create trigger prompts_updated_at before update on public.prompts
-  for each row execute function public.tg_set_updated_at();
+  for each row execute function private.tg_set_updated_at();
 create trigger prompts_actor before insert on public.prompts
-  for each row execute function public.tg_stamp_actor('created_by');
+  for each row execute function private.tg_stamp_actor('created_by');
 
 -- ---------------------------------------------------------------------------
 -- Engines (global reference data)
@@ -300,9 +300,9 @@ create table public.content_items (
 );
 create index content_items_org_idx on public.content_items (org_id, status);
 create trigger content_items_updated_at before update on public.content_items
-  for each row execute function public.tg_set_updated_at();
+  for each row execute function private.tg_set_updated_at();
 create trigger content_items_actor before insert on public.content_items
-  for each row execute function public.tg_stamp_actor('created_by');
+  for each row execute function private.tg_stamp_actor('created_by');
 
 create type public.creator_platform as enum ('youtube', 'tiktok');
 
@@ -345,7 +345,7 @@ create table public.outreach_contacts (
 );
 create index outreach_contacts_org_idx on public.outreach_contacts (org_id, status);
 create trigger outreach_contacts_updated_at before update on public.outreach_contacts
-  for each row execute function public.tg_set_updated_at();
+  for each row execute function private.tg_set_updated_at();
 
 create table public.reports (
   id            uuid primary key default gen_random_uuid(),
@@ -362,7 +362,7 @@ create table public.reports (
   created_at    timestamptz not null default now()
 );
 create trigger reports_actor before insert on public.reports
-  for each row execute function public.tg_stamp_actor('created_by');
+  for each row execute function private.tg_stamp_actor('created_by');
 
 -- ---------------------------------------------------------------------------
 -- API keys (hashed) and audit log
@@ -382,69 +382,7 @@ create table public.api_keys (
 );
 create index api_keys_org_idx on public.api_keys (org_id);
 create trigger api_keys_actor before insert on public.api_keys
-  for each row execute function public.tg_stamp_actor('created_by');
+  for each row execute function private.tg_stamp_actor('created_by');
 
-create type public.audit_visibility as enum ('org', 'platform');
-create type public.actor_kind as enum ('user', 'platform_admin', 'system');
-
-create table public.audit_log (
-  id           bigint generated always as identity primary key,
-  org_id       uuid references public.organizations (id) on delete cascade,
-  actor_id     uuid references auth.users (id) on delete set null,
-  actor_kind   public.actor_kind not null default 'user',
-  action       text not null,              -- e.g. 'secret.write', 'member.invite', 'prompt.create'
-  target_type  text,
-  target_id    text,
-  metadata     jsonb not null default '{}'::jsonb,   -- never secret values
-  visibility   public.audit_visibility not null default 'org',
-  ip           inet,
-  created_at   timestamptz not null default now()
-);
-create index audit_log_org_idx on public.audit_log (org_id, created_at desc);
-
--- Force platform-admin activity to be invisible to clients, whoever inserts it.
-create or replace function public.tg_audit_visibility()
-returns trigger
-language plpgsql
-security definer
-set search_path = ''
-as $$
-begin
-  if new.actor_id is not null
-     and exists (select 1 from public.platform_admins pa where pa.user_id = new.actor_id) then
-    new.actor_kind := 'platform_admin';
-    new.visibility := 'platform';
-  end if;
-  if new.actor_kind = 'platform_admin' then
-    new.visibility := 'platform';
-  end if;
-  return new;
-end;
-$$;
-create trigger audit_log_visibility before insert or update on public.audit_log
-  for each row execute function public.tg_audit_visibility();
-
--- Append an audit row as the current user (clients cannot insert directly).
-create or replace function public.write_audit(
-  p_org_id uuid,
-  p_action text,
-  p_target_type text default null,
-  p_target_id text default null,
-  p_metadata jsonb default '{}'::jsonb
-)
-returns void
-language plpgsql
-security definer
-set search_path = ''
-as $$
-begin
-  if (select auth.uid()) is null then
-    raise exception 'not authenticated' using errcode = '42501';
-  end if;
-  if p_org_id is not null and not public.can_read_org(p_org_id) then
-    raise exception 'not a member of this organization' using errcode = '42501';
-  end if;
-  insert into public.audit_log (org_id, actor_id, action, target_type, target_id, metadata)
-  values (p_org_id, (select auth.uid()), p_action, p_target_type, p_target_id, coalesce(p_metadata, '{}'::jsonb));
-end;
-$$;
+-- Audit lives in public.audit_events (client-visible, staff masked) and public.platform_audit_log
+-- (staff only), both created in 20261124000100_tenancy.sql.

@@ -18,13 +18,14 @@ export async function createSupabaseServerClient(): Promise<TypedSupabaseClient 
   const cookieStore = await cookies();
   return createServerClient<Database>(
     env.values.NEXT_PUBLIC_SUPABASE_URL,
-    env.values.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    env.values.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     {
       cookies: {
         getAll() {
           return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
+          // Cache headers passed by Supabase are applied by the proxy (updateSession).
           try {
             for (const { name, value, options } of cookiesToSet) cookieStore.set(name, value, options);
           } catch {
