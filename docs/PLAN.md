@@ -17,7 +17,7 @@ Scale target: about 20 client accounts with about 5 users each. Free or low-cost
 | Multi-tenancy | `organizations` (= client accounts) + `memberships` with roles; RLS on every table; platform staff live in `platform_admins`, **never** in a client's member list | Super admin sees all accounts and stays invisible to clients |
 | Secrets | **Infisical Cloud**: one project per client, envs `prod`, a machine identity per worker scoped to one project, audit logs | Per-client isolation, E2E encryption, MCP/CLI for agents, free tier |
 | Billing | Stripe Checkout + Customer Portal + webhooks → `subscriptions` table | Standard, low effort |
-| AI engine data | Direct APIs (OpenAI Responses + web_search, Perplexity Sonar, Gemini + Google Search grounding, Anthropic + web_search) + **DataForSEO** for Google AI Overviews / AI Mode | Compliant and stable, about $50–200/mo at our scale |
+| AI engine data | Direct APIs (OpenAI Responses + web_search, Perplexity **Agent API** (Sonar chat-completions retired 2026-09-27), Gemini + Google Search grounding, Anthropic + web_search) + **DataForSEO** for Google AI Overviews / AI Mode. Cadence: AIO/AI Mode daily; LLM engines weekly (top 25 prompts × 3 runs, rest × 1) | Compliant and stable. **About $95 per client per month (~$1.9k for 20 clients)**, see docs/research/ai-engine-methodology.md |
 | Jobs / scheduling | Vercel Cron → API route that enqueues; worker on Supabase Edge Functions / pg_cron (later: Inngest free tier if needed) | No extra infra |
 | AthenaHQ teardown | AthenaHQ MCP connector + public site/docs now; pixel-level UI pass once your computer is connected | Cloud session can't reach your browser |
 

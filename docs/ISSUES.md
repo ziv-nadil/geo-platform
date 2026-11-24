@@ -52,3 +52,8 @@ Decisions were made so work didn't stop. Each item says what I chose and what yo
 - Domain-user access mode stores a password and TOTP secret in the vault. Accept the risk, or restrict to agency-email mode only? (Security agent should review.)
 - Step 4 (GitHub) has no skip logic in the config. Should the UI skip it automatically for non-Git CMS clients?
 - Wix, Framer, HubSpot, Shopify grant steps need a real-account walkthrough before launch.
+- **Engine budget (research):** realistic engine cost is about $95 per client per month (100 prompts), ~$1.9k at 20 clients, not $50–200 total.
+  Default: 100 prompts per client with the cadence above. Lever: 50 prompts → about $47 per client.
+- **DataForSEO "LLM Scraper"** scrapes the ChatGPT/Gemini consumer UIs, so I EXCLUDED it per your API-only choice. Tell me if you want it as a "UI parity" add-on.
+- **Engine models:** the research names gpt-5.4-mini and Claude Haiku 4.5. Backend will use the cheapest current search-capable model per vendor
+  (Claude Haiku 5.5) and verify the [V?] items with live calls once API keys + network access exist.
