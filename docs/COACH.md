@@ -38,5 +38,7 @@ Read this first when resuming in a fresh or compacted session.
 
 - USER RULE: never use Explorium company accounts, connectors or branding (Claude excepted). All services go on the user's PERSONAL accounts.
 
+- Session naming rule: short descriptive titles, no project prefix (e.g. "Engines", "Questions", "Access", "QA").
+
 ## Next
 - Wave 2: QA + security review + integrate. Deploy once VERCEL_TOKEN exists.
