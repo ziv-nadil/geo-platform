@@ -15,8 +15,8 @@ const delta = (value: number | null, previous: number | null): KpiDelta => ({
 export async function getOverview(orgId: string, filters: Filters = {}): Promise<QueryResult<Overview>> {
   const w = window(filters);
   return orgQuery(orgId, async (sql) => {
-    const eng = w.engines ? sql`and engine_id = any(${sql.array(w.engines)})` : sql``;
-    const engPr = w.engines ? sql`and pr.engine_id = any(${sql.array(w.engines)})` : sql``;
+    const eng = w.engines ? sql`and engine_id = any(${w.engines}::text[])` : sql``;
+    const engPr = w.engines ? sql`and pr.engine_id = any(${w.engines}::text[])` : sql``;
     const topic = w.topicId ? sql`and p.topic_id = ${w.topicId}` : sql``;
 
     // Ratio-of-sums aggregation over a window (not an average of daily percentages).

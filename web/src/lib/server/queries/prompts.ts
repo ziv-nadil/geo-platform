@@ -16,7 +16,7 @@ export async function listTopics(orgId: string): Promise<QueryResult<Topic[]>> {
 
 async function promptRows(sql: TxSql, orgId: string, filters: Filters, promptId?: string): Promise<PromptRow[]> {
   const w = window(filters);
-  const eng = w.engines ? sql`and pr.engine_id = any(${sql.array(w.engines)})` : sql``;
+  const eng = w.engines ? sql`and pr.engine_id = any(${w.engines}::text[])` : sql``;
   const topic = w.topicId ? sql`and p.topic_id = ${w.topicId}` : sql``;
   const one = promptId ? sql`and p.id = ${promptId}` : sql``;
   const rows = await sql`
@@ -61,7 +61,7 @@ async function responseRows(sql: TxSql, orgId: string, opts: Filters & { promptI
   const w = window(opts);
   const limit = Math.min(100, Math.max(1, opts.limit ?? 20));
   const offset = Math.max(0, opts.offset ?? 0);
-  const eng = w.engines ? sql`and pr.engine_id = any(${sql.array(w.engines)})` : sql``;
+  const eng = w.engines ? sql`and pr.engine_id = any(${w.engines}::text[])` : sql``;
   const topic = w.topicId ? sql`and p.topic_id = ${w.topicId}` : sql``;
   const prompt = opts.promptId ? sql`and pr.prompt_id = ${opts.promptId}` : sql``;
   const brand = opts.brandMentioned === undefined ? sql`` : sql`and r.brand_mentioned = ${opts.brandMentioned}`;

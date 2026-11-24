@@ -5,7 +5,7 @@ import type { Citations, Filters, QueryResult, SourceTag, SourceType } from './t
 export async function getCitations(orgId: string, filters: Filters = {}): Promise<QueryResult<Citations>> {
   const w = window(filters);
   return orgQuery(orgId, async (sql) => {
-    const eng = w.engines ? sql`and pr.engine_id = any(${sql.array(w.engines)})` : sql``;
+    const eng = w.engines ? sql`and pr.engine_id = any(${w.engines}::text[])` : sql``;
     const topic = w.topicId ? sql`and p.topic_id = ${w.topicId}` : sql``;
     const base = sql`
       from public.citations c

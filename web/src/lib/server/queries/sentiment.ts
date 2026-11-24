@@ -6,7 +6,7 @@ import type { Filters, QueryResult, Sentiment, SentimentReport } from './types';
 export async function getSentiment(orgId: string, filters: Filters = {}): Promise<QueryResult<SentimentReport>> {
   const w = window(filters);
   return orgQuery(orgId, async (sql) => {
-    const eng = w.engines ? sql`and pr.engine_id = any(${sql.array(w.engines)})` : sql``;
+    const eng = w.engines ? sql`and pr.engine_id = any(${w.engines}::text[])` : sql``;
     const topic = w.topicId ? sql`and p.topic_id = ${w.topicId}` : sql``;
     const base = sql`
       from public.mentions m

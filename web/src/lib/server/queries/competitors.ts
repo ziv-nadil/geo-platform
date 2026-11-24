@@ -13,7 +13,7 @@ export async function listCompetitors(orgId: string): Promise<QueryResult<Compet
 export async function getCompetitorSov(orgId: string, filters: Filters = {}): Promise<QueryResult<CompetitorSov>> {
   const w = window(filters);
   return orgQuery(orgId, async (sql) => {
-    const eng = w.engines ? sql`and engine_id = any(${sql.array(w.engines)})` : sql``;
+    const eng = w.engines ? sql`and engine_id = any(${w.engines}::text[])` : sql``;
     const entities = await sql`
       select entity_id, entity_type::text as entity_type, entity_name, sum(mentions)::int as mentions,
              round(100.0 * sum(mentions) / nullif(sum(sum(mentions)) over (), 0), 2)::float8 as sov,
