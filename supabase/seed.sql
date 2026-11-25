@@ -477,6 +477,13 @@ insert into public.audit_events (org_id, actor_user_id, actor_kind, action, targ
 insert into public.platform_audit_log (actor_user_id, action, org_id, target_type, target_id, metadata) values
   ('00000000-0000-4000-a000-000000000001', 'org.plan_change', '10000000-0000-4000-b000-000000000001', 'organization', '10000000-0000-4000-b000-000000000001', '{"from":"starter","to":"growth","demo":true}');
 
+-- Demo methodology score (0..1): 0 when the brand is absent, else higher the earlier it appears.
+update public.responses r set visibility_score = coalesce(
+  (select round((1.0 / (1 + greatest(m.position, 1) * 0.35))::numeric + 0.2, 4)
+   from public.mentions m where m.response_id = r.id and m.entity_type = 'brand' limit 1), 0),
+  analysis_version = 'seed'
+where r.org_id in (select id from public.organizations where settings ->> 'demo' = 'true');
+
 -- ---------------------------------------------------------------------------
 -- Materialized metrics
 -- ---------------------------------------------------------------------------

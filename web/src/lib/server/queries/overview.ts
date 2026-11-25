@@ -22,7 +22,8 @@ export async function getOverview(orgId: string, filters: Filters = {}): Promise
     // Ratio-of-sums aggregation over a window (not an average of daily percentages).
     const agg = (from: string, to: string) => sql`
       select coalesce(sum(runs), 0)::int as runs,
-             round(100.0 * sum(runs_with_brand) / nullif(sum(runs), 0), 2)::float8 as visibility,
+             round(sum(visibility_score * scored_runs) / nullif(sum(scored_runs), 0), 2)::float8 as visibility,
+             round(100.0 * sum(runs_with_brand) / nullif(sum(runs), 0), 2)::float8 as pct_mentioned,
              round(100.0 * sum(brand_mentions) / nullif(sum(brand_mentions) + sum(competitor_mentions), 0), 2)::float8 as sov,
              round(100.0 * sum(citations_owned) / nullif(sum(citations_total), 0), 2)::float8 as citation_share,
              round(sum(avg_brand_position * brand_mentions) / nullif(sum(brand_mentions) filter (where avg_brand_position is not null), 0), 2)::float8 as avg_position,
@@ -35,7 +36,7 @@ export async function getOverview(orgId: string, filters: Filters = {}): Promise
     const [prev] = await agg(w.prevFrom, prevTo);
 
     const series = await sql`
-      select day, engine_id, runs::int, visibility_score::float8 as visibility, share_of_voice::float8 as sov,
+      select day, engine_id, runs::int, visibility_score::float8 as visibility, pct_runs_mentioned::float8 as pct_mentioned, share_of_voice::float8 as sov,
              citation_share::float8, avg_brand_position::float8 as avg_position, sentiment_avg::float8 as sentiment
       from public.metrics_daily
       where org_id = ${orgId} and day between ${w.from} and ${w.to} ${eng}
@@ -43,7 +44,8 @@ export async function getOverview(orgId: string, filters: Filters = {}): Promise
 
     const byEngine = await sql`
       select engine_id, sum(runs)::int as runs,
-             round(100.0 * sum(runs_with_brand) / nullif(sum(runs), 0), 2)::float8 as visibility,
+             round(sum(visibility_score * scored_runs) / nullif(sum(scored_runs), 0), 2)::float8 as visibility,
+             round(100.0 * sum(runs_with_brand) / nullif(sum(runs), 0), 2)::float8 as pct_mentioned,
              round(100.0 * sum(brand_mentions) / nullif(sum(brand_mentions) + sum(competitor_mentions), 0), 2)::float8 as sov,
              round(100.0 * sum(citations_owned) / nullif(sum(citations_total), 0), 2)::float8 as citation_share
       from public.metrics_daily
@@ -77,6 +79,7 @@ export async function getOverview(orgId: string, filters: Filters = {}): Promise
       window: { from: w.from, to: w.to, days: w.days },
       kpis: {
         visibility: delta(num(cur.visibility), num(prev.visibility)),
+        pctMentioned: delta(num(cur.pct_mentioned), num(prev.pct_mentioned)),
         shareOfVoice: delta(num(cur.sov), num(prev.sov)),
         citationShare: delta(num(cur.citation_share), num(prev.citation_share)),
         avgPosition: delta(num(cur.avg_position), num(prev.avg_position)),
@@ -84,10 +87,10 @@ export async function getOverview(orgId: string, filters: Filters = {}): Promise
         runs: Number(cur.runs),
       },
       series: series.map((r) => ({
-        day: day(r.day), engineId: r.engine_id, visibility: num(r.visibility), shareOfVoice: num(r.sov),
+        day: day(r.day), engineId: r.engine_id, visibility: num(r.visibility), pctMentioned: num(r.pct_mentioned), shareOfVoice: num(r.sov),
         citationShare: num(r.citation_share), avgPosition: num(r.avg_position), sentiment: num(r.sentiment), runs: r.runs,
       })),
-      byEngine: byEngine.map((r) => ({ engineId: r.engine_id, visibility: num(r.visibility), shareOfVoice: num(r.sov), citationShare: num(r.citation_share), runs: r.runs })),
+      byEngine: byEngine.map((r) => ({ engineId: r.engine_id, visibility: num(r.visibility), pctMentioned: num(r.pct_mentioned), shareOfVoice: num(r.sov), citationShare: num(r.citation_share), runs: r.runs })),
       topCompetitors: comps.map((r) => ({ id: r.id, name: r.name, color: r.color, mentions: r.mentions, shareOfVoice: Number(r.sov) })),
       topSources: sources.map((r) => ({ domain: r.domain, sourceType: r.source_type as SourceType, citations: r.citations })),
     };

@@ -221,6 +221,7 @@ export async function getOverview(orgId: string, f: Filters): Promise<Load<Overv
       return {
         kpis: {
           visibility: kd(k.visibility),
+          pctMentioned: kd(k.pctMentioned),
           shareOfVoice: kd(k.shareOfVoice),
           citationShare: kd(k.citationShare),
           avgPosition: kd(k.avgPosition),
@@ -234,7 +235,7 @@ export async function getOverview(orgId: string, f: Filters): Promise<Load<Overv
         },
         trend,
         engineIds,
-        engines: o.byEngine.map((e) => ({ engine: e.engineId, visibility: r1(e.visibility), sov: r1(e.shareOfVoice), citationShare: r1(e.citationShare), runs: e.runs })),
+        engines: o.byEngine.map((e) => ({ engine: e.engineId, visibility: r1(e.visibility), pctMentioned: r1(e.pctMentioned), sov: r1(e.shareOfVoice), citationShare: r1(e.citationShare), runs: e.runs })),
         topSources: o.topSources.map((s) => ({ domain: s.domain, type: st(s.sourceType), citations: s.citations })),
       };
     }),
@@ -535,9 +536,8 @@ export const DEFAULT_STYLE: BrandStyle = { voice: "", audience: "", perspective:
 
 export async function getBrandKit(orgId: string): Promise<Load<BrandKit>> {
   return as(async () => {
-    // TODO(backend): brand style fields (voice, audience, tone, rules…) have no table; stored in organizations.settings.brand_kit.
     const style = await withViewerRls(async (sql) => {
-      const [r] = await sql`select settings -> 'brand_kit' as kit from public.organizations where id = ${orgId}`;
+      const [r] = await sql`select style as kit from public.brand_kits where org_id = ${orgId}`;
       return (r?.kit ?? null) as Partial<BrandStyle> | null;
     });
     return unwrap(Q.getBrandKit(orgId), (k) => {

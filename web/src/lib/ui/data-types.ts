@@ -57,6 +57,8 @@ export interface Kpi {
 
 export interface KpiSet {
   visibility: Kpi;
+  /** Secondary: % of runs whose answer mentions the brand. */
+  pctMentioned: Kpi;
   shareOfVoice: Kpi;
   citationShare: Kpi;
   avgPosition: Kpi;
@@ -72,6 +74,7 @@ export interface KpiSet {
 export interface EngineBreakdown {
   engine: EngineId;
   visibility: number | null;
+  pctMentioned?: number | null;
   sov: number | null;
   citationShare: number | null;
   runs: number;

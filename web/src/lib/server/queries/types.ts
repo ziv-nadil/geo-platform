@@ -29,13 +29,13 @@ export interface OrgSummary { id: string; name: string; slug: string; website: s
 export interface Engine { id: EngineId; name: string; provider: string; method: string; active: boolean; enabled: boolean }
 
 // ---- overview ---------------------------------------------------------------
-export interface MetricPoint { day: string; engineId: EngineId; visibility: number | null; shareOfVoice: number | null; citationShare: number | null; avgPosition: number | null; sentiment: number | null; runs: number }
+export interface MetricPoint { day: string; engineId: EngineId; visibility: number | null; pctMentioned: number | null; shareOfVoice: number | null; citationShare: number | null; avgPosition: number | null; sentiment: number | null; runs: number }
 export interface KpiDelta { value: number | null; previous: number | null; delta: number | null }
 export interface Overview {
   window: { from: string; to: string; days: number };
-  kpis: { visibility: KpiDelta; shareOfVoice: KpiDelta; citationShare: KpiDelta; avgPosition: KpiDelta; sentiment: KpiDelta; runs: number };
+  kpis: { visibility: KpiDelta; pctMentioned: KpiDelta; shareOfVoice: KpiDelta; citationShare: KpiDelta; avgPosition: KpiDelta; sentiment: KpiDelta; runs: number };
   series: MetricPoint[];
-  byEngine: { engineId: EngineId; visibility: number | null; shareOfVoice: number | null; citationShare: number | null; runs: number }[];
+  byEngine: { engineId: EngineId; visibility: number | null; pctMentioned: number | null; shareOfVoice: number | null; citationShare: number | null; runs: number }[];
   topCompetitors: { id: string; name: string; color: string | null; mentions: number; shareOfVoice: number }[];
   topSources: { domain: string; sourceType: SourceType; citations: number }[];
 }

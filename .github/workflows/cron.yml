@@ -1,0 +1,48 @@
+# Vercel Hobby cannot run 5-minute crons, so GitHub Actions calls the cron routes instead.
+# Repo secrets: APP_URL (e.g. https://app.example.com, no trailing slash) and CRON_SECRET (same value as the app's env).
+# Remove this workflow (and restore vercel.json crons) when the project is on Vercel Pro.
+name: cron
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # worker
+    - cron: "7 * * * *"     # crawlers
+    - cron: "0 2 * * *"     # enqueue
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Job to run"
+        type: choice
+        options: [worker, crawlers, enqueue]
+        default: worker
+
+concurrency:
+  group: cron-${{ github.event.schedule || inputs.job }}
+  cancel-in-progress: false
+
+jobs:
+  call:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Call cron route
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SCHEDULE: ${{ github.event.schedule }}
+          JOB_INPUT: ${{ inputs.job }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APP_URL:-}" ] || [ -z "${CRON_SECRET:-}" ]; then
+            echo "APP_URL and CRON_SECRET repo secrets are required"; exit 1
+          fi
+          case "${SCHEDULE:-}" in
+            "*/5 * * * *") job=worker ;;
+            "7 * * * *")   job=crawlers ;;
+            "0 2 * * *")   job=enqueue ;;
+            *)             job="${JOB_INPUT:-worker}" ;;
+          esac
+          code=$(curl -sS -o body.json -w '%{http_code}' --max-time 330 -X POST \
+            -H "Authorization: Bearer ${CRON_SECRET}" "${APP_URL%/}/api/cron/${job}")
+          echo "${job}: HTTP ${code}"; head -c 500 body.json; echo
+          [ "$code" -ge 200 ] && [ "$code" -lt 300 ]

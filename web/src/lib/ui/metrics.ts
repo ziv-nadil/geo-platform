@@ -12,9 +12,9 @@ export interface MetricDef {
 export const METRICS = {
   visibility: {
     label: "Visibility score",
-    definition: "How often AI engines mention your brand when answering the prompts you track.",
-    formula: "answers that mention the brand ÷ all answers collected × 100",
-    note: "Counted per prompt × engine × run in the selected date range.",
+    definition: "How prominently AI engines surface your brand when answering the prompts you track.",
+    formula: "mean of each answer's visibility score (0–1; mention, position and citation of your brand) × 100",
+    note: "Only analyzed answers are scored. \"Mentioned in\" shows the simpler share of answers that name the brand.",
   },
   shareOfVoice: {
     label: "Share of voice",
