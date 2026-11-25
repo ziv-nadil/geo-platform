@@ -60,8 +60,8 @@ async function Overview(props: RouteProps) {
         <StatTile label="Net sentiment" metric="sentiment" value={kpi.sentiment.value === null ? "—" : `${kpi.sentiment.value > 0 ? "+" : ""}${Math.round(kpi.sentiment.value)}`} delta={d(kpi.sentiment)} deltaUnit="" trend={kpi.sparkSentiment} />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <Card>
           <CardHeader title="Visibility by engine" help={<MetricHelp id="visibility" />} description="Mean visibility score per engine · 3-day rolling average" />
           <CardBody>
             <TrendChart data={trend} series={series} />
@@ -77,7 +77,7 @@ async function Overview(props: RouteProps) {
                   <Th className="text-right">
                     <span className="inline-flex items-center gap-1">Visibility <MetricHelp id="visibility" /></span>
                   </Th>
-                  <Th className="text-right">Mentioned in</Th>
+                  <Th className="text-right" title="Share of runs where the engine names your brand">Mentioned</Th>
                   <Th className="text-right">
                     <span className="inline-flex items-center gap-1">SoV <MetricHelp id="shareOfVoice" /></span>
                   </Th>

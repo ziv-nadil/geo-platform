@@ -22,7 +22,7 @@ async function Prompts(props: RouteProps) {
   return (
     <>
       <PageHeader title="Prompts" description={`The questions we ask AI engines every day on behalf of ${org.name}. ${rangeLabel(filters)}.`} />
-      {!r.ok ? <LoadFail result={r} /> : r.data.rows.length === 0 ? <NoData org={org} what="tracked prompts" /> : <PromptsView orgId={org.id} orgSlug={org.slug} qs={filterQs(filters)} rows={r.data.rows} engineIds={r.data.engineIds} topics={r.data.topics} />}
+      {!r.ok ? <LoadFail result={r} /> : r.data.rows.length === 0 ? <NoData org={org} title="No tracked prompts yet" description="Prompts are the questions your buyers ask AI engines. Onboarding can suggest a starter set, and you can add your own." /> : <PromptsView orgId={org.id} orgSlug={org.slug} qs={filterQs(filters)} rows={r.data.rows} engineIds={r.data.engineIds} topics={r.data.topics} />}
     </>
   );
 }

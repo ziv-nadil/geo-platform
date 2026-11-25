@@ -34,7 +34,7 @@ async function SentimentContent(props: RouteProps) {
   if (!r.ok) return (<>{header}<LoadFail result={r} /></>);
   const s = r.data;
   const total = s.totals.positive + s.totals.neutral + s.totals.negative;
-  if (!total) return (<>{header}<NoData org={org} what="brand mentions" /></>);
+  if (!total) return (<>{header}<NoData org={org} title="No brand mentions yet" description="Sentiment is scored from answers that name your brand. Once tracked prompts have run, you will see net sentiment and sample sentences here." action={{ label: "Go to prompts", href: `/app/${org.slug}/prompts` }} /></>);
   const pct = (n: number) => ((n / total) * 100).toFixed(1);
   return (
     <>

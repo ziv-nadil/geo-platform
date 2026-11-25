@@ -22,7 +22,7 @@ async function Responses(props: RouteProps) {
   const r = await getResponses(org.id, filters, 80);
   if (!r.ok) return <LoadFail result={r} />;
   const { items, brandName, competitorNames, total } = r.data;
-  if (!items.length) return (<><PageHeader title="Responses explorer" /><NoData org={org} /></>);
+  if (!items.length) return (<><PageHeader title="Responses explorer" /><NoData org={org} title="No AI answers yet" description="Every collected answer is searchable here, with the engine, prompt and brands it mentions. Answers arrive after the first daily run of your tracked prompts." action={{ label: "Go to prompts", href: `/app/${org.slug}/prompts` }} /></>);
   return (
     <>
       <PageHeader title="Responses explorer" description={`Read exactly what each engine answered. Showing the latest ${items.length} of ${total.toLocaleString()} answers in range. Your brand is highlighted in teal, competitors in amber.`} />

@@ -37,7 +37,7 @@ async function Crawlers(props: RouteProps) {
   const header = <PageHeader title="AI crawlers" description={`Verified visits from AI bots, read from your CDN logs. ${rangeLabel(filters)}.`} />;
   if (!r.ok) return (<>{header}<LoadFail result={r} /></>);
   const { bots, trend, operators, paths } = r.data;
-  if (!bots.length) return (<>{header}<NoData org={org} what="crawler hits (connect Cloudflare in onboarding)" /></>);
+  if (!bots.length) return (<>{header}<NoData org={org} title="No AI crawler hits yet" description="Crawler hits come from your CDN edge logs. Connect Cloudflare in onboarding, then verified AI bot requests show up here within a day." action={{ label: "Connect Cloudflare", href: `/app/${org.slug}/onboarding` }} /></>);
   const total = bots.reduce((s, b) => s + b.hits, 0);
   const sum = (...p: string[]) => bots.filter((b) => p.includes(b.purpose)).reduce((s, b) => s + b.hits, 0);
   const errors = bots.reduce((s, b) => s + b.errorHits, 0);
