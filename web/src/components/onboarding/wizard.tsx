@@ -6,6 +6,7 @@ import {
   BarChart3,
   BookOpen,
   Building2,
+  ScanSearch,
   Circle,
   ClipboardCheck,
   CloudCog,
@@ -50,8 +51,9 @@ import {
 import { FieldList } from "./field-renderer";
 import { InstructionsPanel } from "./instructions-panel";
 import { TestsPanel } from "./tests-panel";
+import { GeoReadinessCard } from "@/components/geo/geo-readiness-card";
 
-const ICONS: Record<string, LucideIcon> = { Building2, BookOpen, KeyRound, GitBranch, PenSquare, Search, Globe, BarChart3, CloudCog, Network, LineChart, Database, ShieldCheck, MessageSquare, ClipboardCheck };
+const ICONS: Record<string, LucideIcon> = { Building2, BookOpen, KeyRound, GitBranch, PenSquare, Search, Globe, BarChart3, CloudCog, Network, LineChart, Database, ShieldCheck, MessageSquare, ClipboardCheck, ScanSearch };
 
 const STATUS_FOR_PILL: Record<StepStatus, Status> = { idle: "idle", pending: "pending", pass: "pass", partial: "partial", fail: "fail", skipped: "idle" };
 const STATUS_LABEL: Record<StepStatus, string> = { idle: "Not started", pending: "In progress", pass: "Working", partial: "Partial", fail: "Failed", skipped: "Skipped" };
@@ -263,6 +265,7 @@ export function OnboardingWizard({
               <div className="flex min-w-0 flex-col gap-6">
                 <InstructionsPanel step={step} values={values} placeholders={placeholders} />
                 <TestsPanel orgId={orgId} step={step} values={values} results={state.tests[current] ?? {}} onResult={setTest} onError={toast} />
+                {step.id === "geo_readiness" ? <GeoReadinessCard orgId={orgId} initial={null} /> : null}
               </div>
             </div>
           )}

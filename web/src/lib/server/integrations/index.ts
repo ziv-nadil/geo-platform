@@ -10,6 +10,7 @@ import * as cloudflare from './cloudflare';
 import * as cms from './cms';
 import * as dns from './dns';
 import * as ga4 from './ga4';
+import * as geo from './geo';
 import * as gcloud from './gcloud';
 import * as github from './github';
 import * as gsc from './gsc';
@@ -22,7 +23,7 @@ export { awsExternalId } from './aws';
 
 /** One tester per onboarding step id (web/src/config/onboarding.ts). */
 export const TESTERS: Record<string, Tester> = {
-  company, brand_book: brandBook, access_method: accessMethod,
+  company, geo_readiness: geo.test, brand_book: brandBook, access_method: accessMethod,
   github: github.test, cms: cms.test, gsc: gsc.test, bing: bing.test, ga4: ga4.test, google_cloud: gcloud.test,
   dns: dns.test, analytics_tools: analytics.test, cloud_storage: aws.test, cdn_crawlers: cloudflare.test, chat: slack.test,
   review,
