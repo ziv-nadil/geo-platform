@@ -191,7 +191,12 @@ export function createGeminiAdapter(): EngineAdapter {
         resp = (await ai.models.generateContent({
           model,
           contents: prompt,
-          config: { tools: [{ googleSearch: {} }], abortSignal: opts.signal },
+          config: {
+            tools: [{ googleSearch: {} }],
+            // No user_location in the Gemini API: steer region/language through the system instruction.
+            systemInstruction: `Answer for a user located in ${locale.country}; respond in language "${locale.language}" and prefer sources relevant to that country.`,
+            abortSignal: opts.signal,
+          },
         })) as unknown as GeminiResponseLike;
       } catch (err) {
         throw toEngineError(err, 'gemini');

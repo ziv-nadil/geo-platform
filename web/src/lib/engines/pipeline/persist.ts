@@ -82,9 +82,13 @@ export function localeFromPrompt(p: { locale: string; country: string | null; lo
 }
 
 export async function loadPrompt(sql: Sql, orgId: string, promptId: string): Promise<PromptContext | null> {
-  const [p] = await sql<{ id: string; text: string; locale: string; country: string | null; location_code: number | null }[]>`
-    select id, text, locale, country, location_code from public.prompts where id = ${promptId} and org_id = ${orgId}`;
-  return p ? { id: p.id, text: p.text, locale: localeFromPrompt(p) } : null;
+  const [p] = await sql<{ id: string; text: string; locale: string; country: string | null; location_code: number | null; org_country: string; org_language: string }[]>`
+    select p.id, p.text, p.locale, p.country, p.location_code, o.country as org_country, o.language as org_language
+    from public.prompts p join public.organizations o on o.id = p.org_id where p.id = ${promptId} and p.org_id = ${orgId}`;
+  // One location per client: the org setting wins over any per-prompt value.
+  return p
+    ? { id: p.id, text: p.text, locale: localeFromPrompt({ locale: p.org_language, country: p.org_country, location_code: null }) }
+    : null;
 }
 
 export async function loadDomainCache(sql: Sql, domains: readonly string[]): Promise<Map<string, SourceCategory>> {

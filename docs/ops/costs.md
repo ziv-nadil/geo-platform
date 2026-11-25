@@ -86,6 +86,22 @@ Notes:
 
 ---
 
+### 4.1 Engine cost under the 2026-11-25 decisions (supersedes the table above)
+
+Scope: **4 engines** (ChatGPT, Claude, Gemini, Google AI Overviews; Perplexity and AI Mode off by default) x **100 prompts** x **2 runs/week** (Mon + Thu, 1 run per prompt) x **1 location per client**. Runs per engine per client per month = 100 x 2 x 4.33 = **866**; at 20 clients = **17,320 per engine**, 69,280 total.
+
+| Engine | Per run | Launch (5 clients, 4,330/engine) | Full (20 clients, 17,320/engine) |
+|---|---|---|---|
+| ChatGPT (gpt-5-mini + search) | $0.0121 | $52 | $210 |
+| Claude (Sonnet 5.5 + search) | $0.022 | $95 | $381 (Haiku 5.5: about $183) |
+| Gemini (Flash tokens $0.0045 + grounding $0.014 over 5K free/mo) | | $19 (under free grounding) | $78 tokens + $172 grounding = $250 |
+| Google AI Overviews (DataForSEO standard, async AIO) | $0.0012 | $5 | $21 |
+| **Engine total** | | **$171** | **$862** (about $664 with Haiku for Claude) |
+
+That is about **$43 per client per month** (about $33 with Haiku), versus $95 in the old B-hybrid plan. The first-month 5-run baseline (about $60 for 5 engines) is now about $48 per client for 4 engines (100 prompts x 5 runs x 3 LLM engines plus 1 AIO run) and is not included above. One location per client means no multiplier; each extra location would multiply cost linearly. No VPN or proxy cost: location is sent through native API parameters (see methodology section 2.8).
+
+---
+
 ## 5. Platform costs per month
 
 | Line item | MVP / free | Launch (5 clients) | Full (20 clients) | Notes |
@@ -117,9 +133,9 @@ Stripe is roughly 3.7% of MRR. This line scales with revenue, not usage.
 
 | Scenario | Clients | Engine APIs | Platform | Stripe (on assumed MRR) | **Total / month** |
 |---|---|---|---|---|---|
-| **MVP / free** | 2 internal, 1 run/wk | $41 | $0 | $0 | **≈ $41** |
-| **Launch** | 5 | $326 | $223 | $92 | **≈ $641** |
-| **Full** | 20 | $1,511 | $360 | $366 | **≈ $2,237** |
+| **MVP / free** | 2 internal, 1 run/wk | $41 (old estimate) | $0 | $0 | **≈ $41** |
+| **Launch** | 5 | $171 | $223 | $92 | **≈ $486** |
+| **Full** | 20 | $862 | $360 | $366 | **≈ $1,588** |
 
 Engine APIs are about 68% of full-scale cost. Infisical is the largest platform line and is driven by the identity design choice.
 

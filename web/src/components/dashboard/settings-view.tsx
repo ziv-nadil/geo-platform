@@ -4,7 +4,7 @@ import { CreditCard, ExternalLink, KeyRound, Mail, Plus, RefreshCw, ShieldCheck,
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { createApiKey, inviteMember, removeMember, revokeApiKey, revokeInvitation, saveOrgGeneral, setMemberRole } from "@/app/app/[orgSlug]/actions";
+import { createApiKey, inviteMember, removeMember, revokeApiKey, revokeInvitation, saveOrgGeneral, saveOrgLocale, setMemberRole } from "@/app/app/[orgSlug]/actions";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,7 @@ export function SettingsView({
   integrations,
   billing,
   billingEnabled,
+  locale,
 }: {
   org: Org;
   tab: string;
@@ -58,6 +59,7 @@ export function SettingsView({
   integrations: Integration[];
   billing: Billing | null;
   billingEnabled: boolean;
+  locale: { country: string; language: string };
 }) {
   const router = useRouter();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -66,6 +68,7 @@ export function SettingsView({
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [general, setGeneral] = useState({ name: org.name, website: org.domain ? `https://${org.domain}` : "" });
+  const [loc, setLoc] = useState(locale);
 
   async function act(p: Promise<{ ok: boolean; error?: string }>, okText?: string) {
     const r = await p;
@@ -100,6 +103,12 @@ export function SettingsView({
             <Field label="Primary website" htmlFor="s-site">
               <Input id="s-site" type="url" value={general.website} disabled={!canAdmin} onChange={(e) => setGeneral((g) => ({ ...g, website: e.target.value }))} />
             </Field>
+            <Field label="Country (search location)" htmlFor="s-country">
+              <Input id="s-country" maxLength={2} value={loc.country} disabled={!canAdmin} onChange={(e) => setLoc((l) => ({ ...l, country: e.target.value.toUpperCase() }))} />
+            </Field>
+            <Field label="Language" htmlFor="s-lang">
+              <Input id="s-lang" value={loc.language} disabled={!canAdmin} onChange={(e) => setLoc((l) => ({ ...l, language: e.target.value }))} />
+            </Field>
             <Field label="Plan" htmlFor="s-plan">
               <Input id="s-plan" value={org.plan} disabled />
             </Field>
@@ -109,7 +118,7 @@ export function SettingsView({
           </CardBody>
           <CardFooter>
             {!canAdmin ? <span className="mr-auto text-sm text-ink-3">Only owners and admins can change these.</span> : null}
-            <Button disabled={!canAdmin} onClick={() => act(saveOrgGeneral(org.id, general.name, general.website), "Saved")}>
+            <Button disabled={!canAdmin} onClick={() => act(saveOrgGeneral(org.id, general.name, general.website).then((r) => (r.ok ? saveOrgLocale(org.id, loc.country, loc.language) : r)), "Saved")}>
               Save changes
             </Button>
           </CardFooter>

@@ -1,14 +1,15 @@
 /**
  * Run planning (docs/research/ai-engine-methodology.md section 4.2), pure.
  *
- * - Google AI Overviews / AI Mode: daily, 1 run per prompt.
- * - LLM engines: weekly on the org's stagger weekday; core prompts x3 runs, tail x1.
- * - New org (no runs yet): one baseline sweep, every engine x 5 runs per prompt.
+ * - Every engine (LLM and SERP): twice a week, 1 run per prompt, on two org-staggered weekdays
+ *   (Mon + Thu shifted by the org's stagger offset 0..2, so the gap stays 3/4 days).
+ * - New org (no runs yet): one baseline sweep, every engine x 5 runs per prompt (SERP x1).
  */
 import { LLM_ENGINES, SERP_ENGINES, type EngineId } from '../types';
 
-export const CORE_RUNS = 3;
+export const CORE_RUNS = 1;
 export const TAIL_RUNS = 1;
+export const SWEEP_DAYS = [1, 4] as const; // Monday, Thursday
 export const BASELINE_RUNS = 5;
 export const FALLBACK_CORE_SIZE = 25;
 
@@ -37,9 +38,20 @@ export function hash32(s: string): number {
   return h >>> 0;
 }
 
-/** 0 = Sunday ... 6 = Saturday: the weekday this org's LLM sweep runs. */
+/** 0..2 day offset applied to Mon + Thu so orgs spread over Mon-Wed and Thu-Sat. */
+export function staggerOffset(orgId: string): number {
+  return hash32(orgId) % 3;
+}
+
+/** The two weekdays (0 = Sunday) this org's engines run. */
+export function sweepWeekdays(orgId: string): [number, number] {
+  const o = staggerOffset(orgId);
+  return [SWEEP_DAYS[0] + o, SWEEP_DAYS[1] + o];
+}
+
+/** First sweep weekday, kept for callers that need one stagger day. */
 export function staggerWeekday(orgId: string): number {
-  return hash32(orgId) % 7;
+  return sweepWeekdays(orgId)[0];
 }
 
 export function utcDate(d: Date): string {
@@ -81,13 +93,14 @@ export function planRuns(args: {
       }
     return out;
   }
-  const llmDay = args.date.getUTCDay() === staggerWeekday(args.orgId);
+  const sweepDay = sweepWeekdays(args.orgId).includes(args.date.getUTCDay());
   const core = corePromptIds(args.prompts);
   for (const p of args.prompts) {
     for (const engine of args.engines) {
+      if (!sweepDay) continue;
       if (SERP_ENGINES.includes(engine)) {
         out.push({ promptId: p.id, engine, runIndex: 0, trigger: 'schedule', runDate });
-      } else if (llmDay && !args.llmPaused) {
+      } else if (!args.llmPaused) {
         const n = core.has(p.id) ? CORE_RUNS : TAIL_RUNS;
         for (let i = 0; i < n; i++) out.push({ promptId: p.id, engine, runIndex: i, trigger: 'schedule', runDate });
       }

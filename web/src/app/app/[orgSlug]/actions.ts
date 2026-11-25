@@ -177,6 +177,14 @@ export async function saveOrgGeneral(orgId: string, name: string, website: strin
   return write(orgId, (sql) => sql`update public.organizations set name = ${name.trim()}, website = ${website.trim() || null} where id = ${orgId}`.then(() => undefined));
 }
 
+export async function saveOrgLocale(orgId: string, country: string, language: string) {
+  const c = country.trim().toUpperCase();
+  const l = language.trim();
+  if (!/^[A-Z]{2}$/.test(c)) return { ok: false, error: "Country must be a 2-letter ISO code (e.g. US)." } as Result;
+  if (!/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(l)) return { ok: false, error: "Language must be a code like en or pt-BR." } as Result;
+  return write(orgId, (sql) => sql`update public.organizations set country = ${c}, language = ${l} where id = ${orgId}`.then(() => undefined));
+}
+
 /* ---------------------------------------------------------------- engines */
 
 export async function setEngineEnabled(orgId: string, engineId: string, enabled: boolean) {
