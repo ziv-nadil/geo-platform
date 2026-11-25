@@ -23,7 +23,7 @@ async function Creators(props: RouteProps) {
   return (
     <>
       <PageHeader title="Creators" description="YouTube and TikTok creators covering your topics. Videos are a growing source in AI answers, especially Google AI Overviews and Gemini." />
-      {r.data.length ? <CreatorsView orgId={org.id} creators={r.data} /> : <NoData org={org} what="creators" />}
+      {r.data.length ? <CreatorsView orgId={org.id} creators={r.data} /> : <NoData org={org} title="No creators found yet" description="Creator discovery runs weekly once YouTube Data API access is connected in onboarding." action={{ label: "Connect YouTube in onboarding", href: `/app/${org.slug}/onboarding` }} />}
     </>
   );
 }

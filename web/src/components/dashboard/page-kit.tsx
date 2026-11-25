@@ -43,13 +43,30 @@ export function Section<T>({ load, children }: { load: Load<T>; children: (data:
   return load.ok ? <>{children(load.data)}</> : <LoadFail result={load} />;
 }
 
-export function NoData({ org, what = "AI answers" }: { org: Org; what?: string }) {
+/** Empty state for a tab with no data yet. Pass title/description/action to give each tab its own next step. */
+export function NoData({
+  org,
+  what = "AI answers",
+  title,
+  description,
+  action,
+}: {
+  org: Org;
+  what?: string;
+  title?: string;
+  description?: ReactNode;
+  action?: { label: string; href: string };
+}) {
   return (
     <EmptyState
       icon={DatabaseZap}
-      title={`No ${what} yet`}
-      description={`Nothing has been collected for ${org.name} in this period. Monitoring starts after onboarding adds tracked prompts and the first daily run completes.`}
-      action={<ButtonLink href={`/app/${org.slug}/onboarding`} variant="secondary">Open onboarding</ButtonLink>}
+      title={title ?? `No ${what} yet`}
+      description={description ?? `Nothing has been collected for ${org.name} in this period. Monitoring starts after onboarding adds tracked prompts and the first daily run completes.`}
+      action={
+        <ButtonLink href={action?.href ?? `/app/${org.slug}/onboarding`} variant="secondary">
+          {action?.label ?? "Open onboarding"}
+        </ButtonLink>
+      }
     />
   );
 }

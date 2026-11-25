@@ -22,7 +22,7 @@ async function SiteHealth(props: RouteProps) {
   return (
     <>
       <PageHeader title="Site health" description="A crawl of your sites checks what stops AI engines from reading, understanding and citing your pages." />
-      {!r.ok ? <LoadFail result={r} /> : r.data.properties.length === 0 ? <NoData org={org} what="site audits" /> : <SiteHealthView orgId={org.id} {...r.data} />}
+      {!r.ok ? <LoadFail result={r} /> : r.data.properties.length === 0 ? <NoData org={org} title="No site audits yet" description="Site health crawls your tracked properties for crawl blockers, broken links and missing llms.txt. Add your domain in onboarding to run the first audit." action={{ label: "Add domain in onboarding", href: `/app/${org.slug}/onboarding` }} /> : <SiteHealthView orgId={org.id} {...r.data} />}
     </>
   );
 }

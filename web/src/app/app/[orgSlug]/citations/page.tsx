@@ -40,7 +40,7 @@ async function Citations(props: RouteProps) {
   if (!c.ok) return (<>{header}<LoadFail result={c} /></>);
   const { domains, urls, split } = c.data;
   const total = split.reduce((s, x) => s + x.count, 0);
-  if (total === 0) return (<>{header}<NoData org={org} what="citations" /></>);
+  if (total === 0) return (<>{header}<NoData org={org} title="No citations yet" description="Citations appear when AI answers link to pages on your domains or on competitors. Run tracked prompts so engines have answers to cite." action={{ label: "Go to prompts", href: `/app/${org.slug}/prompts` }} /></>);
   const owned = domains.filter((d) => d.type === "owned").reduce((s, d) => s + d.answersCiting, 0);
   const cs = ov.ok ? ov.data.kpis.citationShare : null;
   return (

@@ -23,7 +23,7 @@ async function Outreach(props: RouteProps) {
   return (
     <>
       <PageHeader title="Outreach" description="Editors, reviewers and community moderators at the sites AI engines cite. Get your brand onto the pages that shape the answers." />
-      {r.data.length ? <OutreachView orgId={org.id} contacts={r.data.filter((c) => c.stage !== "ignored")} /> : <NoData org={org} what="outreach contacts" />}
+      {r.data.length ? <OutreachView orgId={org.id} contacts={r.data.filter((c) => c.stage !== "ignored")} /> : <NoData org={org} title="No outreach contacts yet" description="Contacts are suggested from the domains AI engines cite most for your prompts. They appear once answers have been collected." action={{ label: "View citations", href: `/app/${org.slug}/citations` }} />}
     </>
   );
 }

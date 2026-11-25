@@ -18,7 +18,7 @@ export const METRICS = {
   },
   gapImportance: {
     label: "Prompt importance",
-    definition: "The weight you gave the prompts in this group (default 1). Business-critical prompts count more.",
+    definition: "The importance you set on the prompts in this group, from 1 (default) upward. Prompts you mark as business-critical count for more in the gap score.",
     formula: "mean prompts.importance across the group's gap prompts",
   },
   gapPresence: {
@@ -33,7 +33,7 @@ export const METRICS = {
   },
   visibility: {
     label: "Visibility score",
-    definition: "How prominently AI engines surface your brand when answering the prompts you track.",
+    definition: "How prominently AI engines feature your brand across the answers to your tracked prompts. Each answer is scored on whether your brand is mentioned, how early it appears, and whether a page of yours is cited.",
     formula: "mean of each answer's visibility score (0–1; mention, position and citation of your brand) × 100",
     note: "Only analyzed answers are scored. \"Mentioned in\" shows the simpler share of answers that name the brand.",
   },
@@ -49,12 +49,12 @@ export const METRICS = {
   },
   avgPosition: {
     label: "Average position",
-    definition: "Where your brand appears among the brands named in an answer. 1 means named first.",
+    definition: "The position your brand takes in the list of brands named in an answer. 1 means your brand is named first; 2 means second, and so on.",
     formula: "mean rank of the brand in answers that mention it (lower is better)",
   },
   sentiment: {
     label: "Net sentiment",
-    definition: "Tone of the answers that mention your brand, from −100 (all negative) to +100 (all positive).",
+    definition: "The tone of answers that mention your brand, from −100 (every mention negative) to +100 (every mention positive). 0 means positive and negative mentions balance out.",
     formula: "% positive mentions − % negative mentions",
     note: "Each mention is classified positive, neutral or negative by an LLM judge.",
   },
@@ -75,7 +75,7 @@ export const METRICS = {
   },
   promptVolume: {
     label: "Est. volume",
-    definition: "Estimated monthly searches for the closest keyword equivalent of this prompt.",
+    definition: "Estimated average monthly Google searches for the closest keyword to this prompt. A rough demand signal, not a count of AI prompts.",
     formula: "keyword volume from Google Ads Keyword Planner / DataForSEO, rounded",
   },
   movers: {
@@ -110,7 +110,7 @@ export const METRICS = {
   },
   crawlerHits: {
     label: "AI crawler hits",
-    definition: "Requests from known AI crawlers and AI user agents, verified by reverse DNS or published IP ranges.",
+    definition: "Requests to your site from known AI crawlers (such as GPTBot or ClaudeBot), counted only when the caller is verified by reverse DNS or a published IP range.",
     formula: "count of verified requests from the edge logs (Cloudflare / CDN)",
   },
   llmsTxt: {
@@ -126,7 +126,7 @@ export const METRICS = {
   mrr: {
     label: "MRR",
     definition: "Monthly recurring revenue from the account's active subscription.",
-    formula: "plan price × seats, normalised to one month",
+    formula: "plan price × seats, normalized to one month",
   },
   creatorReach: {
     label: "Reach",

@@ -58,7 +58,7 @@ export function ContentGapsView({ orgId, role, gaps, items }: { orgId: string; r
               </THead>
               <TBody>
                 {gaps.length === 0 ? (
-                  <Tr><Td colSpan={7} className="py-8 text-center text-ink-3">No gaps yet. Run prompts, then press Detect gaps.</Td></Tr>
+                  <Tr><Td colSpan={7} className="py-8 text-center text-ink-3"><p className="font-medium text-ink">No content gaps yet</p><p className="mt-1">Gaps appear where competitors are named in AI answers and you are not. Press Detect gaps once tracked prompts have run.</p></Td></Tr>
                 ) : gaps.map((g) => (
                   <Tr key={g.id}>
                     <Td>

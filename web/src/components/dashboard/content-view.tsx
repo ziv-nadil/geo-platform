@@ -1,10 +1,11 @@
 "use client";
 
-import { Check, Plus, Trash2 } from "lucide-react";
+import { Check, FilePen, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Slider } from "@/components/ui/controls";
 import { Field, Input, Textarea } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -254,7 +255,7 @@ export function ContentView({ orgId, kit: initialKit, drafts }: { orgId: string;
               </TBody>
             </Table>
           </TableWrap>
-          {drafts.length === 0 ? <CardBody><p className="text-sm text-ink-3">No drafts yet.</p></CardBody> : null}
+          {drafts.length === 0 ? <CardBody><EmptyState icon={FilePen} title="No drafts yet" description="Drafts are written from your brand kit for the prompts where engines overlook you. Pick a content gap to start one." action={<ButtonLink href="content-gaps" variant="secondary">Review content gaps</ButtonLink>} /></CardBody> : null}
         </Card>
       </TabsContent>
     </Tabs>

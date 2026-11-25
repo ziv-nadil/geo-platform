@@ -33,7 +33,10 @@ export function SegmentedList({ className, ...rest }: ComponentProps<typeof RTab
 
 export function SegmentedTrigger({ className, ...rest }: ComponentProps<typeof RTabs.Trigger>) {
   return (
+    // Segmented triggers filter in place and have no TabsContent panel, so drop the aria-controls
+    // Radix would otherwise point at a non-existent id.
     <RTabs.Trigger
+      aria-controls={undefined}
       className={cn(
         "inline-flex h-7 items-center gap-1.5 rounded-xs px-2.5 text-sm font-medium text-ink-3 hover:text-ink data-[state=active]:bg-surface data-[state=active]:text-ink data-[state=active]:shadow-xs [&_svg]:size-3.5",
         className,
