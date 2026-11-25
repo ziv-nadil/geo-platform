@@ -15,7 +15,13 @@ DATA_DIR="$ROOT/.devdb"
 PGDATA="$DATA_DIR/data"
 PORT="${DEVDB_PORT:-54322}"
 DB="${DEVDB_NAME:-beacon}"
-PG_BIN="${PG_BIN:-/usr/lib/postgresql/16/bin}"
+if [ -z "${PG_BIN:-}" ]; then
+  for c in /usr/lib/postgresql/16/bin /opt/homebrew/opt/postgresql@16/bin /usr/local/opt/postgresql@16/bin; do
+    [ -x "$c/initdb" ] && PG_BIN="$c" && break
+  done
+  if [ -z "${PG_BIN:-}" ] && command -v brew >/dev/null 2>&1; then PG_BIN="$(brew --prefix postgresql@16 2>/dev/null)/bin"; fi
+  PG_BIN="${PG_BIN:-/usr/lib/postgresql/16/bin}"
+fi
 LOG="$DATA_DIR/postgres.log"
 
 die() { echo "dev-db: $*" >&2; exit 1; }
