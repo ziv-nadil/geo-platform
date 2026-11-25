@@ -1,6 +1,6 @@
 # Beacon GEO: access checklist
 
-Owner: Access agent. Last updated 2026-11-24. Sources: `docs/ISSUES.md`, `docs/ops/costs.md`, `docs/architecture/security.md`
+Owner: Access agent. Last updated 2026-11-25. Sources: `docs/ISSUES.md`, `docs/ops/costs.md`, `docs/architecture/security.md`
 (branch `claude/zealous-hamilton-nlkizt`).
 
 > **PERSONAL ACCOUNTS ONLY.** Do not use any Explorium company account, workspace, org or connector for Beacon GEO (Claude itself is the only exception).
@@ -70,6 +70,7 @@ User asked the Access agent to drive a browser on their computer while they sign
 - 2026-11-25: Infisical decision: Free tier, 1 org + 3 machine identities; Pro at first paying client (lead). Bria verification is being done by a separate "Bria test" session.
 - 2026-11-25: Anchor Browser network secret saved by user (row 18); Remote Control folder sharing not offered in user's app (only a "Connect new sessions" toggle), so Anchor is the browser path.
 - 2026-11-25: Access agent verification: api.anchorbrowser.io 403 (blocked), anchorbrowser.io 200 (site only, no API), engine.prod.bria-api.com 403 (blocked), bria.ai 200. Secrets need correct hosts.
+- 2026-11-25 (new session): re-verified, unchanged. Proxy still refuses CONNECT to `api.anchorbrowser.io`, `engine.prod.bria-api.com`, and every vendor API host (Supabase, Vercel, Infisical, OpenAI, DataForSEO). Only `anchorbrowser.io`, `bria.ai` (websites) and Google hosts respond. No vendor env vars present. Network allowlist and secret hosts have not been updated yet.
 
 ## Handoff for the next Access session (read this first)
 
