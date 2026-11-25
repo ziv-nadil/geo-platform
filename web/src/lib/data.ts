@@ -601,8 +601,10 @@ export async function getBilling(orgId: string): Promise<Load<Billing>> {
       seats: b.subscription?.seats ?? null,
       renewsAt: b.subscription?.currentPeriodEnd ?? null,
       cancelAtPeriodEnd: b.subscription?.cancelAtPeriodEnd ?? false,
+      engineLimit: b.plan?.engineLimit ?? null,
+      meters: b.meters,
       usage: b.usage.map((u) => ({ metric: u.metric, value: u.value })),
-      plans: b.plans.map((p) => ({ id: p.id, name: p.name, monthlyPrice: p.monthlyPriceCents / 100 })),
+      plans: b.plans.map((p) => ({ id: p.id, name: p.name, monthlyPrice: p.monthlyPriceCents / 100, annualPrice: p.annualPriceCents === null ? null : p.annualPriceCents / 100, purchasable: p.purchasable })),
     })),
   );
 }

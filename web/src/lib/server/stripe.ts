@@ -27,7 +27,7 @@ export async function syncSubscription(stripe: Stripe, subscriptionId: string): 
       ? await sql`select id from public.organizations where id = ${metaOrg}`
       : await sql`select id from public.organizations where stripe_customer_id = ${customerId}`;
     if (!org) return { orgId: null };
-    const [plan] = priceId ? await sql`select id from public.plans where stripe_price_id = ${priceId}` : [];
+    const [plan] = priceId ? await sql`select id from public.plans where stripe_price_id = ${priceId} or stripe_price_id_annual = ${priceId}` : [];
     await sql`
       insert into public.subscriptions (org_id, plan_id, stripe_customer_id, stripe_subscription_id, stripe_price_id, status, seats,
         current_period_start, current_period_end, cancel_at_period_end, canceled_at, trial_end)

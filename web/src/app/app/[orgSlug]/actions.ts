@@ -3,6 +3,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { withViewerRls } from "@/lib/data";
+import { checkLimit, type LimitKind } from "@/lib/billing/limits";
 import type { BrandStyle, IssueStatus, OutreachStage, Role } from "@/lib/ui/data-types";
 
 /**
@@ -11,7 +12,14 @@ import type { BrandStyle, IssueStatus, OutreachStage, Role } from "@/lib/ui/data
  * clients can't touch other orgs). Results are plain objects the UI can show.
  */
 
-type Result<T = undefined> = { ok: true; data?: T } | { ok: false; error: string };
+type Result<T = undefined> = { ok: true; data?: T } | { ok: false; error: string; code?: "plan_limit" };
+
+class PlanLimitError extends Error {}
+/** Throws PlanLimitError (rolling back the transaction) when adding `adding` of `kind` would exceed the plan. */
+async function enforce(sql: Parameters<typeof checkLimit>[0], orgId: string, kind: LimitKind, adding = 1) {
+  const r = await checkLimit(sql, orgId, kind, adding);
+  if (!r.ok) throw new PlanLimitError(r.message);
+}
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
@@ -23,6 +31,7 @@ async function write<T>(orgId: string, fn: Parameters<typeof withViewerRls<T>>[0
     revalidatePath(path, "layout");
     return { ok: true, data: r.data };
   } catch (e) {
+    if (e instanceof PlanLimitError) return { ok: false, error: e.message, code: "plan_limit" };
     const msg = e instanceof Error ? e.message : String(e);
     if (/row-level security|permission denied/i.test(msg)) return { ok: false, error: "Your role can't make this change. Ask an admin of this account." };
     return { ok: false, error: "Could not save. Try again." };
@@ -35,6 +44,7 @@ export async function addPrompts(orgId: string, texts: string[], opts: { topicId
   const clean = texts.map((t) => t.trim()).filter((t) => t.length >= 8 && t.length <= 500).slice(0, 200);
   if (!clean.length) return { ok: false, error: "Add at least one prompt of 8 characters or more." } as Result;
   return write(orgId, async (sql, claims) => {
+    await enforce(sql, orgId, "prompts", clean.length);
     for (const text of clean) {
       await sql`insert into public.prompts (org_id, text, topic_id, funnel_stage, source, created_by)
                 values (${orgId}, ${text}, ${opts.topicId ?? null}, ${opts.funnel ?? null}, ${opts.source ?? "manual"}, ${claims.sub})`;
@@ -44,7 +54,10 @@ export async function addPrompts(orgId: string, texts: string[], opts: { topicId
 }
 
 export async function setPromptActive(orgId: string, promptId: string, active: boolean) {
-  return write(orgId, (sql) => sql`update public.prompts set active = ${active} where id = ${promptId} and org_id = ${orgId}`.then(() => undefined));
+  return write(orgId, async (sql) => {
+    if (active) await enforce(sql, orgId, "prompts", 1);
+    await sql`update public.prompts set active = ${active} where id = ${promptId} and org_id = ${orgId} and active <> ${active}`;
+  });
 }
 
 /* ---------------------------------------------------------------- competitors */
@@ -121,6 +134,7 @@ export async function inviteMember(orgId: string, email: string, role: Role) {
   const token = randomBytes(24).toString("base64url");
   const hash = createHash("sha256").update(token).digest("hex");
   return write<string>(orgId, async (sql, claims) => {
+    await enforce(sql, orgId, "seats");
     await sql`insert into public.invitations (org_id, email, role, token_hash, invited_by, expires_at)
               values (${orgId}, ${e}, ${role}, ${hash}, ${claims.sub}, now() + interval '7 days')`;
     // The raw token is returned once so the inviter can copy the link; only its hash is stored.
@@ -161,4 +175,17 @@ export async function revokeApiKey(orgId: string, keyId: string) {
 export async function saveOrgGeneral(orgId: string, name: string, website: string) {
   if (!name.trim()) return { ok: false, error: "Name is required." } as Result;
   return write(orgId, (sql) => sql`update public.organizations set name = ${name.trim()}, website = ${website.trim() || null} where id = ${orgId}`.then(() => undefined));
+}
+
+/* ---------------------------------------------------------------- engines */
+
+export async function setEngineEnabled(orgId: string, engineId: string, enabled: boolean) {
+  return write(orgId, async (sql) => {
+    if (enabled) {
+      const [cur] = await sql`select enabled from public.org_engines where org_id = ${orgId} and engine_id = ${engineId}`;
+      if (!cur?.enabled) await enforce(sql, orgId, "engines", 1);
+    }
+    await sql`insert into public.org_engines (org_id, engine_id, enabled) values (${orgId}, ${engineId}, ${enabled})
+              on conflict (org_id, engine_id) do update set enabled = excluded.enabled`;
+  });
 }

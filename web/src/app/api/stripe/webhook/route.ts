@@ -1,7 +1,8 @@
 import type Stripe from 'stripe';
 import { json, notConfiguredResponse } from '@/lib/server/auth';
 import { dbConfigured, withService } from '@/lib/server/db';
-import { getStripe, syncSubscription } from '@/lib/server/stripe';
+import { getStripe } from '@/lib/server/stripe';
+import { handleStripeEvent } from '@/lib/server/stripe-events';
 
 
 /**
@@ -31,31 +32,7 @@ export async function POST(request: Request) {
   if (!fresh) return json({ received: true, duplicate: true });
 
   try {
-    let subscriptionId: string | null = null;
-    let orgFromCheckout: string | null = null;
-    switch (event.type) {
-      case 'checkout.session.completed': {
-        const s = event.data.object as Stripe.Checkout.Session;
-        subscriptionId = typeof s.subscription === 'string' ? s.subscription : (s.subscription?.id ?? null);
-        orgFromCheckout = s.client_reference_id ?? s.metadata?.org_id ?? null;
-        const customer = typeof s.customer === 'string' ? s.customer : (s.customer?.id ?? null);
-        if (orgFromCheckout && customer) {
-          await withService((sql) => sql`update public.organizations set stripe_customer_id = coalesce(stripe_customer_id, ${customer}) where id = ${orgFromCheckout}`);
-        }
-        break;
-      }
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated':
-      case 'customer.subscription.deleted':
-      case 'customer.subscription.paused':
-      case 'customer.subscription.resumed':
-        subscriptionId = (event.data.object as Stripe.Subscription).id;
-        break;
-      default:
-        break;
-    }
-    let orgId: string | null = orgFromCheckout;
-    if (subscriptionId) orgId = (await syncSubscription(stripe, subscriptionId)).orgId ?? orgId;
+    const { orgId } = await handleStripeEvent(stripe, event);
     await withService(async (sql) => {
       await sql`update public.stripe_events set processed_at = now() where id = ${event.id}`;
       if (orgId) {

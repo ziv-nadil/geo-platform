@@ -357,7 +357,9 @@ export interface Billing {
   renewsAt: string | null;
   cancelAtPeriodEnd: boolean;
   usage: { metric: string; value: number }[];
-  plans: { id: string; name: string; monthlyPrice: number }[];
+  engineLimit: number | null;
+  meters: { seats: number; prompts: number; engines: number };
+  plans: { id: string; name: string; monthlyPrice: number; annualPrice: number | null; purchasable: boolean }[];
 }
 
 export interface AdminOrg {

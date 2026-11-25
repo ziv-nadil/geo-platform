@@ -1,5 +1,6 @@
 import 'server-only';
 import { iso, orgQuery } from './_run';
+import { getUsage } from '@/lib/billing/limits';
 import type { ApiKey, Billing, Invitation, Member, OrgRole, QueryResult } from './types';
 
 export async function listMembers(orgId: string): Promise<QueryResult<Member[]>> {
@@ -42,12 +43,14 @@ export async function getBilling(orgId: string): Promise<QueryResult<Billing>> {
     const usage = await sql`
       select metric, period_start::text, value from public.usage_counters
       where org_id = ${orgId} order by period_start desc, metric limit 24`;
-    const plans = await sql`select id, name, monthly_price_cents from public.plans where active order by sort_order`;
+    const plans = await sql`select id, name, monthly_price_cents, annual_price_cents, (stripe_price_id is not null and stripe_price_id_annual is not null) as purchasable from public.plans where active and id <> 'trial' order by sort_order`;
+    const meters = await getUsage(sql, orgId);
     return {
       plan: plan ? { id: plan.id, name: plan.name, monthlyPriceCents: plan.monthly_price_cents, seatLimit: plan.seat_limit, promptLimit: plan.prompt_limit, engineLimit: plan.engine_limit, runsPerMonth: plan.runs_per_month } : null,
       subscription: sub ? { status: sub.status, seats: sub.seats, currentPeriodEnd: iso(sub.current_period_end), cancelAtPeriodEnd: sub.cancel_at_period_end, trialEnd: iso(sub.trial_end) } : null,
       usage: usage.map((r) => ({ metric: r.metric, periodStart: r.period_start, value: Number(r.value) })),
-      plans: plans.map((r) => ({ id: r.id, name: r.name, monthlyPriceCents: r.monthly_price_cents })),
+      plans: plans.map((r) => ({ id: r.id, name: r.name, monthlyPriceCents: r.monthly_price_cents, annualPriceCents: r.annual_price_cents, purchasable: !!r.purchasable })),
+      meters,
     };
   });
 }
