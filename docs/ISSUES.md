@@ -85,3 +85,43 @@ Decisions were made so work didn't stop. Each item says what I chose and what yo
   Supabase stub; cross-tenant, viewer, staff aal1/aal2/grant and MFA cases all behave. The draft `public.is_platform_admin()`
   grants every staff session silent all-tenant access without MFA, and `public.client_visible_actor()` is RPC-callable (reveals
   staff). See security.md §3.4.
+
+### Engines pipeline (Engines agent)
+- **Engines: no live vendor calls yet.** No API keys in this session, and api.openai.com, api.perplexity.ai, api.dataforseo.com and
+  api.cloudflare.com are blocked by the session network (Anthropic and Google hosts resolve). Adapter parsers are tested on
+  **synthetic** fixtures built from the SDK types and the methodology doc (`web/src/lib/engines/__tests__/fixtures.ts`). First job with
+  keys: run each adapter once and replace the fixtures with recorded responses, and confirm the [V?] items in methodology section 9.
+- **Engines: Perplexity endpoint.** We POST `/v1/agent` via the official SDK transport (`@perplexity-ai/perplexity_ai` 0.44), with
+  `effort` (default `low`; `preset` is deprecated in the SDK types) and `web_search` (`search_type: fast`). Cost comes from the
+  API's `usage.cost.total_cost`. Verify on the first live call.
+- **Engines: Claude model.** Default is the cheapest current model, `claude-haiku-5-5` ($0.10/$0.50 per M tokens, plus $10 per 1k
+  searches) with `web_search_20250305`. The `_20260209` tool version is documented only for Sonnet/Opus-class models. Override with
+  `ANTHROPIC_ENGINE_MODEL` / `ANTHROPIC_WEB_SEARCH_TOOL` for a calibration slice.
+- **Engines: model defaults are config.** `gpt-5.4-mini` (the OpenAI SDK also lists newer gpt-5.6 models; we stay on the methodology's
+  choice until a calibration run), `gemini-3.8-flash` (its $0.75/$3.75 price is [V?]), `claude-haiku-5-5`. Each run stores the model
+  string the API actually returned. Env overrides: `OPENAI_ENGINE_MODEL`, `GEMINI_ENGINE_MODEL`, `PERPLEXITY_EFFORT`/`PERPLEXITY_ENGINE_MODEL`.
+- **Engines: Vercel Hobby cron limits.** `web/vercel.json` schedules enqueue daily (02:00 UTC), the worker every 5 minutes, and
+  crawlers hourly. Hobby only allows daily crons, so the worker and crawler schedules need **Vercel Pro**. Until then, trigger
+  `/api/cron/worker` from Supabase pg_cron + pg_net or any external scheduler, using `Authorization: Bearer $CRON_SECRET`.
+- **Engines: secrets broker not wired.** Crawler ingestion reads the Cloudflare token by reference (step `cdn_crawlers`, field
+  `cf_api_token`) through `SecretBroker` (`web/src/lib/engines/crawlers/broker.ts`). Until the backend's
+  `lib/server/secrets/broker.ts` calls `registerSecretBroker()`, every org reports `not_configured` and nothing is fetched.
+  The zone name comes from `onboarding_progress(step_id='cdn_crawlers').data->>'cf_zone_name'`. Note: the onboarding
+  migration comment says step id `cloudflare` while the config uses `cdn_crawlers`; the poll accepts both.
+- **Engines: egress.** `lib/engines/http.ts` holds the engine/Cloudflare host allowlist (https only, no auto-redirects). When
+  the platform `safeFetch` lands, it should delegate to it. The Gemini SDK gets the same allowlisted fetch via `httpOptions.fetch`.
+- **Engines: schema additions** (`supabase/migrations/20261125000100_engines_pipeline.sql`, additive): prompts.tier/importance/branded/
+  location_code; brands/competitors.extra_domains/negative_aliases/context_terms; scheduling + idempotency columns on prompt_runs
+  (unique `(prompt_id, engine_id, run_date, run_index, trigger)`); usage/score columns on responses; audit columns on mentions/citations;
+  new tables `source_domains`, `entity_candidates` (emerging competitors) and `pipeline_state`. DB enums are coarser than the method:
+  sentiment `mixed` is stored as `neutral` (the score keeps the nuance), and fine source categories go in `citations.category`, mapped
+  onto `source_type`. UI agents: `entity_candidates` is new data for an "emerging competitors" list.
+- **Engines: budget guard.** The default is $150 per org per month (`ENGINE_MONTHLY_BUDGET_USD`, or override per org with
+  `organizations.settings.engine_budget_usd`). LLM engines pause at 100%, and enqueue reports `warning` at 80%. No alerting channel
+  exists yet. Manual runs bypass the guard.
+- **Engines: DataForSEO mode.** Scheduled runs default to the Standard queue (`task_post` + `task_get`, polled by the worker).
+  Set `DATAFORSEO_MODE=live` to make every run synchronous (simpler, about 3x the price). Manual runs always use live.
+  No pingback endpoint yet; the worker polls instead.
+- **Engines: metrics view.** `analytics.org_engine_daily` (metrics migration) still computes visibility as the % of runs that
+  mention the brand. The methodology score (`responses.visibility_score`, the per-observation score_o) and the CI helpers in
+  `lib/analysis/scoring.ts` are ready for the dashboards, but no rollup uses them yet. Backend/UI should decide which number is the headline.

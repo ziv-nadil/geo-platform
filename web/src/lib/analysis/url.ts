@@ -47,8 +47,8 @@ export function canonicalizeUrl(raw: string): string {
   kept.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   u.search = '';
   for (const [k, v] of kept) u.searchParams.append(k, v);
+  if (u.pathname !== '/') u.pathname = u.pathname.replace(/\/+$/, '') || '/';
   let out = u.toString();
-  if (u.pathname !== '/' && out.endsWith('/') && !u.search) out = out.slice(0, -1);
   if (u.pathname === '/' && !u.search) out = out.replace(/\/$/, '');
   return out;
 }
