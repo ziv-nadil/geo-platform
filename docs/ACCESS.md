@@ -70,3 +70,19 @@ User asked the Access agent to drive a browser on their computer while they sign
 - 2026-11-25: Infisical decision: Free tier, 1 org + 3 machine identities; Pro at first paying client (lead). Bria verification is being done by a separate "Bria test" session.
 - 2026-11-25: Anchor Browser network secret saved by user (row 18); Remote Control folder sharing not offered in user's app (only a "Connect new sessions" toggle), so Anchor is the browser path.
 - 2026-11-25: Access agent verification: api.anchorbrowser.io 403 (blocked), anchorbrowser.io 200 (site only, no API), engine.prod.bria-api.com 403 (blocked), bria.ai 200. Secrets need correct hosts.
+
+## Handoff for the next Access session (read this first)
+
+**Role.** Access agent for Beacon GEO. Only tells the user which accounts/tokens/hosts to set up and verifies them. No app code, no product questions.
+**Lead session to report to:** `session_01AWqBEXskyXE3wo3zzPAFSx` (send one line per service with `mcp__claude-code-remote__send_message` after each status change). Work on branch `claude/access-checklist`; fetch `claude/zealous-hamilton-nlkizt` each round.
+
+**Hard rules.** Never ask for tokens in chat; they go in environment settings (Network secrets, or env vars). Print only pass/fail, never values. Personal accounts only, no Explorium accounts (exception: Claude/Anthropic key, user approved using the Explorium Anthropic account for now). Commit ACCESS.md changes and push.
+
+**Decisions made (2026-11-25).** Removed: Stripe, Perplexity, Cloudflare, GitHub App, Slack, Unsplash. Infisical stays, Free tier, 1 org + 3 machine identities. DataForSEO optional/deferrable. Anchor Browser approved by the user for driving signups (user signs in via live view; agent creates tokens; user copies them into settings).
+
+**Open tasks, in order.**
+1. Verify the network secrets for `anchorbrowser.io` and `bria.ai` (try `api.anchorbrowser.io`; confirm Bria's API host; may need extra secret entries). A "Bria test" session is also verifying `BRIA_API_KEY`.
+2. With Anchor: Supabase (token + project ref), Vercel (token), Infisical (org + machine identity), Google OAuth client (+ PageSpeed key), OpenAI key, Gemini key, Anthropic key (env var only), optional DataForSEO.
+3. After each: user adds the secret to settings; a NEW session verifies with a read-only call; update status here, push, message the lead.
+
+**What does not carry over.** Chat history, subagents (none were running), task list (none open), and any secret added after a session starts (new sessions only). Everything needed is in this file.
