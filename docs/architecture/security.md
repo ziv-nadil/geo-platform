@@ -140,6 +140,8 @@ Project Templates are worth revisiting if we ever move to Enterprise.
 
 ### 1.5 Fixed identity set: residual risk and how we contain it
 
+> **Superseded for client-secret reads by [`isolation.md`](./isolation.md)** (proposal 2026-11-25): per-client reader identities bound to per-client GitHub environments via OIDC, and `beacon-worker` removed.
+
 **Residual risk.** One `beacon-worker` token can read **every client's** machine credentials. A bug in our broker, an
 RCE in a worker function, or a leaked token is a cross-tenant breach of the most valuable data we hold. With
 per-client identities, the same bug would expose one client.

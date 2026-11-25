@@ -172,3 +172,8 @@ Engine APIs are about 68% of full-scale cost. Infisical is the largest platform 
 - Infisical stays on **Free at launch** ($0): 3 machine identities fit the cap. Pro at first paying client or >5 identities. AWS Secrets Manager is the documented fallback (~$0.40/secret/mo, ~$56/mo for 140 secrets).
 - Removed from cost scope: Stripe fees (billing handled elsewhere, `BILLING_ENABLED=false`), Perplexity (adapter off by default), Unsplash. Cloudflare is optional.
 - Anthropic runs on the existing company Anthropic account.
+
+
+## Addendum 2026-11-25: per-client isolation
+
+The infisical.com/pricing page now resolves (**V**): Pro is $20 per identity per month billed annually or $23 monthly, with unlimited identities and 30-day audit retention. Dynamic secrets require Advanced ($40/$46). Hard per-client isolation (see [`../architecture/isolation.md`](../architecture/isolation.md) §4) costs about **$230/mo at 5 clients** (Infisical Pro + GitHub environments) and about **$110–135/mo at 20 clients** after moving to AWS Secrets Manager. Staying on Infisical at 20 clients would cost about $607/mo.
