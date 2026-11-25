@@ -24,6 +24,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { OnboardingStep } from "@/config/onboarding";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +78,7 @@ export function OnboardingWizard({
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "unavailable">("idle");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { toast, region } = useToasts();
+  const router = useRouter();
   const step = steps.find((s) => s.id === current)!;
   const idx = steps.findIndex((s) => s.id === current);
   const values = useMemo(() => state.values[current] ?? {}, [state.values, current]);
@@ -92,9 +94,10 @@ export function OnboardingWizard({
         const res = await saveProgress(orgId, stepId, serialisableValues(next.values[stepId] ?? {}), status === "idle" ? "not_started" : "in_progress", next.skipped[stepId] ? "skipped" : null);
         setSaveState(res.available ? "saved" : "unavailable");
         if (!res.available) toast(`Could not save your progress: ${res.error}`);
+        else router.refresh(); // sidebar progress comes from the server; keep it in step with the wizard
       }, 700);
     },
-    [orgId, steps, toast],
+    [orgId, steps, toast, router],
   );
 
   useEffect(() => () => void (timer.current && clearTimeout(timer.current)), []);

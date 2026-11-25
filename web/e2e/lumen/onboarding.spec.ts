@@ -52,8 +52,8 @@ test.describe("onboarding wizard (Lumen owner, org in onboarding)", () => {
     await page.getByRole("button", { name: /skip \/ not applicable/i }).click();
     await expect(page.getByText(/Skipped/).first()).toBeVisible();
     await expect.poll(pct, { timeout: 10_000 }).toBeGreaterThan(before);
-    const bar = Number(await page.getByRole("progressbar", { name: "Onboarding progress" }).first().getAttribute("aria-valuenow"));
-    expect(bar, "top progress bar should match the summary").toBe(await pct());
+    const bar = async () => Number(await page.getByRole("progressbar", { name: "Onboarding progress" }).first().getAttribute("aria-valuenow"));
+    await expect.poll(async () => (await bar()) === (await pct()), { timeout: 10_000, message: "every progress bar should match the summary" }).toBe(true);
     await page.getByRole("button", { name: /undo skip/i }).click();
     await expect.poll(pct, { timeout: 10_000 }).toBe(before);
   });
@@ -129,13 +129,13 @@ test.describe("onboarding wizard (Lumen owner, org in onboarding)", () => {
     await stepBtn(page, "Access method").click();
     await page.getByRole("radio").first().click();
     await page.getByRole("button", { name: /run live tests?/i }).click();
-    // Expected: "The test service is not configured". Any visible feedback is the minimum bar.
-    await expect(page.getByText(/not configured|sign in|unauthenticated|could not|failed to/i).first()).toBeVisible({ timeout: 15_000 });
+    // With the dev bypass the route answers: either a result ("All checks passed") or "not configured". Never silence.
+    await expect(page.getByText(/all checks passed|not configured|did not pass|could not run/i).first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/something went wrong|unexpected token/i)).toHaveCount(0);
   });
 
   test("test API returns not_configured JSON", async ({ page }) => {
-    const r = await page.request.post("/api/onboarding/10000000-0000-4000-b000-000000000002/test/access_method", { data: {} });
+    const r = await page.request.post("/api/onboarding/10000000-0000-4000-b000-000000000002/test/access_method", { data: {}, headers: { origin: page.url().replace(/^(https?:\/\/[^/]+).*/, "$1"), "x-beacon-intake": "1" } });
     expect(r.status(), "API should honour the dev auth bypass like the pages do").not.toBe(401);
     expect(JSON.stringify(await r.json().catch(() => ({})))).toMatch(/not_configured|pass|partial|fail/);
   });

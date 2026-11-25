@@ -637,7 +637,7 @@ function wizardStateFromProgress(p: Q.OnboardingProgress): WizardState {
           results[td.id] = {
             testId: td.id,
             status: c ? (c.ok ? "pass" : "fail") : t.status,
-            summary: c?.detail ?? (t.status === "pass" ? "Passed on the last run." : t.status === "partial" ? "Partly working." : "Failed on the last run."),
+            summary: (c ? (c.ok ? "Passed on the last run." : c.detail) : undefined) ?? (t.status === "pass" ? "Passed on the last run." : t.status === "partial" ? "Partly working." : "Failed on the last run."),
             missing: t.missing,
             checks: t.checks.map((x) => ({ label: x.label, status: x.ok ? "pass" : "fail", detail: x.detail })),
             ranAt: t.createdAt,
