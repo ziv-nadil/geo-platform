@@ -1,11 +1,11 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Lightbulb, Plus, Search, Sparkles, Upload } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Search, Upload } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardBody, CardHeader } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field, Input, Textarea } from "@/components/ui/input";
@@ -70,7 +70,9 @@ export function PromptsView({
   rows,
   engineIds,
   topics,
+  discovery,
 }: {
+  discovery?: React.ReactNode;
   orgId: string;
   orgSlug: string;
   qs: string;
@@ -82,7 +84,6 @@ export function PromptsView({
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
   const personas = [...new Set(rows.map((r) => r.persona).filter(Boolean) as string[])];
   const topicNames = [...new Set(rows.map((r) => r.topic).filter(Boolean) as string[])];
-  const suggestions = rows.filter((r) => r.source === "suggested" || r.source === "discovered");
   const [q, setQ] = useState("");
   const [topic, setTopic] = useState("all");
   const [persona, setPersona] = useState("all");
@@ -233,36 +234,7 @@ export function PromptsView({
         ) : null}
       </Card>
 
-      <Card>
-        <CardHeader
-          title={
-            <span className="inline-flex items-center gap-2">
-              <Sparkles className="size-4 text-accent" aria-hidden="true" /> Prompt discovery
-            </span>
-          }
-          description="Prompts found by the weekly discovery job from your ICP, Search Console queries and community threads. They are tracked like any other prompt."
-        />
-        <CardBody>
-          {suggestions.length === 0 ? (
-            <EmptyState icon={Lightbulb} title="No discovered prompts yet" description="The weekly discovery job adds questions your buyers ask where competitors appear and you don't. They show up here with a Discovered tag." />
-          ) : (
-            <ul className="grid gap-3 md:grid-cols-2">
-              {suggestions.slice(0, 8).map((s) => (
-                <li key={s.id} className="flex flex-col gap-2 rounded-sm border border-line p-3">
-                  <Link href={`/app/${orgSlug}/prompts/${s.id}${qs}`} className="text-sm font-medium text-ink hover:text-accent">
-                    {s.text}
-                  </Link>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {s.topic ? <Badge tone="outline">{s.topic}</Badge> : null}
-                    {s.persona ? <Badge tone="outline">{s.persona}</Badge> : null}
-                    <span className="text-xs text-ink-3">Visibility {s.visibility === null ? "not measured yet" : `${s.visibility.toFixed(0)}%`}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardBody>
-      </Card>
+      {discovery}
     </div>
   );
 }
