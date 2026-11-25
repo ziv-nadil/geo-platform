@@ -167,7 +167,7 @@ async function Overview(props: RouteProps) {
               sub: d.type === "owned" ? "Your site" : d.type === "ugc" ? "UGC / forum" : d.type,
               value: d.citations,
               highlight: d.type === "owned",
-              color: d.type === "owned" ? "#008c99" : "#8a929c",
+              color: d.type === "owned" ? "#4a45e0" : "#8b8e98",
             }))}
           />
         </CardBody>

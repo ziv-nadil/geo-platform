@@ -6,15 +6,15 @@
 export const SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"] as const;
 
 /** The client's own brand in competitive charts. */
-export const BRAND_SERIES = "#008c99";
+export const BRAND_SERIES = "#4a45e0";
 
 /** Competitor slots that pass all checks next to BRAND_SERIES, in fixed order. */
-export const COMPETITOR_SERIES = ["#eb6834", "#2a78d6", "#e87ba4", "#6250d6", "#eda100"] as const;
+export const COMPETITOR_SERIES = ["#eb6834", "#0b9a94", "#e87ba4", "#eda100", "#5b616c"] as const;
 
 export const CHART_INK = {
-  grid: "#e3e6ea",
-  axis: "#5f6874",
-  muted: "#8a929c",
+  grid: "#e6e6ea",
+  axis: "#4f535d",
+  muted: "#8b8e98",
   surface: "#ffffff",
 } as const;
 
@@ -22,5 +22,5 @@ export const STATUS_COLORS = {
   good: "#0f7b3d",
   warn: "#f0a91b",
   bad: "#c2312f",
-  neutral: "#8a929c",
+  neutral: "#8b8e98",
 } as const;

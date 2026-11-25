@@ -24,7 +24,7 @@ export function BarList({
           </div>
           <div className="flex items-center gap-2">
             <div className="h-3.5 flex-1 rounded-r-xs bg-subtle">
-              <div className="h-full rounded-r-xs" style={{ width: `${(it.value / top) * 100}%`, background: it.color ?? "#008c99" }} />
+              <div className="h-full rounded-r-xs" style={{ width: `${(it.value / top) * 100}%`, background: it.color ?? "#4a45e0" }} />
             </div>
             <span className={cn("w-12 shrink-0 text-right text-sm tabular", it.highlight ? "font-semibold text-ink" : "text-ink-2")}>
               {it.value.toLocaleString("en-US", { maximumFractionDigits: 1 })}

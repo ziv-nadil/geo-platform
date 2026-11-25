@@ -9,7 +9,7 @@ const base =
   "inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors select-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0";
 
 const variants: Record<ButtonVariant, string> = {
-  primary: "bg-accent text-white hover:bg-accent-hover active:bg-accent-press",
+  primary: "bg-ink text-white shadow-xs hover:bg-ink-2 active:bg-black",
   secondary: "bg-surface text-ink border border-line-strong hover:bg-subtle active:bg-muted-bg",
   ghost: "text-ink-2 hover:bg-subtle hover:text-ink active:bg-muted-bg",
   subtle: "bg-accent-soft text-accent-ink hover:bg-accent-soft-2",

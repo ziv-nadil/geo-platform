@@ -16,11 +16,11 @@ import { fmtDate } from "@/lib/ui/format";
 export const metadata = { title: "Citations & sources" };
 
 const TYPE_META: Record<SourceType, { label: string; color: string }> = {
-  owned: { label: "Your site", color: "#008c99" },
+  owned: { label: "Your site", color: "#4a45e0" },
   competitor: { label: "Competitor", color: "#eb6834" },
   earned: { label: "Earned media", color: "#2a78d6" },
   ugc: { label: "UGC / forum", color: "#e87ba4" },
-  other: { label: "Other", color: "#8a929c" },
+  other: { label: "Other", color: "#8b8e98" },
 };
 
 export default function CitationsPage(props: PageProps<"/app/[orgSlug]/citations">) {

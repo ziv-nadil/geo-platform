@@ -1,7 +1,7 @@
 import { cn } from "@/lib/ui/cn";
 
 /** 12–30 point sparkline: de-emphasised line, light area wash, accent end dot. Pure SVG (server-safe). */
-export function Sparkline({ data, className, color = "#0b7480", invert = false }: { data: number[]; className?: string; color?: string; invert?: boolean }) {
+export function Sparkline({ data, className, color = "#4a45e0", invert = false }: { data: number[]; className?: string; color?: string; invert?: boolean }) {
   const w = 96;
   const h = 32;
   const pad = 3;

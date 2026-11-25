@@ -1,5 +1,23 @@
 # Beacon GEO design system
 
+## Rebrand direction (Nov 2026): "precision instrument"
+
+Goal: techy, sophisticated, numbers-first, luxury high-end tech, still a clean light mode.
+
+**Research (brief).** Linear: near-achromatic UI with a single indigo accent used sparingly. Vercel Geist: one grotesk + mono pair on near-black/near-white, nine-step gray ramp, blue only for links/focus. Ramp: figures with stylistic sets, high contrast. Common thread across Linear / Vercel / Stripe / Ramp: one workhorse sans, monospace for figures and metadata, hairline structure, accent covering a small share of the screen. (Sources: third-party style summaries such as webdesignhot.com and refero.design; not official guidelines. Mercury not covered.)
+
+**Decisions.**
+- **Type:** Geist (UI and display, tight negative tracking on headings) + Geist Mono (eyebrows, section labels, URLs, `GEO` in the wordmark, `.num` utility). Inter removed. `font-variant-numeric: tabular-nums` and the `tnum` feature are on globally, so every metric, table and axis aligns.
+- **Ink palette:** `ink #0b0c0f` (19.6:1), `ink-2 #31343b`, `ink-3 #4f535d`, `ink-4 #5e626d`; canvas `#f7f7f8`; hairlines `#e6e6ea` / `#cfcfd6`. Primary buttons are ink, not accent.
+- **One accent:** "signal" indigo `accent #4338ca` (7.9:1 on white), soft washes `#eeedfb` / `#d9d7f6`. Used for links, focus, selected marks and the brand series in charts. Replaces the previous teal.
+- **Data-viz:** brand series `#4a45e0`. Competitor slots are now `#eb6834, #0b9a94, #e87ba4, #eda100, #5b616c`: the blue and purple slots were dropped because they sat too close to the indigo brand. Engine slots (series 1-5) are unchanged. Contrast of the new accent/ink values was computed; the competitor set was **not** re-run through the CVD validator, so charts keep legends and table values (orange, yellow, pink remain under 3:1 on white).
+- **Depth:** hairline borders first; `shadow-card` (inset top highlight + soft 1px + diffuse drop) on cards and stat tiles; `shadow-shot` for product screenshots; `shadow-pop` for floating layers.
+- **Logo:** ink rounded tile with a signal dot and two hairline arcs (indigo-tinted dot); wordmark is Geist semibold "Beacon" plus Geist Mono small-caps "GEO".
+- **Marketing:** centered hero with a framed real screenshot of the Overview, a hairline-grid backdrop faded by a radial mask, a two-up product section (Competitors, Content; images in `web/public/shots/`), and a dark closing banner. Imagery: `ArtBanner` (`web/src/components/marketing/art.tsx`) uses an Unsplash photo via `web/src/lib/unsplash.ts` only when `UNSPLASH_ACCESS_KEY` is set (server-side API call, revalidated daily, credit shown); without a key it renders the abstract `SignalArt` SVG. Nothing is hotlinked without a key.
+- **App shell:** active nav is an ink-on-subtle chip (accent on the active icon), section labels in mono caps.
+
+Previews (2x): `docs/design/preview/{home,pricing,overview,content,onboarding}.png`. Token values in the sections below that still show the old teal/Inter values are superseded by this section and by `globals.css`.
+
 Light mode only. A quiet, cool off-white canvas with white working surfaces separated by hairline borders (no heavy shadows), and one confident teal accent used for actions and for the client's own brand in charts. Tokens live in `web/src/app/globals.css` (`@theme`, Tailwind v4), so every token is a utility class (`bg-surface`, `text-ink-3`, `border-line`, `bg-accent`…).
 
 ## Tokens

@@ -135,7 +135,7 @@ export function CompetitorsView({ orgId, rows, trend, h2h, sample, brandName }: 
               </div>
               <ul className="flex flex-col gap-2 text-sm">
                 {[
-                  ["Only you", h.brandOnly, "#008c99"],
+                  ["Only you", h.brandOnly, "#4a45e0"],
                   [`Only ${vsRow.name}`, h.compOnly, vsRow.color],
                   ["Both", h.both, "#5f6874"],
                   ["Neither", h.neither, "#cfd4da"],
@@ -157,7 +157,7 @@ export function CompetitorsView({ orgId, rows, trend, h2h, sample, brandName }: 
                   <li key={e.engine} className="grid grid-cols-[120px_1fr_44px] items-center gap-2">
                     <EngineChip id={e.engine} short />
                     <div className="h-2.5 rounded-full bg-subtle">
-                      <div className="h-full rounded-full bg-[#008c99]" style={{ width: `${e.winRate}%` }} />
+                      <div className="h-full rounded-full bg-[#4a45e0]" style={{ width: `${e.winRate}%` }} />
                     </div>
                     <span className="text-right text-sm font-semibold text-ink tabular">{e.winRate.toFixed(0)}%</span>
                   </li>

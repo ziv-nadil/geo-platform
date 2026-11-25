@@ -33,7 +33,7 @@ export function Sidebar({ org, orgs, canSwitch }: { org: Org; orgs: Org[]; canSw
       <nav className="flex-1 overflow-y-auto px-3 pb-4">
         {NAV.map((group) => (
           <div key={group.section} className="mt-3 first:mt-1">
-            <p className="px-2 pb-1 text-2xs font-semibold tracking-wider text-ink-4 uppercase">{group.section}</p>
+            <p className="px-2 pb-1 font-mono text-2xs font-medium tracking-[0.12em] text-ink-4 uppercase">{group.section}</p>
             <ul className="flex flex-col gap-px">
               {group.items.map((item) => {
                 const href = `${base}${item.href}`;
@@ -45,7 +45,7 @@ export function Sidebar({ org, orgs, canSwitch }: { org: Org; orgs: Org[]; canSw
                       aria-current={active ? "page" : undefined}
                       className={cn(
                         "flex h-8 items-center gap-2.5 rounded-sm px-2 text-sm font-medium transition-colors",
-                        active ? "bg-accent-soft text-accent-ink" : "text-ink-2 hover:bg-subtle hover:text-ink",
+                        active ? "bg-subtle text-ink shadow-xs" : "text-ink-2 hover:bg-subtle hover:text-ink",
                       )}
                     >
                       <item.icon className={cn("size-4", active ? "text-accent" : "text-ink-3")} aria-hidden="true" />

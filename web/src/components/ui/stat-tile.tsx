@@ -38,14 +38,14 @@ export function StatTile({
   const good = dir === 0 ? null : (dir > 0) === upIsGood;
   const Icon = dir > 0 ? ArrowUpRight : dir < 0 ? ArrowDownRight : Minus;
   return (
-    <div className={cn("flex min-w-0 flex-col gap-2 rounded-md border border-line bg-surface p-4", className)}>
+    <div className={cn("flex min-w-0 flex-col gap-2 rounded-md border border-line bg-surface p-4 shadow-card", className)}>
       <div className="flex items-center gap-1.5 text-sm font-medium text-ink-3">
         <span className="truncate">{label}</span>
         {metric ? <MetricHelp id={metric} label={label} /> : null}
       </div>
       <div className="flex items-end justify-between gap-3">
         <div className="flex items-baseline gap-1">
-          <span className="font-display text-2xl font-semibold tracking-tight text-ink tabular">{value}</span>
+          <span className="font-display text-2xl font-semibold tracking-[-0.04em] text-ink tabular-nums">{value}</span>
           {unit ? <span className="text-md font-medium text-ink-3">{unit}</span> : null}
         </div>
         {trend && trend.length > 1 ? <Sparkline data={trend} invert={!upIsGood} className="mb-1 h-8 w-24" /> : null}
