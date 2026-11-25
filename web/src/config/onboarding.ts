@@ -1045,6 +1045,39 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     ],
   },
 
+  // 14b --------------------------------------------------------------------
+  {
+    id: 'youtube',
+    title: 'YouTube channel (education)',
+    short: 'YouTube',
+    icon: 'Video',
+    group: 'stack',
+    optional: true,
+    why: 'A separate expert-education channel turns each approved article into a short video whose titles, descriptions, chapters and captions link back to your blog. Uploads run hands-free after a one-time Google consent. The presenter is a branded AI persona, videos are marked as synthetic media and the description says the voice is AI.',
+    fields: [
+      { id: 'youtube_channel_name', label: 'Channel name', type: 'text', required: true, placeholder: 'Acme Insights', help: 'A branded name, never a person\'s name. Not your main brand channel.' },
+      { id: 'youtube_persona_name', label: 'Presenter persona', type: 'text', required: true, placeholder: 'Acme Insights Desk', help: 'A brand persona, not a real person. No titles or credentials.' },
+      { id: 'youtube_channel_url', label: 'Channel URL (after creating it)', type: 'url', placeholder: 'https://www.youtube.com/@acmeinsights' },
+    ],
+    instructions: [
+      {
+        title: 'One-time manual setup (YouTube cannot create channels through its API)',
+        steps: [
+          'Use a Google account owned by your company (for example youtube@acme.com). Sign in at youtube.com.',
+          'Click your avatar > Create a channel, and choose a Brand Account so ownership can move between people.',
+          'Name it as in the field above. Add the avatar and banner from your brand assets. In About, say the videos use an AI presenter voice and put your blog link first.',
+          'Verify the channel by phone (required for custom thumbnails). Defaults: category Education, made for kids: No.',
+          'Open the YouTube tab in Beacon and press Connect channel. Pick the Brand Account channel in Google\'s account picker and accept. We request upload and manage-captions access only; the token is stored in your vault and you can revoke it at myaccount.google.com/permissions.',
+          'Click Test here to confirm the channel is reachable.',
+        ],
+        links: [{ label: 'YouTube: create a channel with a Brand Account', href: 'https://support.google.com/youtube/answer/1646861' }],
+      },
+    ],
+    tests: [
+      { id: 'youtube_connected', label: 'Channel connected', description: 'Exchange the stored refresh token for an access token and call channels.list (1 quota unit). Fail: token revoked or expired (reconnect from the YouTube tab) or the Google account has no channel.', requires: ['youtube_channel_name'] },
+    ],
+  },
+
   // 15 ---------------------------------------------------------------------
   {
     id: 'review',

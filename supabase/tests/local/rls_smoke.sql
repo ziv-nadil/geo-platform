@@ -396,6 +396,32 @@ begin
 end $$;
 rollback;
 
+-- ---------------------------------------------------------------- youtube engine
+begin;
+select set_config('request.jwt.claims', json_build_object('sub', :'dana', 'role', 'authenticated', 'aal', 'aal1')::text, true);
+set local role authenticated;
+do $$
+declare n int; item uuid;
+begin
+  insert into public.content_items (org_id, title) values ('10000000-0000-4000-b000-000000000001', 'yt source') returning id into item;
+  insert into public.youtube_channels (org_id, persona_name) values ('10000000-0000-4000-b000-000000000001', 'Northwind Insights Desk');
+  insert into public.youtube_videos (org_id, content_item_id) values ('10000000-0000-4000-b000-000000000001', item);
+  select count(*) into n from public.youtube_videos; assert n = 1, 'dana sees her org video, got ' || n;
+  begin
+    insert into public.youtube_videos (org_id, content_item_id) values ('10000000-0000-4000-b000-000000000002', item);
+    raise exception 'FAIL: cross-tenant youtube_videos insert allowed';
+  exception when insufficient_privilege or check_violation or foreign_key_violation then null; end;
+  begin
+    insert into public.youtube_videos (org_id, content_item_id, status) values ('10000000-0000-4000-b000-000000000001', item, 'bogus');
+    raise exception 'FAIL: invalid status accepted';
+  exception when check_violation then null; end;
+  begin
+    insert into public.youtube_videos (org_id, content_item_id) values ('10000000-0000-4000-b000-000000000001', item);
+    raise exception 'FAIL: two live videos for one article';
+  exception when unique_violation then null; end;
+end $$;
+rollback;
+
 -- ---------------------------------------------------------------- structural checks
 do $$
 declare n int;

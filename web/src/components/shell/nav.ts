@@ -15,6 +15,7 @@ import {
   Smile,
   Swords,
   Clapperboard,
+  Video,
   type LucideIcon,
 } from "lucide-react";
 
@@ -44,6 +45,7 @@ export const NAV: { section: string; items: NavItem[] }[] = [
       { href: "/content", label: "Content", icon: PenLine },
       { href: "/content-gaps", label: "Content gaps", icon: FileSearch },
       { href: "/creators", label: "Creators", icon: Clapperboard },
+      { href: "/youtube", label: "YouTube", icon: Video },
       { href: "/outreach", label: "Outreach", icon: Megaphone },
     ],
   },

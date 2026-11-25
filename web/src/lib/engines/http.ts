@@ -17,6 +17,8 @@ export const EGRESS_ALLOWLIST = {
   dataforseo: ['api.dataforseo.com'],
   bria: ['engine.prod.bria-api.com'],
   cloudflare: ['api.cloudflare.com'],
+  elevenlabs: ['api.elevenlabs.io'],
+  youtube: ['oauth2.googleapis.com', 'www.googleapis.com', 'youtube.googleapis.com'],
 } as const;
 export type Integration = keyof typeof EGRESS_ALLOWLIST;
 

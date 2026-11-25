@@ -15,6 +15,7 @@ import * as gcloud from './gcloud';
 import * as github from './github';
 import * as gsc from './gsc';
 import * as slack from './slack';
+import * as youtube from './youtube';
 import type { TestContext, TestResult, Tester } from './types';
 
 export type { TestResult, Check, TestStatus } from './types';
@@ -25,7 +26,7 @@ export { awsExternalId } from './aws';
 export const TESTERS: Record<string, Tester> = {
   company, geo_readiness: geo.test, brand_book: brandBook, access_method: accessMethod,
   github: github.test, cms: cms.test, gsc: gsc.test, bing: bing.test, ga4: ga4.test, google_cloud: gcloud.test,
-  dns: dns.test, analytics_tools: analytics.test, cloud_storage: aws.test, cdn_crawlers: cloudflare.test, chat: slack.test,
+  dns: dns.test, analytics_tools: analytics.test, cloud_storage: aws.test, cdn_crawlers: cloudflare.test, chat: slack.test, youtube: youtube.test,
   review,
 };
 

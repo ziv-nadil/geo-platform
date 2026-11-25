@@ -38,6 +38,7 @@ export const STEP_FOLDERS: Record<string, string> = {
   cloud_storage: '/aws',
   cdn_crawlers: '/cloudflare',
   chat: '/slack',
+  youtube: '/youtube',
 };
 
 const ROLE_ENV: Record<InfisicalRole, string> = {
