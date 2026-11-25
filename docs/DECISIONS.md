@@ -12,3 +12,7 @@
 | 2026-11-25 | Staff visibility | Internal log only (staff writes show as "Agency team"); DPA wording covers staff support access. | As designed in security.md |
 
 **Note:** "Accept shared worker" and "full separation per client agent" conflict for the content agents. Needs a follow-up: per-client identities for client-facing content agents (cost ~+$20/client/mo), shared worker only for monitoring?
+| 2026-11-25 | Infisical region | US cloud. | No EU org at launch |
+| 2026-11-25 | GitHub step for non-Git CMS | Auto-skip, provided Git isn't needed anywhere else in the process (lead to verify). | Add skip logic to onboarding config |
+| 2026-11-25 | Domain-user access mode (clarified) | Client chooses ONE of: (a) share access with a dedicated email WE give them, or (b) a dedicated email THEY create for us. Both are dedicated agency-access identities. Whether we store that identity's password/TOTP is still to be confirmed. | Wizard step 3 keeps both modes; vault storage of login credentials to confirm |
+| 2026-11-25 | Per-client agent isolation | User asked what risk we take without full separation (answer pending: explained in follow-up). | Open |
