@@ -301,6 +301,41 @@ begin
 end $$;
 rollback;
 
+-- ---------------------------------------------------------------- content gaps: tenant RLS + admin-only approval
+begin;
+select set_config('request.jwt.claims', json_build_object('sub', :'sam', 'role', 'authenticated', 'aal', 'aal1')::text, true);
+set local role authenticated;
+do $$
+declare gid uuid; cid uuid; n int;
+begin
+  insert into public.content_gaps (org_id, group_key, label) values ('10000000-0000-4000-b000-000000000001', 't|p|f', 'Gap') returning id into gid;
+  insert into public.content_items (org_id, gap_id, title, content_type, status) values ('10000000-0000-4000-b000-000000000001', gid, 'L', 'listicle', 'draft') returning id into cid;
+  update public.content_items set status = 'in_review' where id = cid;
+  begin update public.content_items set status = 'approved' where id = cid; raise exception 'FAIL: member approved content';
+  exception when insufficient_privilege then null; end;
+  select count(*) into n from public.content_gaps where org_id = '10000000-0000-4000-b000-000000000002'; assert n = 0, 'no cross-tenant gaps';
+end $$;
+rollback;
+begin;
+select set_config('request.jwt.claims', json_build_object('sub', :'dana', 'role', 'authenticated', 'aal', 'aal1')::text, true);
+set local role authenticated;
+do $$
+declare cid uuid;
+begin
+  insert into public.content_items (org_id, title, content_type, status) values ('10000000-0000-4000-b000-000000000001', 'L', 'listicle', 'in_review') returning id into cid;
+  update public.content_items set status = 'approved' where id = cid;
+end $$;
+rollback;
+begin;
+select set_config('request.jwt.claims', json_build_object('sub', :'leo', 'role', 'authenticated', 'aal', 'aal1')::text, true);
+set local role authenticated;
+do $$
+begin
+  begin insert into public.content_gaps (org_id, group_key, label) values ('10000000-0000-4000-b000-000000000002', 'x', 'x'); raise exception 'FAIL: viewer wrote a gap';
+  exception when insufficient_privilege then null; end;
+end $$;
+rollback;
+
 -- ---------------------------------------------------------------- structural checks
 do $$
 declare n int;

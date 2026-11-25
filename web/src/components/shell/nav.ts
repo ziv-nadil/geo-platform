@@ -1,6 +1,7 @@
 import {
   Bot,
   ClipboardList,
+  FileSearch,
   FileText,
   Gauge,
   HeartPulse,
@@ -41,6 +42,7 @@ export const NAV: { section: string; items: NavItem[] }[] = [
       { href: "/site-health", label: "Site health", icon: HeartPulse },
       { href: "/crawlers", label: "AI crawlers", icon: Bot },
       { href: "/content", label: "Content", icon: PenLine },
+      { href: "/content-gaps", label: "Content gaps", icon: FileSearch },
       { href: "/creators", label: "Creators", icon: Clapperboard },
       { href: "/outreach", label: "Outreach", icon: Megaphone },
     ],

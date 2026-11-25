@@ -10,6 +10,27 @@ export interface MetricDef {
 }
 
 export const METRICS = {
+  gapScore: {
+    label: "Gap score",
+    definition: "How much a content gap is worth closing: prompts where competitors appear in AI answers and you don't, weighted by how much the prompt matters and how authoritative the cited sources are.",
+    formula: "Σ over gap prompts of importance × competitor presence × source authority",
+    note: "Higher is better to fix first. Recomputed from the last 30 days of runs whenever you detect gaps.",
+  },
+  gapImportance: {
+    label: "Prompt importance",
+    definition: "The weight you gave the prompts in this group (default 1). Business-critical prompts count more.",
+    formula: "mean prompts.importance across the group's gap prompts",
+  },
+  gapPresence: {
+    label: "Competitor presence",
+    definition: "How consistently competitors win these prompts: the share of runs where a competitor is mentioned or cited, plus 0.1 for each extra competitor (up to +0.5).",
+    formula: "runs with a competitor ÷ runs + 0.1 × (distinct competitors − 1), max 1.5",
+  },
+  gapAuthority: {
+    label: "Source authority",
+    definition: "How authoritative the domains AI engines cite for these prompts are, by source type (institutional and reference highest, social lowest). Neutral 0.4 when nothing is cited.",
+    formula: "citation-weighted mean of domain authority (0–1)",
+  },
   visibility: {
     label: "Visibility score",
     definition: "How prominently AI engines surface your brand when answering the prompts you track.",
