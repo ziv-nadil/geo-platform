@@ -134,10 +134,10 @@ alter table public.entity_candidates enable row level security;
 revoke all on public.entity_candidates from anon;
 grant select, update on public.entity_candidates to authenticated;
 create policy entity_candidates_select on public.entity_candidates
-  for select to authenticated using (public.can_read_org(org_id));
+  for select to authenticated using ((select private.can_read(org_id)));
 -- Members may confirm/ignore a candidate (status only is meaningful for the UI).
 create policy entity_candidates_update on public.entity_candidates
-  for update to authenticated using (public.can_edit_org(org_id)) with check (public.can_edit_org(org_id));
+  for update to authenticated using ((select private.can_write(org_id, 'member'))) with check ((select private.can_write(org_id, 'member')));
 
 alter table public.pipeline_state enable row level security;
 revoke all on public.pipeline_state from anon, authenticated;

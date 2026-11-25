@@ -103,7 +103,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
       { id: 'social_reddit', label: 'Reddit (brand account or subreddit)', type: 'url', placeholder: 'https://www.reddit.com/r/acme' },
       { id: 'social_instagram', label: 'Instagram', type: 'url', placeholder: 'https://www.instagram.com/acme' },
       { id: 'social_facebook', label: 'Facebook', type: 'url', placeholder: 'https://www.facebook.com/acme' },
-      { id: 'design_system_html', label: 'Design-system HTML', type: 'file', accept: '.html,.htm,.zip', help: 'A single HTML style guide (or a zip with its CSS/fonts) showing colors, type, buttons, cards. Export from Figma/Storybook or ask your designer.' },
+      { id: 'design_system_html', label: 'Design-system HTML', type: 'file', accept: '.html,.htm', help: 'A single self-contained HTML style guide (max 2 MB) showing colors, type, buttons, cards. Export from Figma/Storybook or ask your designer.' },
       { id: 'logo_light', label: 'Logo for light backgrounds', type: 'file', required: true, accept: '.svg,.png', help: 'SVG preferred. Transparent background, dark-colored logo.' },
       { id: 'logo_dark', label: 'Logo for dark backgrounds', type: 'file', required: true, accept: '.svg,.png', help: 'SVG preferred. Transparent background, light-colored logo.' },
       { id: 'favicon_light', label: 'Favicon for light mode', type: 'file', required: true, accept: '.ico,.png,.svg', help: 'At least 48x48 px. Square.' },

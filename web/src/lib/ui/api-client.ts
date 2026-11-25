@@ -77,7 +77,7 @@ export function saveProgress(orgId: string, stepId: string, data: Record<string,
   });
 }
 
-/** File uploads: no backend route yet (TODO backend: /api/onboarding/:orgId/files → Supabase Storage). */
+/** File uploads: POST /api/onboarding/:orgId/files (validated server-side, private Storage buckets). */
 export async function uploadFile(orgId: string, stepId: string, fieldId: string, file: File): Promise<ApiOutcome<{ path: string }>> {
   const fd = new FormData();
   fd.set("stepId", stepId);

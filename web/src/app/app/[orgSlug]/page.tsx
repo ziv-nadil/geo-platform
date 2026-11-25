@@ -62,7 +62,7 @@ async function Overview(props: RouteProps) {
 
       <div className="mt-6 grid gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-2">
-          <CardHeader title="Visibility by engine" help={<MetricHelp id="visibility" />} description="Share of answers that mention you, per engine · 3-day rolling average" />
+          <CardHeader title="Visibility by engine" help={<MetricHelp id="visibility" />} description="Mean visibility score per engine · 3-day rolling average" />
           <CardBody>
             <TrendChart data={trend} series={series} />
           </CardBody>
@@ -77,6 +77,7 @@ async function Overview(props: RouteProps) {
                   <Th className="text-right">
                     <span className="inline-flex items-center gap-1">Visibility <MetricHelp id="visibility" /></span>
                   </Th>
+                  <Th className="text-right">Mentioned in</Th>
                   <Th className="text-right">
                     <span className="inline-flex items-center gap-1">SoV <MetricHelp id="shareOfVoice" /></span>
                   </Th>
@@ -89,6 +90,7 @@ async function Overview(props: RouteProps) {
                       <EngineChip id={e.engine} short />
                     </Td>
                     <Td className="text-right font-semibold text-ink">{fmtMaybe(e.visibility, 1, "%")}</Td>
+                    <Td className="text-right">{fmtMaybe(e.pctMentioned ?? null, 1, "%")}</Td>
                     <Td className="text-right">{fmtMaybe(e.sov, 1, "%")}</Td>
                   </Tr>
                 ))}

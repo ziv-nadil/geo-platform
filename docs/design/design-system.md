@@ -56,8 +56,7 @@ Charts (`web/src/components/charts`): `TrendChart` (Recharts lines + legend + cr
 Pages are server components. They call only `web/src/lib/data.ts`, a thin adapter over the backend's query functions in `web/src/lib/server/queries` (RLS enforced). The adapter converts shapes, derives previous-period values (2× window minus current window), pivots series, and returns `Load<T>` (`ok` or `not_configured | unauthenticated | forbidden`). Pages render `LoadFail` / `NoData` states and never invent numbers. Mutations are server actions in `web/src/app/app/[orgSlug]/actions.ts` (run with RLS as the signed-in user) or the backend's `/api/*` routes (secrets, live tests, onboarding progress, admin org creation, billing portal).
 
 Adapter TODOs (no backend query yet; the UI shows an empty or reduced state):
-- Brand style fields (voice, audience, tone, rules) are stored in `organizations.settings.brand_kit`; a dedicated table/query would be cleaner.
-- Prompt volume, per-prompt daily trend, head-to-head (computed from the latest 1,000 answers), source-domain trend sparklines, site-health tasks, llms.txt status, robots.txt allow/block per bot, invoices list, MRR per account, onboarding file uploads (`/api/onboarding/:orgId/files`), `SERVICE_ACCOUNT_EMAIL` per org.
+- Prompt volume, per-prompt daily trend, head-to-head (computed from the latest 1,000 answers), source-domain trend sparklines, site-health tasks, llms.txt status, robots.txt allow/block per bot, invoices list, MRR per account, `SERVICE_ACCOUNT_EMAIL` per org.
 
 ## Auth and local QA
 

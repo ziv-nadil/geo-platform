@@ -102,7 +102,8 @@ export async function setCreatorStatus(orgId: string, creatorId: string, status:
 
 export async function saveBrandKit(orgId: string, style: BrandStyle, terminology: { use: string; avoid: string }[]) {
   return write(orgId, async (sql) => {
-    await sql`update public.organizations set settings = coalesce(settings, '{}'::jsonb) || jsonb_build_object('brand_kit', ${sql.json(JSON.parse(JSON.stringify(style)))}::jsonb) where id = ${orgId}`;
+    await sql`insert into public.brand_kits (org_id, style) values (${orgId}, ${sql.json(JSON.parse(JSON.stringify(style)))})
+              on conflict (org_id) do update set style = excluded.style`;
     await sql`delete from public.brand_voice_terms where org_id = ${orgId} and kind in ('use', 'avoid')`;
     for (const t of terminology) {
       if (t.avoid.trim()) await sql`insert into public.brand_voice_terms (org_id, kind, term, replacement) values (${orgId}, 'avoid', ${t.avoid.trim()}, ${t.use.trim() || null})`;
