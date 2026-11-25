@@ -42,7 +42,6 @@ begin
   begin perform private.client_visible_actor('00000000-0000-4000-a000-000000000001'); raise exception 'FAIL: client_visible_actor callable';
   exception when insufficient_privilege then null; end;
 end $$;
-insert into storage.objects (bucket_id, name) values ('brand-assets', '10000000-0000-4000-b000-000000000001/logo.svg');
 update public.organizations set name = 'Northwind Analytics (renamed)' where slug = 'northwind';
 do $$
 begin
@@ -332,6 +331,23 @@ set local role authenticated;
 do $$
 begin
   begin insert into public.content_gaps (org_id, group_key, label) values ('10000000-0000-4000-b000-000000000002', 'x', 'x'); raise exception 'FAIL: viewer wrote a gap';
+  exception when insufficient_privilege then null; end;
+end $$;
+rollback;
+
+-- ---------------------------------------------------------------- M5/L3: no direct storage writes, no direct member adds
+begin;
+select set_config('request.jwt.claims', json_build_object('sub', :'dana', 'role', 'authenticated', 'aal', 'aal1')::text, true);
+set local role authenticated;
+do $$
+begin
+  begin
+    insert into storage.objects (bucket_id, name, owner) values ('brand-assets', '10000000-0000-4000-b000-000000000001/evil.svg', auth.uid());
+    raise exception 'FAIL: member wrote to brand-assets directly';
+  exception when insufficient_privilege then null; end;
+  begin
+    insert into public.memberships (org_id, user_id, role) values ('10000000-0000-4000-b000-000000000001', '00000000-0000-4000-a000-000000000022', 'member');
+    raise exception 'FAIL: admin/owner added a user without an invitation';
   exception when insufficient_privilege then null; end;
 end $$;
 rollback;

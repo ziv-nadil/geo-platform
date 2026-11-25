@@ -1,11 +1,13 @@
 import "server-only";
-import { createHash } from "node:crypto";
 import { connection } from "next/server";
-import { currentClaims, dbConfigured, runAs, withRls, withService, type JwtClaims, type TxSql } from "@/lib/server/db";
+import { currentClaims, dbConfigured, devBypassClaims, runAs, withRls, withService, type JwtClaims, type TxSql } from "@/lib/server/db";
+import { awsExternalId } from "@/lib/server/integrations/aws";
+import { DNS_TXT_NAME, dnsTxtValue } from "@/lib/server/integrations/dns";
 import * as Q from "@/lib/server/queries";
 import { ONBOARDING_STEPS } from "@/config/onboarding";
 import { BRAND_SERIES, COMPETITOR_SERIES } from "@/lib/ui/chart-colors";
 import { engineMeta } from "@/lib/ui/engines";
+import { withTrackedCompetitors } from "@/lib/ui/sov";
 import type {
   AdminOrg,
   ApiKey,
@@ -46,7 +48,7 @@ import type {
   UrlStat,
   Viewer,
 } from "@/lib/ui/data-types";
-import type { StepStatus, WizardState } from "@/lib/ui/onboarding-logic";
+import { overallProgress, type StepStatus, type WizardState } from "@/lib/ui/onboarding-logic";
 
 /**
  * Data adapter: the only place pages touch the backend query layer (src/lib/server/queries).
@@ -61,19 +63,7 @@ import type { StepStatus, WizardState } from "@/lib/ui/onboarding-logic";
 
 /* ------------------------------------------------------------------ identity */
 
-export function devBypassClaims(): JwtClaims | null {
-  const id = process.env.DEV_AUTH_USER_ID ?? process.env.DEV_IMPERSONATE_USER_ID;
-  const url = process.env.DATABASE_URL;
-  if (!id || !url || process.env.NODE_ENV === "production" || process.env.VERCEL || process.env.VERCEL_ENV) return null;
-  let host = "";
-  try {
-    host = new URL(url).hostname;
-  } catch {
-    return null;
-  }
-  if (!["localhost", "127.0.0.1", "::1"].includes(host)) return null;
-  return { sub: id, role: "authenticated", aal: process.env.DEV_AUTH_AAL === "aal1" ? "aal1" : "aal2" };
-}
+export { devBypassClaims } from "@/lib/server/db";
 
 /** Run backend queries as the dev-bypass user when active, otherwise as the session user. */
 async function as<T>(fn: () => Promise<T>): Promise<T> {
@@ -151,10 +141,9 @@ export async function getOrgBySlug(slug: string): Promise<Load<Org | null>> {
   });
 }
 
+/** Sidebar percentage: the same computation the wizard uses (skips count as done). */
 function onboardingPctFromServer(p: Q.OnboardingProgress) {
-  const steps = p.steps.filter((s) => s.stepId !== "review");
-  const score = steps.reduce((s, x) => s + (x.status === "complete" ? 1 : x.status === "needs_attention" ? 0.5 : 0), 0);
-  return steps.length ? Math.round((score / steps.length) * 100) : 0;
+  return overallProgress(ONBOARDING_STEPS, wizardStateFromProgress(p));
 }
 
 /** Active staff grant for this org ("view as"). Service read of the caller's own grants only. */
@@ -246,7 +235,7 @@ export async function getOverview(orgId: string, f: Filters): Promise<Load<Overv
 
 export async function getShareOfVoice(orgId: string, f: Filters): Promise<Load<{ rows: SovRow[]; trend: TrendPoint[] }>> {
   return as(async () => {
-    const [cur, wide] = await Promise.all([Q.getCompetitorSov(orgId, qf(f)), Q.getCompetitorSov(orgId, qf(f, f.range * 2))]);
+    const [cur, wide, tracked] = await Promise.all([Q.getCompetitorSov(orgId, qf(f)), Q.getCompetitorSov(orgId, qf(f, f.range * 2)), Q.listCompetitors(orgId)]);
     return unwrap(Promise.resolve(cur), (c) => {
       // Previous period = (2× window) − (current window), per entity.
       const prevMentions = new Map<string, number>();
@@ -255,7 +244,7 @@ export async function getShareOfVoice(orgId: string, f: Filters): Promise<Load<{
       let slot = 0;
       const colors = new Map<string, string>();
       for (const e of c.entities) colors.set(e.entityId, e.entityType === "brand" ? BRAND_SERIES : e.color ?? COMPETITOR_SERIES[slot++ % COMPETITOR_SERIES.length]!);
-      const rows: SovRow[] = c.entities
+      const rows: SovRow[] = withTrackedCompetitors(c.entities
         .map((e) => ({
           id: e.entityId,
           name: e.name,
@@ -266,7 +255,7 @@ export async function getShareOfVoice(orgId: string, f: Filters): Promise<Load<{
           mentions: e.mentions,
           avgPosition: r1(e.avgPosition),
           sentiment: e.sentiment === null ? null : Math.round(e.sentiment * 100),
-        }))
+        })), tracked.ok ? tracked.data : [])
         .sort((a, b) => b.sov - a.sov);
       const days = [...new Set(c.series.map((s) => s.day))].sort();
       const trend = days.map((date) => {
@@ -629,9 +618,7 @@ export async function getIntegrations(orgId: string): Promise<Load<Integration[]
 
 /* ------------------------------------------------------------------ onboarding */
 
-export async function getOnboardingState(orgId: string): Promise<Load<WizardState>> {
-  return as(() =>
-    unwrap(Q.getOnboardingProgress(orgId), (p) => {
+function wizardStateFromProgress(p: Q.OnboardingProgress): WizardState {
       const state: WizardState = { values: {}, tests: {}, skipped: {}, serverStatus: {} };
       for (const s of p.steps) {
         const data = { ...(s.data ?? {}) } as Record<string, unknown>;
@@ -652,7 +639,7 @@ export async function getOnboardingState(orgId: string): Promise<Load<WizardStat
           results[td.id] = {
             testId: td.id,
             status: c ? (c.ok ? "pass" : "fail") : t.status,
-            summary: c?.detail ?? (t.status === "pass" ? "Passed on the last run." : t.status === "partial" ? "Partly working." : "Failed on the last run."),
+            summary: (c ? (c.ok ? "Passed on the last run." : c.detail) : undefined) ?? (t.status === "pass" ? "Passed on the last run." : t.status === "partial" ? "Partly working." : "Failed on the last run."),
             missing: t.missing,
             checks: t.checks.map((x) => ({ label: x.label, status: x.ok ? "pass" : "fail", detail: x.detail })),
             ranAt: t.createdAt,
@@ -661,27 +648,30 @@ export async function getOnboardingState(orgId: string): Promise<Load<WizardStat
         state.tests[t.stepId] = results;
       }
       return state;
-    }),
-  );
 }
 
-/** Values substituted into onboarding instructions. Unset values stay as visible {{PLACEHOLDERS}}. */
+export async function getOnboardingState(orgId: string): Promise<Load<WizardState>> {
+  return as(() => unwrap(Q.getOnboardingProgress(orgId), wizardStateFromProgress));
+}
+
+/**
+ * Values substituted into onboarding instructions. DNS/ExternalId values come from the same derivation the
+ * backend verifies against (DNS_VERIFY_SECRET / AWS_EXTERNAL_ID_SECRET). Unset ones are omitted; the UI shows a
+ * "Not set yet" chip for them.
+ */
 export async function getOnboardingPlaceholders(orgId: string): Promise<Record<string, string>> {
   const env = process.env;
   const out: Record<string, string> = {};
-  const put = (k: string, v: string | undefined) => {
+  const put = (k: string, v: string | null | undefined) => {
     if (v) out[k] = v;
   };
   put("AGENCY_EMAIL", env.AGENCY_EMAIL);
   put("AGENCY_GITHUB_USER", env.AGENCY_GITHUB_USER);
   put("ADS_MANAGER_ID", env.ADS_MANAGER_ID);
   put("AWS_PRINCIPAL_ARN", env.AWS_PRINCIPAL_ARN);
-  out.DNS_TXT_NAME = "_beacon-verify";
-  if (env.ONBOARDING_TOKEN_SALT) {
-    const h = (k: string) => createHash("sha256").update(`${k}:${orgId}:${env.ONBOARDING_TOKEN_SALT}`).digest("hex");
-    out.DNS_TXT_VALUE = `beacon-site-verification=${h("dns").slice(0, 32)}`;
-    out.AWS_EXTERNAL_ID = `bgeo-${h("aws").slice(0, 20)}`;
-  }
+  out.DNS_TXT_NAME = DNS_TXT_NAME;
+  put("DNS_TXT_VALUE", dnsTxtValue(orgId));
+  put("AWS_EXTERNAL_ID", awsExternalId(orgId));
   // TODO(backend): SERVICE_ACCOUNT_EMAIL is created per client in step 9 and should come from the DB.
   return out;
 }

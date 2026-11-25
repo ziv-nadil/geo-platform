@@ -91,23 +91,33 @@ export function runAs<T>(claims: JwtClaims, fn: () => Promise<T>): Promise<T> {
 /**
  * Resolve the current caller's JWT claims:
  *   1. runAs() override (scripts)
- *   2. Supabase session via getClaims() (verified JWT; never getSession())
- *   3. local dev only: DEV_IMPERSONATE_USER_ID (+ DEV_IMPERSONATE_AAL) when Supabase Auth is not configured
+ *   2. local dev only: devBypassClaims() (checked before the session, same as the pages)
+ *   3. Supabase session via getClaims() (verified JWT; never getSession())
  */
 export async function currentClaims(): Promise<JwtClaims | null> {
   const o = override.getStore();
   if (o) return o;
+  const bypass = devBypassClaims();
+  if (bypass) return bypass;
   const supabase = await createSupabaseServerClient();
   if (supabase) {
     const { data } = await supabase.auth.getClaims();
     const c = data?.claims as JwtClaims | undefined;
     return c?.sub ? { sub: c.sub, role: 'authenticated', aal: (c.aal as 'aal1' | 'aal2') ?? 'aal1', email: c.email as string | undefined } : null;
   }
-  const dev = process.env.DEV_IMPERSONATE_USER_ID;
-  if (dev && devBypassAllowed()) {
-    return { sub: dev, role: 'authenticated', aal: process.env.DEV_IMPERSONATE_AAL === 'aal2' ? 'aal2' : 'aal1' };
-  }
   return null;
+}
+
+/**
+ * Local dev identity (shared by pages in lib/data.ts and route handlers): DEV_AUTH_USER_ID or
+ * DEV_IMPERSONATE_USER_ID, with DEV_AUTH_AAL / DEV_IMPERSONATE_AAL (default aal2 for DEV_AUTH, aal1 otherwise).
+ * Null unless devBypassAllowed(), so it can never apply in production, on Vercel or against a remote DB.
+ */
+export function devBypassClaims(): JwtClaims | null {
+  const id = process.env.DEV_AUTH_USER_ID ?? process.env.DEV_IMPERSONATE_USER_ID;
+  if (!id || !devBypassAllowed()) return null;
+  const aal = process.env.DEV_AUTH_AAL ?? process.env.DEV_IMPERSONATE_AAL ?? (process.env.DEV_AUTH_USER_ID ? 'aal2' : 'aal1');
+  return { sub: id, role: 'authenticated', aal: aal === 'aal2' ? 'aal2' : 'aal1' };
 }
 
 /**

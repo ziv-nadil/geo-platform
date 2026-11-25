@@ -1,9 +1,16 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("platform admin, aal1 (no MFA step-up)", () => {
-  test("console loads but flags that MFA is required for client access", async ({ page }) => {
+  test("/admin requires MFA entirely: no console content", async ({ page }) => {
     await page.goto("/admin");
-    await expect(page.locator("body")).toContainText(/MFA required/i);
+    await expect(page.getByTestId("admin-mfa-required")).toContainText(/MFA required/i);
+    await expect(page.locator("body")).not.toContainText("Client accounts");
+    await expect(page.locator("body")).not.toContainText("Northwind");
+  });
+  test("/admin/settings requires MFA too", async ({ page }) => {
+    await page.goto("/admin/settings");
+    await expect(page.getByTestId("admin-mfa-required")).toBeVisible();
+    await expect(page.locator("body")).not.toContainText("Platform settings");
   });
   test("client org data is not reachable at aal1", async ({ page }) => {
     await page.goto("/app/northwind");

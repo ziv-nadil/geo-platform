@@ -5,6 +5,7 @@ import { LoadFail } from "@/components/dashboard/page-kit";
 import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/ui/logo";
 import { getViewer } from "@/lib/data";
+import { adminGate } from "@/lib/ui/admin-gate";
 
 export const metadata = { title: "Super admin" };
 
@@ -23,7 +24,17 @@ async function Gate({ children }: { children: ReactNode }) {
     if (viewer.reason === "forbidden") notFound();
     return <main className="mx-auto max-w-xl px-6 py-24"><LoadFail result={viewer} /></main>;
   }
-  if (!viewer.data.isPlatformAdmin) notFound();
+  const gate = adminGate(viewer.data.isPlatformAdmin, viewer.data.aal);
+  if (gate === "not_found") notFound();
+  if (gate === "mfa_required") {
+    return (
+      <main className="mx-auto max-w-xl px-6 py-24 text-center" data-testid="admin-mfa-required">
+        <h1 className="text-lg font-semibold text-ink">MFA required</h1>
+        <p className="mt-2 text-sm text-ink-3">The admin console needs an MFA-verified (aal2) session. Sign in again and complete the authenticator step.</p>
+        <Link href="/login?next=/admin" className="mt-4 inline-block text-sm font-medium text-accent hover:underline">Sign in with MFA</Link>
+      </main>
+    );
+  }
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-line bg-surface">
@@ -35,7 +46,7 @@ async function Gate({ children }: { children: ReactNode }) {
             <Link href="/admin/settings" className="rounded-sm px-2.5 py-1.5 font-medium text-ink-2 hover:bg-subtle hover:text-ink">Platform settings</Link>
           </nav>
           <span className="ml-auto text-sm text-ink-3">
-            {viewer.data.name} · {viewer.data.aal === "aal2" ? "MFA verified" : "MFA required for client access"}
+            {viewer.data.name} · MFA verified
           </span>
         </div>
       </header>

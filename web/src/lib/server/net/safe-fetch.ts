@@ -1,14 +1,16 @@
 import 'server-only';
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
+import { Agent } from 'undici';
 
 /**
  * safeFetch: the only outbound HTTP client in lib/server/** (docs/architecture/security.md §5.3).
  *
  * - Host allowlist per integration profile. Client-supplied hosts (a WordPress site, a CDN URL) are
  *   accepted only via `extraHosts`, which callers take from the org's own saved onboarding answers.
- * - Every request resolves DNS and refuses private, loopback, link-local, CGNAT, multicast and
- *   cloud-metadata addresses (SSRF), and re-checks after each redirect (max 3, manual).
+ * - Every request resolves DNS once, refuses private, loopback, link-local, CGNAT, multicast and
+ *   cloud-metadata addresses (SSRF), and connects to exactly the address it checked (pinned via an undici
+ *   `connect.lookup` hook, so DNS rebinding between check and connect is impossible). Re-checked after each redirect (max 3, manual).
  * - https only (http is allowed only for the `scrape` profile's first hop when the caller opts in).
  * - Credentials (Authorization, cookies, API-key headers) are never forwarded to a different host.
  * - 15 s timeout and 5 MB response cap.
@@ -88,20 +90,23 @@ export function isPrivateAddress(ip: string): boolean {
     const x = ip.toLowerCase();
     if (x === '::' || x === '::1') return true;
     if (x.startsWith('::ffff:')) return isPrivateAddress(x.slice(7));
+    if (x.startsWith('2002:')) return true; // 6to4 embeds an arbitrary IPv4 address
+    if (/^::(\d+\.\d+\.\d+\.\d+|[0-9a-f]{1,4}:[0-9a-f]{1,4})$/.test(x)) return true; // IPv4-compatible (::a.b.c.d / ::ab:cd)
     return /^(fc|fd|fe8|fe9|fea|feb|ff)/.test(x) || x.startsWith('64:ff9b:') || x.startsWith('2001:db8');
   }
   return true;
 }
 
-async function assertPublicHost(host: string): Promise<void> {
+/** Validates the host and returns the one address the connection must use (null for IP literals, which are used as-is). */
+async function resolvePublic(host: string): Promise<{ address: string; family: number } | null> {
   if (isIP(host)) {
     if (isPrivateAddress(host)) throw new SafeFetchError('private_address', `blocked address ${host}`);
-    return;
+    return null;
   }
   if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.internal') || host.endsWith('.local')) {
     throw new SafeFetchError('private_address', `blocked host ${host}`);
   }
-  let addrs: { address: string }[];
+  let addrs: { address: string; family: number }[];
   try {
     addrs = await lookup(host, { all: true, verbatim: true });
   } catch {
@@ -110,6 +115,19 @@ async function assertPublicHost(host: string): Promise<void> {
   if (!addrs.length || addrs.some((a) => isPrivateAddress(a.address))) {
     throw new SafeFetchError('private_address', `${host} resolves to a non-public address`);
   }
+  return addrs[0]!;
+}
+
+/** undici dispatcher whose DNS lookup always answers with the already-validated address (TLS still verifies the hostname). */
+export function pinnedAgent(pin: { address: string; family: number }): Agent {
+  return new Agent({
+    connect: {
+      lookup: ((_host: string, opts: { all?: boolean }, cb: (...a: unknown[]) => void) => {
+        if (opts?.all) cb(null, [{ address: pin.address, family: pin.family }]);
+        else cb(null, pin.address, pin.family);
+      }) as never,
+    },
+  });
 }
 
 async function readCapped(res: Response, maxBytes: number): Promise<Uint8Array> {
@@ -158,18 +176,21 @@ export async function safeFetch(input: string | URL | Request, opts: SafeFetchOp
       if (!hostAllowed(url.hostname, integration, extraHosts)) {
         throw new SafeFetchError('host_not_allowed', `${url.hostname} is not allowed for ${integration}`);
       }
-      await assertPublicHost(url.hostname);
+      const pin = await resolvePublic(url.hostname);
+      const agent = pin ? pinnedAgent(pin) : null;
 
       let res: Response;
       try {
-        res = await fetch(req, { redirect: 'manual', signal: controller.signal, cache: 'no-store' });
+        res = await fetch(req, { redirect: 'manual', signal: controller.signal, cache: 'no-store', ...(agent ? { dispatcher: agent } : {}) } as RequestInit);
       } catch (e) {
+        void agent?.destroy();
         if (controller.signal.aborted) throw new SafeFetchError('timeout', `timed out after ${timeoutMs} ms`);
         throw new SafeFetchError('network', e instanceof Error ? e.message : 'network error');
       }
 
       if (res.status >= 300 && res.status < 400 && res.headers.get('location')) {
         await res.body?.cancel();
+        void agent?.close();
         const next = new URL(res.headers.get('location')!, url);
         const headers = new Headers(req.headers);
         if (next.hostname !== originalHost) for (const h of CREDENTIAL_HEADERS) headers.delete(h);
@@ -178,7 +199,12 @@ export async function safeFetch(input: string | URL | Request, opts: SafeFetchOp
         continue;
       }
 
-      const body = await readCapped(res, maxBytes);
+      let body: Uint8Array;
+      try {
+        body = await readCapped(res, maxBytes);
+      } finally {
+        void agent?.close();
+      }
       const out = new Response(body.byteLength ? (body as unknown as BodyInit) : null, { status: res.status, statusText: res.statusText, headers: res.headers });
       Object.defineProperty(out, 'url', { value: req.url });
       return out;
