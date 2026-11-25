@@ -49,5 +49,7 @@ Read this first when resuming in a fresh or compacted session.
 
 - 02:58 UTC: merged Integration, QA, Security review, Content gaps, Billing, Reports, Fixes (renumbered the security_fixes migration to 000700). All tests/build green. Running: Discovery (claude/discovery), Design polish (claude/design-polish). Remaining: Site, deploy (needs tokens), Athena UI (needs the computer).
 
+- 04:00 UTC: Discovery + Design polish merged; build/tsc green. Usage warning reached, so Site is deferred until the next reset (~06:50 UTC). Remaining: Site, deploy (tokens), Athena UI (computer).
+
 ## Next
 - Wave 2: QA + security review + integrate. Deploy once VERCEL_TOKEN exists.
