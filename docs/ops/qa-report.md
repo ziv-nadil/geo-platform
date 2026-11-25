@@ -113,7 +113,7 @@ Suite: `web/e2e/` (Playwright 1.63, chromium). Run all: `web/e2e/run.sh` (one de
 - Steps: Lumen onboarding. Header progress bar `aria-valuenow=25`, summary "21% complete · 3 of 14". Skip an optional step: summary goes to 29%, the top bar stays 25 (it is not driven by step status).
 - Expected: one number. Actual: two sources; the top bar seems stale or computed differently.
 - Hints: `web/src/components/onboarding/wizard.tsx`, `web/src/components/ui/progress.tsx`.
-- Test: `progress bar is consistent with the summary text` (FAIL). `skip an optional step and undo` also asserts the top bar moves; see its result in the table.
+- Test: `progress bar is consistent with the summary text` (FAIL). `skip an optional step and undo` (FAIL) fails only on the top-bar assertion; the summary and undo work.
 
 ### B6 Skip not persisted
 - Steps: skip Cloudflare, reload, step is back to not skipped. Same `PUT progress` 401 as B3, so possibly dev-only; recheck after B3 is fixed.
