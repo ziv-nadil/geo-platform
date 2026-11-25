@@ -77,7 +77,11 @@ export async function enqueueDaily(
     const wanted = orgEngines.length
       ? orgEngines.filter((r) => r.enabled).map((r) => r.engine_id)
       : [...globallyActive];
-    const engines = wanted.filter(isEngineId).filter((e) => globallyActive.has(e) && configured.has(e));
+    const [planRow] = await sql<{ engine_limit: number | null }[]>`
+      select pl.engine_limit from public.organizations o join public.plans pl on pl.id = o.plan where o.id = ${org.id}`;
+    const engineCap = planRow?.engine_limit ?? null; // plan limit: never fan out to more engines than the plan includes
+    const allowed = wanted.filter(isEngineId).filter((e) => globallyActive.has(e) && configured.has(e));
+    const engines = engineCap === null ? allowed : allowed.slice(0, engineCap);
 
     const prompts = await sql<{ id: string; tier: 'core' | 'tail'; funnel_stage: string | null; created_at: Date }[]>`
       select id, tier, funnel_stage::text, created_at from public.prompts

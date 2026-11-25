@@ -3,7 +3,7 @@
 import { CreditCard, ExternalLink, KeyRound, Mail, Plus, RefreshCw, ShieldCheck, Trash2, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createApiKey, inviteMember, removeMember, revokeApiKey, revokeInvitation, saveOrgGeneral, setMemberRole } from "@/app/app/[orgSlug]/actions";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +59,8 @@ export function SettingsView({
 }) {
   const router = useRouter();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [active, setActive] = useState(tab);
+  const [limitHit, setLimitHit] = useState<string | null>(null);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [general, setGeneral] = useState({ name: org.name, website: org.domain ? `https://${org.domain}` : "" });
@@ -74,7 +76,7 @@ export function SettingsView({
   const pending = invitations.filter((i) => i.status === "pending");
 
   return (
-    <Tabs defaultValue={tab}>
+    <Tabs value={active} onValueChange={setActive}>
       <TabsList>
         <TabsTrigger value="general">General</TabsTrigger>
         <TabsTrigger value="members">Members & roles</TabsTrigger>
@@ -119,6 +121,7 @@ export function SettingsView({
             description={`${members.length} ${members.length === 1 ? "person" : "people"} in ${org.name}. Agency staff are never listed and do not use a seat.`}
             actions={canAdmin ? <InviteDialog onInvite={async (email, role) => {
               const r = await inviteMember(org.id, email, role);
+              setLimitHit(!r.ok && r.code === "plan_limit" ? r.error : null);
               if (r.ok && r.data) {
                 setInviteLink(`${window.location.origin}${r.data}`);
                 router.refresh();
@@ -127,6 +130,12 @@ export function SettingsView({
             }} /> : null}
           />
           <Notice msg={msg} />
+          {limitHit ? (
+            <div className="mx-5 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-warn/30 bg-warn-soft px-3 py-2" role="status">
+              <span className="text-sm text-ink">{limitHit}</span>
+              <Button size="sm" onClick={() => setActive("billing")}>See plans</Button>
+            </div>
+          ) : null}
           {inviteLink ? (
             <div className="mx-5 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-good/30 bg-good-soft px-3 py-2">
               <span className="text-sm text-good">Invitation created. Send this link; it works once and expires in 7 days.</span>
@@ -367,19 +376,64 @@ export function SettingsView({
       </TabsContent>
 
       <TabsContent value="billing">
-        <BillingPanel billing={billing} orgId={org.id} />
+        <BillingPanel billing={billing} orgId={org.id} canAdmin={canAdmin} />
       </TabsContent>
     </Tabs>
   );
 }
 
-function BillingPanel({ billing, orgId }: { billing: Billing | null; orgId: string }) {
+type InvoiceRow = { id: string; number: string | null; status: string | null; currency: string; amountPaid: number; amountDue: number; created: string; hostedUrl: string | null; pdf: string | null };
+
+function Meter({ label, used, limit }: { label: string; used: number; limit: number | null }) {
+  const pct = limit ? (used / limit) * 100 : 0;
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-xs text-ink-4">{label}</p>
+      <p className="text-sm text-ink">
+        <strong className="font-semibold tabular">{used}</strong>
+        {limit ? ` of ${limit}` : " · unlimited"}
+      </p>
+      {limit ? <Progress value={Math.min(pct, 100)} label={`${label} used`} /> : null}
+      {limit && pct >= 100 ? <p className="text-xs text-bad">Limit reached. Upgrade to add more.</p> : limit && pct >= 80 ? <p className="text-xs text-warn">Almost at your limit.</p> : null}
+    </div>
+  );
+}
+
+function BillingPanel({ billing, orgId, canAdmin }: { billing: Billing | null; orgId: string; canAdmin: boolean }) {
   const [portalMsg, setPortalMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [interval, setInterval] = useState<"month" | "year">("month");
+  const [buying, setBuying] = useState<string | null>(null);
+  const [invoices, setInvoices] = useState<InvoiceRow[] | null>(null);
+  const [invoiceMsg, setInvoiceMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!canAdmin) return;
+    let live = true;
+    fetch(`/api/billing/invoices?orgId=${orgId}`)
+      .then(async (r) => {
+        const b = (await r.json().catch(() => ({}))) as { invoices?: InvoiceRow[]; status?: string; error?: string };
+        if (!live) return;
+        if (r.ok) setInvoices(b.invoices ?? []);
+        else setInvoiceMsg(b.status === "not_configured" ? "Stripe is not configured for this environment." : "Could not load invoices.");
+      })
+      .catch(() => live && setInvoiceMsg("Could not load invoices."));
+    return () => {
+      live = false;
+    };
+  }, [orgId, canAdmin]);
+
+  async function post(url: string, payload: object, fail: string) {
+    const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+    const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string; status?: string };
+    if (res.ok && body.url) window.location.assign(body.url);
+    else setPortalMsg(body.status === "not_configured" ? "Stripe is not configured for this environment." : body.error === "already_subscribed" ? "This account already has a subscription. Change plan in the Stripe portal." : body.error === "mfa_required" ? "Verify with your second factor, then try again." : fail);
+  }
+
+  const hasSub = !!billing?.subscriptionStatus && !["canceled", "incomplete_expired"].includes(billing.subscriptionStatus);
   if (!billing || (!billing.planName && !billing.subscriptionStatus)) {
     return <EmptyState icon={CreditCard} title="No subscription" description="This account has no plan yet. The agency starts the subscription after onboarding." />;
   }
-  const prompts = billing.usage.find((u) => /prompt/.test(u.metric));
   return (
     <div className="grid gap-6 xl:grid-cols-3">
       <Card className="xl:col-span-2">
@@ -394,10 +448,7 @@ function BillingPanel({ billing, orgId }: { billing: Billing | null; orgId: stri
                 setBusy(true);
                 setPortalMsg(null);
                 try {
-                  const res = await fetch(`/api/billing/portal`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ orgId }) });
-                  const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string; status?: string };
-                  if (res.ok && body.url) window.location.assign(body.url);
-                  else setPortalMsg(res.status === 404 ? "The billing portal endpoint is not deployed yet." : body.status === "not_configured" ? "Stripe is not configured for this environment." : body.error ?? "Could not open the billing portal.");
+                  await post("/api/billing/portal", { orgId }, "Could not open the billing portal.");
                 } catch {
                   setPortalMsg("Network error. Try again.");
                 }
@@ -408,47 +459,88 @@ function BillingPanel({ billing, orgId }: { billing: Billing | null; orgId: stri
             </Button>
           }
         />
-        <CardBody className="grid gap-6 md:grid-cols-3">
+        <CardBody className="grid gap-6 md:grid-cols-4">
           <div>
             <p className="text-xs text-ink-4">Plan price</p>
             <p className="font-display text-xl font-semibold text-ink tabular">{billing.monthlyPrice === null ? "—" : `${fmtUsd(billing.monthlyPrice)}/mo`}</p>
           </div>
-          <div className="flex flex-col gap-2">
-            <p className="text-xs text-ink-4">Seats</p>
-            <p className="text-sm text-ink">
-              <strong className="font-semibold tabular">{billing.seats ?? "—"}</strong>
-              {billing.seatLimit ? ` of ${billing.seatLimit} included` : ""}
-            </p>
-            {billing.seats !== null && billing.seatLimit ? <Progress value={(billing.seats / billing.seatLimit) * 100} label="Seats used" /> : null}
-          </div>
-          <div className="flex flex-col gap-2">
-            <p className="text-xs text-ink-4">Tracked prompts</p>
-            <p className="text-sm text-ink">
-              <strong className="font-semibold tabular">{prompts?.value ?? "—"}</strong>
-              {billing.promptLimit ? ` of ${billing.promptLimit}` : ""}
-            </p>
-            {prompts && billing.promptLimit ? <Progress value={(prompts.value / billing.promptLimit) * 100} label="Prompts used" /> : null}
-          </div>
-          {portalMsg ? <p className="text-sm text-bad md:col-span-3" role="alert">{portalMsg}</p> : null}
+          <Meter label="Seats" used={billing.meters.seats} limit={billing.seatLimit} />
+          <Meter label="Tracked prompts" used={billing.meters.prompts} limit={billing.promptLimit} />
+          <Meter label="AI engines" used={billing.meters.engines} limit={billing.engineLimit} />
+          {portalMsg ? <p className="text-sm text-bad md:col-span-4" role="alert">{portalMsg}</p> : null}
         </CardBody>
       </Card>
       <Card>
-        <CardHeader title="Plans" description="Change plan in the Stripe portal" />
+        <CardHeader
+          title="Plans"
+          description={hasSub ? "Change plan in the Stripe portal" : "Pick a plan to subscribe"}
+          actions={
+            !hasSub && canAdmin ? (
+              <Button size="sm" variant="ghost" onClick={() => setInterval((v) => (v === "month" ? "year" : "month"))}>
+                {interval === "month" ? "Monthly" : "Annual · 2 months free"}
+              </Button>
+            ) : null
+          }
+        />
         <CardBody>
           <ul className="flex flex-col divide-y divide-line">
-            {billing.plans.map((p) => (
-              <li key={p.id} className="flex items-center justify-between py-2 text-sm">
-                <span className={p.name === billing.planName ? "font-semibold text-ink" : "text-ink-2"}>
-                  {p.name} {p.name === billing.planName ? <Badge tone="accent" className="ml-1">Current</Badge> : null}
-                </span>
-                <span className="text-ink-2 tabular">{fmtUsd(p.monthlyPrice)}/mo</span>
-              </li>
-            ))}
+            {billing.plans.map((p) => {
+              const current = p.name === billing.planName;
+              const price = interval === "year" && p.annualPrice !== null ? `${fmtUsd(p.annualPrice)}/yr` : `${fmtUsd(p.monthlyPrice)}/mo`;
+              return (
+                <li key={p.id} className="flex items-center justify-between gap-2 py-2 text-sm">
+                  <span className={current ? "font-semibold text-ink" : "text-ink-2"}>
+                    {p.name} {current ? <Badge tone="accent" className="ml-1">Current</Badge> : null}
+                  </span>
+                  <span className="flex items-center gap-3">
+                    <span className="text-ink-2 tabular">{price}</span>
+                    {!hasSub && canAdmin && p.purchasable ? (
+                      <Button
+                        size="sm"
+                        loading={buying === p.id}
+                        onClick={async () => {
+                          setBuying(p.id);
+                          setPortalMsg(null);
+                          try {
+                            await post("/api/billing/checkout", { orgId, planId: p.id, interval }, "Could not start checkout.");
+                          } catch {
+                            setPortalMsg("Network error. Try again.");
+                          }
+                          setBuying(null);
+                        }}
+                      >
+                        Subscribe
+                      </Button>
+                    ) : null}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         </CardBody>
       </Card>
       <Card className="xl:col-span-3">
-        <CardHeader title="Invoices" description="Invoices and receipts are available in the Stripe portal." />
+        <CardHeader title="Invoices" description={canAdmin ? "Latest invoices from Stripe." : "Only owners and admins can see invoices."} />
+        {invoiceMsg ? <p className="mx-5 mb-4 text-sm text-ink-3">{invoiceMsg}</p> : null}
+        {invoices && invoices.length === 0 ? <EmptyState icon={CreditCard} title="No invoices yet" /> : null}
+        {invoices && invoices.length > 0 ? (
+          <TableWrap>
+            <Table>
+              <THead><Tr><Th>Invoice</Th><Th>Date</Th><Th>Status</Th><Th>Amount</Th><Th /></Tr></THead>
+              <TBody>
+                {invoices.map((i) => (
+                  <Tr key={i.id}>
+                    <Td>{i.number ?? i.id}</Td>
+                    <Td>{fmtDate(i.created)}</Td>
+                    <Td><Badge tone={i.status === "paid" ? "good" : i.status === "open" ? "warn" : "neutral"}>{i.status ?? "—"}</Badge></Td>
+                    <Td className="tabular">{fmtUsd((i.status === "paid" ? i.amountPaid : i.amountDue) / 100)}</Td>
+                    <Td>{i.hostedUrl ? <a className="text-accent underline" href={i.hostedUrl} target="_blank" rel="noreferrer">View</a> : null}</Td>
+                  </Tr>
+                ))}
+              </TBody>
+            </Table>
+          </TableWrap>
+        ) : null}
       </Card>
     </div>
   );

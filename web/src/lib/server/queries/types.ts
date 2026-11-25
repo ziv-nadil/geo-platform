@@ -121,7 +121,8 @@ export interface Billing {
   plan: { id: string; name: string; monthlyPriceCents: number; seatLimit: number | null; promptLimit: number | null; engineLimit: number | null; runsPerMonth: number | null } | null;
   subscription: { status: string; seats: number; currentPeriodEnd: string | null; cancelAtPeriodEnd: boolean; trialEnd: string | null } | null;
   usage: { metric: string; periodStart: string; value: number }[];
-  plans: { id: string; name: string; monthlyPriceCents: number }[];
+  plans: { id: string; name: string; monthlyPriceCents: number; annualPriceCents: number | null; purchasable: boolean }[];
+  meters: { seats: number; prompts: number; engines: number };
 }
 
 // ---- onboarding -------------------------------------------------------------
