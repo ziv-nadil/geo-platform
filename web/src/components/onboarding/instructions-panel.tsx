@@ -5,14 +5,14 @@ import { useState, type ReactNode } from "react";
 import type { InstructionBlock, OnboardingStep } from "@/config/onboarding";
 import { CopyButton } from "@/components/ui/copy-button";
 import { cn } from "@/lib/ui/cn";
-import { substitute, variantSelector, type StepValues } from "@/lib/ui/onboarding-logic";
+import { substitute, variantLabel, variantSelector, type StepValues } from "@/lib/ui/onboarding-logic";
 
 /** Render a step string: placeholders become copyable values, ``` fences become code blocks. */
 function StepText({ text, placeholders }: { text: string; placeholders: Record<string, string> }) {
   const fence = text.match(/^([\s\S]*?)```(\w+)?\n([\s\S]*?)```([\s\S]*)$/);
   if (fence) {
     const [, before, lang, code, after] = fence;
-    const body = substitute(code!.replace(/\n$/, ""), placeholders);
+    const body = substitute(code!.replace(/\n$/, ""), placeholders, `‹${NOT_SET_TEXT}›`);
     return (
       <div className="flex flex-col gap-2">
         {before?.trim() ? <InlineText text={before.trim()} placeholders={placeholders} /> : null}
@@ -30,13 +30,23 @@ function StepText({ text, placeholders }: { text: string; placeholders: Record<s
   return <InlineText text={text} placeholders={placeholders} />;
 }
 
+export const NOT_SET_TEXT = "Not set yet — ask your agency";
+
+function NotSetChip() {
+  return (
+    <span data-testid="not-set-chip" className="inline-flex items-center rounded-full border border-warn/30 bg-warn-soft px-2 py-0.5 align-middle text-xs font-medium text-warn">
+      {NOT_SET_TEXT}
+    </span>
+  );
+}
+
 function InlineText({ text, placeholders }: { text: string; placeholders: Record<string, string> }) {
   const parts = text.split(/(\{\{[A-Z0-9_]+\}\})/g);
   const out: ReactNode[] = parts.map((p, i) => {
     const m = p.match(/^\{\{([A-Z0-9_]+)\}\}$/);
     if (m) {
       const v = placeholders[m[1]!];
-      if (!v) return <code key={i} className="rounded-xs bg-warn-soft px-1 font-mono text-xs text-warn">{p}</code>;
+      if (!v) return <NotSetChip key={i} />;
       return (
         <span key={i} className="inline-flex items-center gap-1 align-middle">
           <code className="rounded-xs border border-line bg-subtle px-1.5 py-0.5 font-mono text-xs break-all text-ink">{v}</code>
@@ -88,7 +98,7 @@ export function InstructionsPanel({ step, values, placeholders }: { step: Onboar
   const active = manual && manual.chosen === chosen ? manual.tab : chosen && ordered.includes(chosen) ? chosen : ordered[0];
   const general = step.instructions.filter((b) => !b.variant);
   const variantBlocks = step.instructions.filter((b) => b.variant === active);
-  const labelOf = (v: string) => selector?.options?.find((o) => o.value === v)?.label ?? v;
+  const labelOf = (v: string) => variantLabel(step, selector, v);
 
   if (!step.instructions.length) return null;
   return (

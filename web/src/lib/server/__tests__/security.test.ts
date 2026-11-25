@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('next/headers', () => ({ cookies: async () => ({ getAll: () => [], set: () => undefined }) }));
 
 import { checkOrigin, mfaSatisfied } from '../auth';
-import { currentClaims, devBypassAllowed } from '../db';
+import { currentClaims, devBypassAllowed, devBypassClaims } from '../db';
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -49,6 +49,37 @@ describe('dev identity bypass is impossible outside local dev', () => {
     local();
     vi.stubEnv('DATABASE_URL', 'postgres://u@db.example.supabase.co:6543/postgres');
     expect(await currentClaims()).toBeNull();
+  });
+});
+
+describe('route handlers use the same dev bypass as pages (DEV_AUTH_USER_ID)', () => {
+  const local = () => {
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', '');
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', '');
+    vi.stubEnv('VERCEL', '');
+    vi.stubEnv('VERCEL_ENV', '');
+    vi.stubEnv('DEV_IMPERSONATE_USER_ID', '');
+    vi.stubEnv('DEV_AUTH_USER_ID', '00000000-0000-4000-a000-000000000021');
+    vi.stubEnv('DATABASE_URL', 'postgres://u@localhost:5432/beacon');
+    vi.stubEnv('NODE_ENV', 'development');
+  };
+  it('currentClaims() (used by requireUser in /api/onboarding/*) honours DEV_AUTH_USER_ID, default aal2', async () => {
+    local();
+    expect(await currentClaims()).toMatchObject({ sub: '00000000-0000-4000-a000-000000000021', aal: 'aal2' });
+    vi.stubEnv('DEV_AUTH_AAL', 'aal1');
+    expect((await currentClaims())?.aal).toBe('aal1');
+    expect(devBypassClaims()?.sub).toBe('00000000-0000-4000-a000-000000000021');
+  });
+  it('is impossible in production, on Vercel, or against a remote DB', async () => {
+    local();
+    vi.stubEnv('NODE_ENV', 'production');
+    expect(await currentClaims()).toBeNull();
+    local();
+    vi.stubEnv('VERCEL', '1');
+    expect(devBypassClaims()).toBeNull();
+    local();
+    vi.stubEnv('DATABASE_URL', 'postgres://u@db.example.com:5432/x');
+    expect(devBypassClaims()).toBeNull();
   });
 });
 

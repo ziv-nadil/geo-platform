@@ -30,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { StatusIcon, StatusPill, type Status } from "@/components/ui/status";
+import { useToasts } from "@/components/ui/toast";
 import { Tooltip } from "@/components/ui/tooltip";
 import { saveProgress, type TestResult } from "@/lib/ui/api-client";
 import { cn } from "@/lib/ui/cn";
@@ -75,6 +76,7 @@ export function OnboardingWizard({
   const [current, setCurrent] = useState(() => (initialStepId && steps.some((s) => s.id === initialStepId) ? initialStepId : steps[0]!.id));
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "unavailable">("idle");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { toast, region } = useToasts();
   const step = steps.find((s) => s.id === current)!;
   const idx = steps.findIndex((s) => s.id === current);
   const values = useMemo(() => state.values[current] ?? {}, [state.values, current]);
@@ -89,9 +91,10 @@ export function OnboardingWizard({
         // Clients may only set not_started / in_progress; complete comes from live tests on the server.
         const res = await saveProgress(orgId, stepId, serialisableValues(next.values[stepId] ?? {}), status === "idle" ? "not_started" : "in_progress", next.skipped[stepId] ? "skipped" : null);
         setSaveState(res.available ? "saved" : "unavailable");
+        if (!res.available) toast(`Could not save your progress: ${res.error}`);
       }, 700);
     },
-    [orgId, steps],
+    [orgId, steps, toast],
   );
 
   useEffect(() => () => void (timer.current && clearTimeout(timer.current)), []);
@@ -135,6 +138,7 @@ export function OnboardingWizard({
 
   return (
     <div className="flex flex-col gap-6">
+      {region}
       {/* Overall progress */}
       <div className="flex flex-col gap-3 rounded-md border border-line bg-surface px-5 py-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -255,7 +259,7 @@ export function OnboardingWizard({
               </section>
               <div className="flex min-w-0 flex-col gap-6">
                 <InstructionsPanel step={step} values={values} placeholders={placeholders} />
-                <TestsPanel orgId={orgId} step={step} values={values} results={state.tests[current] ?? {}} onResult={setTest} />
+                <TestsPanel orgId={orgId} step={step} values={values} results={state.tests[current] ?? {}} onResult={setTest} onError={toast} />
               </div>
             </div>
           )}

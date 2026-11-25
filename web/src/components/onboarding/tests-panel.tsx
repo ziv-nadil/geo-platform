@@ -15,12 +15,14 @@ export function TestsPanel({
   values,
   results,
   onResult,
+  onError,
 }: {
   orgId: string;
   step: OnboardingStep;
   values: StepValues;
   results: Record<string, TestResult>;
   onResult: (testId: string, r: TestResult) => void;
+  onError?: (message: string) => void;
 }) {
   const [running, setRunning] = useState<Record<string, boolean>>({});
   const [unavailable, setUnavailable] = useState<string | null>(null);
@@ -33,8 +35,10 @@ export function TestsPanel({
     setUnavailable(null);
     setRunning((r) => ({ ...r, ...Object.fromEntries(ids.map((i) => [i, true])) }));
     const res = await runStepTest(orgId, step.id);
-    if (!res.available) setUnavailable(res.error);
-    else if (res.data.status === "not_configured") setUnavailable(`The test service is not configured${res.data.missing?.length ? ` (${res.data.missing.join(", ")})` : ""}.`);
+    if (!res.available) {
+      setUnavailable(res.error);
+      onError?.(`Live test failed: ${res.error}`);
+    } else if (res.data.status === "not_configured") setUnavailable(`The test service is not configured${res.data.missing?.length ? ` (${res.data.missing.join(", ")})` : ""}.`);
     else {
       const ranAt = res.data.ranAt ?? new Date().toISOString();
       const all = res.data.checks.map((c) => ({ label: c.label, status: (c.ok ? "pass" : "fail") as TestResult["status"], detail: c.detail }));

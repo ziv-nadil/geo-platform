@@ -1,4 +1,5 @@
 import 'server-only';
+import { XMLParser, XMLValidator } from 'fast-xml-parser';
 
 /**
  * Server-side upload validation (security.md §6.3): size caps and magic-byte sniffing, never the
@@ -28,12 +29,75 @@ export function sniffUpload(bytes: Uint8Array): Sniffed {
   return { ok: false, error: 'unsupported_file_type' };
 }
 
-/** Conservative SVG screen: reject anything that can execute or load external resources. */
+const FORBIDDEN_ELEMENTS = new Set(['script', 'foreignobject', 'iframe', 'object', 'embed', 'audio', 'video', 'link', 'meta', 'base', 'handler', 'listener']);
+const SAFE_DATA_URI = /^data:image\/(png|jpeg|gif|webp);/i;
+const decodeForScheme = (v: string) => v.replace(/[\u0000-\u0020\u007f-\u009f]+/g, '').toLowerCase();
+
+function cssIsSafe(css: string): boolean {
+  const c = css.toLowerCase().replace(/\\/g, '');
+  if (/@import|expression\(|javascript:|behavior\s*:|-moz-binding/.test(c)) return false;
+  return !/url\(\s*["']?\s*(?!#)/.test(c);
+}
+
+/**
+ * SVG screen on a real XML parse (not regexes): must be well-formed XML with an <svg> root, no DOCTYPE/ENTITY,
+ * no script/foreignObject/iframe/object/embed (any namespace prefix), no on* attributes, no animation (<set>/<animate*>)
+ * targeting href or on*, and links only to same-document fragments or inline raster data URIs. Entities are decoded
+ * before checking, so `&#106;avascript:` is caught. Anything that fails to parse is rejected.
+ */
 export function svgIsSafe(bytes: Uint8Array): boolean {
-  const s = new TextDecoder().decode(bytes).toLowerCase();
-  if (/<script|<foreignobject|<iframe|<object|<embed|<!entity|<!doctype[^>]*\[/.test(s)) return false;
-  if (/\son[a-z]+\s*=/.test(s)) return false;
-  if (/(href|src)\s*=\s*["']?\s*(?!#|data:image\/(png|jpeg|gif|webp);)[^"'\s>]/.test(s)) return false;
-  if (/url\(\s*["']?\s*(?!#)/.test(s) || /@import|javascript:/.test(s)) return false;
-  return true;
+  const src = new TextDecoder('utf-8', { fatal: false }).decode(bytes).replace(/^\uFEFF/, '');
+  if (/<!doctype|<!entity/i.test(src)) return false;
+  if (XMLValidator.validate(src) !== true) return false;
+  let doc: Record<string, unknown>[];
+  try {
+    doc = new XMLParser({ preserveOrder: true, ignoreAttributes: false, attributeNamePrefix: '@_', processEntities: true, htmlEntities: true, trimValues: false, parseTagValue: false, parseAttributeValue: false }).parse(src);
+  } catch {
+    return false;
+  }
+  const local = (n: string) => n.slice(n.indexOf(':') + 1).toLowerCase();
+  let sawSvgRoot = false;
+  const walk = (nodes: Record<string, unknown>[], depth: number): boolean => {
+    if (depth > 64) return false;
+    for (const node of nodes) {
+      for (const [key, val] of Object.entries(node)) {
+        if (key === ':@') {
+          const attrs = val as Record<string, string>;
+          const tag = Object.keys(node).find((k) => k !== ':@') ?? '';
+          const animates = /^(set|animate|animatetransform|animatemotion)$/.test(local(tag));
+          for (const [rawName, rawVal] of Object.entries(attrs)) {
+            const name = local(rawName.replace(/^@_/, ''));
+            const value = String(rawVal);
+            if (name.startsWith('on')) return false;
+            const compact = decodeForScheme(value);
+            if (compact.includes('javascript:') || compact.startsWith('vbscript:') || (compact.startsWith('data:') && !SAFE_DATA_URI.test(compact))) return false;
+            if (name === 'href' || name === 'src') {
+              if (!(value.trim().startsWith('#') || SAFE_DATA_URI.test(compact))) return false;
+            }
+            if (animates && (name === 'attributename' || name === 'to' || name === 'values' || name === 'from' || name === 'by')) {
+              if (name === 'attributename' && /^(href|on)/.test(local(value))) return false;
+            }
+            if (name === 'style' && !cssIsSafe(value)) return false;
+          }
+        } else if (key.startsWith('#')) {
+          continue;
+        } else {
+          const lk = local(key);
+          if (FORBIDDEN_ELEMENTS.has(lk)) return false;
+          if (depth === 0 && key !== '?xml') {
+            if (lk !== 'svg') return false;
+            sawSvgRoot = true;
+          }
+          const kids = val as Record<string, unknown>[];
+          if (lk === 'style') {
+            const css = kids.map((k) => String(k['#text'] ?? k['#cdata'] ?? '')).join('');
+            if (!cssIsSafe(css)) return false;
+          }
+          if (!walk(kids, depth + 1)) return false;
+        }
+      }
+    }
+    return true;
+  };
+  return walk(doc, 0) && sawSvgRoot;
 }

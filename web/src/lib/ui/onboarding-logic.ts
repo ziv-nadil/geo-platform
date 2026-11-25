@@ -180,8 +180,19 @@ export function variantSelector(step: OnboardingStep): FieldDef | undefined {
   return step.fields.find((f) => (f.type === "select" || f.type === "radio") && f.options?.some((o) => variants.has(o.value)));
 }
 
-export function substitute(text: string, placeholders: Record<string, string>): string {
-  return text.replace(/\{\{([A-Z0-9_]+)\}\}/g, (m, k: string) => placeholders[k] ?? m);
+/** Replace {{KEYS}}; unset keys stay as-is, or become `fallback` when given. */
+export function substitute(text: string, placeholders: Record<string, string>, fallback?: string): string {
+  return text.replace(/\{\{([A-Z0-9_]+)\}\}/g, (m, k: string) => placeholders[k] || fallback || m);
+}
+
+/** Human label for an instruction variant: the selector option label, else the block title, never the raw key. */
+export function variantLabel(step: OnboardingStep, selector: FieldDef | undefined, variant: string): string {
+  const fromOption = selector?.options?.find((o) => o.value === variant)?.label;
+  if (fromOption) return fromOption;
+  const title = step.instructions.find((b) => b.variant === variant)?.title;
+  if (title) return title;
+  const words = variant.replace(/[_-]+/g, " ").trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
 /** Strip non-serialisable or sensitive parts before sending values to the server. */
