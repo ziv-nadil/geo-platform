@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { classifyBot, userAgentFilters } from '../crawlers/bots';
 import { pollWindow, toCrawlerRows } from '../crawlers/cloudflare';
 import { allowlistedFetch, EgressBlockedError, isAllowed } from '../http';
-import { corePromptIds, planRuns, requeueDelayMs, staggerWeekday, type PlanPrompt } from '../pipeline/cadence';
+import { corePromptIds, planRuns, requeueDelayMs, staggerWeekday, sweepWeekdays, type PlanPrompt } from '../pipeline/cadence';
 import { budgetState, orgBudget } from '../pipeline/enqueue';
 import { kindForStatus, parseRetryAfter, toEngineError, withRetry } from '../retry';
 import { EngineError } from '../types';
@@ -23,15 +23,14 @@ function dayFor(weekday: number): Date {
 }
 
 describe('cadence', () => {
-  it('SERP engines daily; LLM engines only on the org stagger day with core x3 / tail x1', () => {
-    const w = staggerWeekday(ORG);
-    const off = planRuns({ orgId: ORG, prompts, engines: [...engines], date: dayFor((w + 1) % 7) });
-    expect(off).toHaveLength(30 * 2);
-    expect(off.every((r) => r.engine.startsWith('google_'))).toBe(true);
-    const on = planRuns({ orgId: ORG, prompts, engines: [...engines], date: dayFor(w) });
-    // 25 core x3 + 5 tail x1 = 80 per LLM engine
-    expect(on.filter((r) => r.engine === 'chatgpt')).toHaveLength(80);
-    expect(on).toHaveLength(60 + 160);
+  it('every engine runs twice a week (Mon+Thu + org stagger), 1 run per prompt, other days nothing', () => {
+    const [d1, d2] = sweepWeekdays(ORG);
+    expect(d2 - d1).toBe(3);
+    const days = Array.from({ length: 7 }, (_, w) => planRuns({ orgId: ORG, prompts, engines: [...engines], date: dayFor(w) }));
+    expect(days.filter((r) => r.length > 0)).toHaveLength(2);
+    expect(days[d1]).toHaveLength(30 * 4);
+    expect(days[d2]).toHaveLength(30 * 4);
+    expect(days[(d1 + 1) % 7]).toHaveLength(0);
   });
 
   it('fallback core = first 25, decision-stage first; explicit tiers win', () => {
@@ -51,6 +50,7 @@ describe('cadence', () => {
   it('budget guard pauses LLM engines only', () => {
     const w = staggerWeekday(ORG);
     const p = planRuns({ orgId: ORG, prompts, engines: [...engines], date: dayFor(w), llmPaused: true });
+    expect(p).toHaveLength(60);
     expect(p.every((r) => r.engine.startsWith('google_'))).toBe(true);
     expect(budgetState(50, 100)).toBe('ok');
     expect(budgetState(80, 100)).toBe('warning');

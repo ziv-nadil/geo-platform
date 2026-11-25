@@ -1,7 +1,7 @@
 import { loadPage, type RouteProps } from "@/components/dashboard/page-kit";
 import { SettingsView } from "@/components/dashboard/settings-view";
 import { PageHeader } from "@/components/ui/page-header";
-import { getApiKeys, getBilling, getIntegrations, getInvitations, getMembers } from "@/lib/data";
+import { withViewerRls, getApiKeys, getBilling, getIntegrations, getInvitations, getMembers } from "@/lib/data";
 
 const BILLING_ON = process.env.BILLING_ENABLED === "true";
 const TABS = ["general", "members", "invitations", "sso", "api-keys", "integrations", ...(BILLING_ON ? ["billing"] : [])];
@@ -11,6 +11,11 @@ export async function SettingsScreen(props: RouteProps) {
   if ("gate" in ctx) return ctx.gate;
   const { org, sp } = ctx;
   const [members, invites, keys, integrations, billing] = await Promise.all([getMembers(org.id), getInvitations(org.id), getApiKeys(org.id), getIntegrations(org.id), BILLING_ON ? getBilling(org.id) : Promise.resolve({ ok: false } as const)]);
+  const locRes = await withViewerRls(async (sql) => {
+    const [r] = await sql`select country, language from public.organizations where id = ${org.id}`;
+    return { country: String(r?.country ?? "US"), language: String(r?.language ?? "en") };
+  });
+  const locale = locRes.ok ? locRes.data : { country: "US", language: "en" };
   const tab = typeof sp.tab === "string" && TABS.includes(sp.tab) ? sp.tab : "general";
   const canAdmin = org.role === "owner" || org.role === "admin";
   return (
@@ -26,6 +31,7 @@ export async function SettingsScreen(props: RouteProps) {
         integrations={integrations.ok ? integrations.data : []}
         billing={billing.ok ? billing.data : null}
         billingEnabled={BILLING_ON}
+        locale={locale}
       />
     </>
   );

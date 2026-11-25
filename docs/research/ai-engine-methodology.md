@@ -109,6 +109,10 @@ Common request policy for all LLM engines: send the tracked prompt **verbatim as
 - **Response** [V]: markdown answer, typed elements (`ai_overview_element`, `ai_overview_table_element`) and references with domain.
 - **Gaps**: no follow-up conversation; structure of items may change, so keep `raw` JSON.
 
+### 2.8 Location and locale (no VPN)
+
+Each client has ONE location: `organizations.country` (ISO-3166 alpha-2) and `organizations.language` (BCP-47), set in Settings. The worker builds the engine locale from these (they override any per-prompt value) and passes it through the **native API location parameters**: OpenAI Responses `web_search` `user_location` (country/region/city/timezone), Anthropic `web_search` `user_location`, DataForSEO `location_code` + `language_code` (derived from country), Gemini via a system-instruction hint for country and language (the Gemini API has no user_location field for grounding). **No VPN or proxy is needed** because we use vendor APIs, not consumer UIs. A proxy would only be needed if we ever scraped consumer UIs (chatgpt.com, gemini.google.com, etc.), which is explicitly excluded.
+
 ### 2.7 Optional / excluded engines
 
 - **Grok** [V?]: xAI API with server-side `web_search` and `x_search` tools at $5/1k calls (X Search billing reportedly changed 2026-09-21 to per-post/per-profile; verify). Add only on client request (X-heavy audiences).
@@ -323,8 +327,8 @@ Operational rules: idempotency key `(client_id, prompt_id, engine, run_date, run
 
 | Surface | Cadence | Runs | Why |
 |---|---|---|---|
-| Google AI Overviews + AI Mode (DataForSEO Standard) | **daily** | 1 | Cheap ($0.0024/prompt/day); low noise; catches Google changes fast |
-| ChatGPT, Perplexity, Gemini, Claude | **weekly** (stagger across the week by client) | core 25 prompts x 3 runs, other 75 x 1 run (4-week pooled) | Cost vs variance trade-off (section 3.8) |
+| **All default engines** (ChatGPT, Claude, Gemini, Google AI Overviews) | **twice a week: Mon + Thu**, shifted by a per-org stagger offset of 0-2 days (hash of org id) | **1 run per prompt, 100 prompts, ONE location per client** | Owner decision 2026-11-25 (docs/DECISIONS.md). Pooled across 4 weeks this gives about 8-9 samples per prompt-engine cell. |
+| Perplexity, Google AI Mode | **off by default** (adapters kept; enable per org/engine) | same as above if enabled | Narrowed scope; see costs.md section 4.1 |
 | Calibration slice (flagship models / Sonnet-class) | monthly | 10 prompts x 3 runs | Measures drift between cheap panel model and consumer-grade model |
 | Human UI spot check | monthly | 10 prompts/client | Publishes API-vs-UI agreement rate |
 | Prompt refresh | monthly | n/a | Capped suggestions |
@@ -353,6 +357,8 @@ Token assumptions per answer: search-augmented input 12k tokens for OpenAI, 15k 
 | Analysis | nano/Haiku judge + entity extraction | n/a | about 1.2k in, 0.3k out | **about $0.001 per response** |
 
 So one "all five engines" prompt-run costs **$0.121 (4 LLM engines) + $0.0024 (Google) + about $0.006 (analysis) = about $0.13**.
+
+> **Superseded scope (2026-11-25):** the recommended plan is now 4 engines x 100 prompts x 2 runs/week x 1 location, about $43/client and $862/month for 20 clients (docs/ops/costs.md section 4.1). The scenarios below are kept as historical context.
 
 ### 5.2 Scenarios per client (100 prompts) and for 20 clients
 
