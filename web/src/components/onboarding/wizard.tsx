@@ -16,6 +16,7 @@ import {
   KeyRound,
   LineChart,
   MessageSquare,
+  Video,
   Network,
   PenSquare,
   Search,
@@ -53,7 +54,7 @@ import { InstructionsPanel } from "./instructions-panel";
 import { TestsPanel } from "./tests-panel";
 import { GeoReadinessCard } from "@/components/geo/geo-readiness-card";
 
-const ICONS: Record<string, LucideIcon> = { Building2, BookOpen, KeyRound, GitBranch, PenSquare, Search, Globe, BarChart3, CloudCog, Network, LineChart, Database, ShieldCheck, MessageSquare, ClipboardCheck, ScanSearch };
+const ICONS: Record<string, LucideIcon> = { Building2, BookOpen, KeyRound, GitBranch, PenSquare, Search, Globe, BarChart3, CloudCog, Network, LineChart, Database, ShieldCheck, MessageSquare, ClipboardCheck, ScanSearch, Video };
 
 const STATUS_FOR_PILL: Record<StepStatus, Status> = { idle: "idle", pending: "pending", pass: "pass", partial: "partial", fail: "fail", skipped: "idle" };
 const STATUS_LABEL: Record<StepStatus, string> = { idle: "Not started", pending: "In progress", pass: "Working", partial: "Partial", fail: "Failed", skipped: "Skipped" };

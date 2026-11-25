@@ -1,55 +1,3 @@
-# Client onboarding wizard: specification
-
-Status: v1, 2026-11-24. Owner: Product agent. The typed config at `web/src/config/onboarding.ts` is the source of truth; **the step sections below are generated from it** (do not hand-edit them; edit the config and regenerate). UI paths were checked against vendor docs where reachable; items marked "verify" changed recently or could not be confirmed online (see Assumptions).
-
-## How the wizard works
-
-- 15 steps, shown with a progress bar. Each step has: why we need it, fields, grant instructions (written for a marketing or IT person), and one or more **live tests**.
-- Test result states: **working** (all checks pass), **partial** (connected but a permission or data is short, with the exact reason, e.g. "GSC access is Full, not Owner"), **failed** (no connection), **pending** (waiting on the client, e.g. DNS propagation or an invite being accepted).
-- Secrets (`type: 'secret'`) are sent straight to the vault (Infisical, one project per client). Only references are stored in Postgres.
-- Instruction placeholders such as `{{AGENCY_EMAIL}}` and `{{DNS_TXT_VALUE}}` are filled in per client by the UI. Blocks with a `variant` show only when the matching selector field has that value.
-- Required steps must be green to submit. Optional steps (11 to 14) can be skipped.
-
-## Step overview
-
-| # | Step | Group | Required | Tests |
-|---|---|---|---|---|
-| 1 | Company info & brand assets | company | yes | 3 |
-| 2 | Brand book | brand | yes | 2 |
-| 3 | Access method | access | yes | 2 |
-| 4 | GitHub (blog repo) | stack | yes if blog is in Git (UI may let users skip when CMS is chosen) | 2 |
-| 5 | CMS | stack | yes | 2 |
-| 6 | Google Search Console (Owner) | access | yes | 3 |
-| 7 | Bing Webmaster Tools (Administrator) | access | yes | 3 |
-| 8 | GA4 (Editor) + key event | access | yes | 4 |
-| 9 | Google Cloud (YouTube, Ads, Indexing) | access | yes | 5 |
-| 10 | DNS verification (TXT) | access | yes | 2 |
-| 11 | GEO/SEO analytics tools | stack | optional | 2 |
-| 12 | AWS S3 + CloudFront (or GCP/Azure) | stack | optional | 4 |
-| 13 | Cloudflare / CDN (AI crawlers) | stack | optional | 4 |
-| 14 | Slack / Teams bot | stack | optional | 2 |
-| 15 | Review & submit | stack | yes | 1 |
-
-Total: 41 live tests.
-
-## Skills check
-
-SearchSkills for onboarding/SEO/search-console/copywriting returned nothing installable. Relevant existing skill: `design:ux-copy` (use it to polish wizard microcopy: button labels, error and partial-state messages). No skill was needed for the grant instructions.
-
-## Assumptions and items to verify
-
-1. Agency email, GitHub user, AWS principal, Ads manager ID are placeholders until the user supplies them (see ISSUES.md).
-2. Bing's top role is "Administrator" (older docs say Owner). The Bing menu path (Settings > Users) is from older sources and the newer portal; marked verify.
-3. GSC Owner is checked through `permissionLevel` in `sites.list` (siteOwner / siteFullUser / siteRestrictedUser). Google documents Settings > Users and permissions (owners only), unchanged since the Feb 2023 update.
-4. Cloudflare permission "AI Crawl Control Read" (zone) exists per Cloudflare docs; the exact REST path for crawler metrics is confirmed at build time. The AI Crawl Control read permission is separate from Analytics Read.
-5. Framer, Wix, HubSpot (private apps vs service keys) and Shopify (Dev Dashboard replacing legacy custom apps) change often; instruction text flags this. Peec.ai and Profound API endpoints are unverified.
-6. Indexing API officially covers only JobPosting and BroadcastEvent pages; we say so to the client. Service account must be a GSC Owner.
-7. AWS uses a cross-account role with ExternalId rather than access keys; access keys are a documented fallback.
-8. Step 4 is marked required in the config but the UI may let a client skip it when the CMS is not Git-based (`cms_platform` != other, no repo field value). The config has no skip logic.
-9. The test `requires` array is evaluated against visible fields only.
-
----
-
 ## 1. Company info & brand assets
 
 Group: company · Icon: Building2 · Required · 3 live test(s)
@@ -67,7 +15,7 @@ Group: company · Icon: Building2 · Required · 3 live test(s)
 | `social_reddit` | Reddit (brand account or subreddit) | url |  |
 | `social_instagram` | Instagram | url |  |
 | `social_facebook` | Facebook | url |  |
-| `design_system_html` | Design-system HTML | file | A single HTML style guide (or a zip with its CSS/fonts) showing colors, type, buttons, cards. Export from Figma/Storybook or ask your designer. |
+| `design_system_html` | Design-system HTML | file | A single self-contained HTML style guide (max 2 MB) showing colors, type, buttons, cards. Export from Figma/Storybook or ask your designer. |
 | `logo_light` | Logo for light backgrounds | file (required) | SVG preferred. Transparent background, dark-colored logo. |
 | `logo_dark` | Logo for dark backgrounds | file (required) | SVG preferred. Transparent background, light-colored logo. |
 | `favicon_light` | Favicon for light mode | file (required) | At least 48x48 px. Square. |
@@ -92,7 +40,34 @@ Group: company · Icon: Building2 · Required · 3 live test(s)
 | `company_socials_resolve` | Social profiles resolve | HEAD/GET each provided social URL; expects 200 and the hostname to match the network. Partial: a profile returns 404 or is private; networks that block unauthenticated checks (LinkedIn, Instagram) report "could not verify" instead of failed. |
 
 
-## 2. Brand book
+## 2. GEO readiness
+
+Group: company · Icon: ScanSearch · Optional · 1 live test(s)
+
+**Why we need it:** Before we create content, we check whether AI engines can actually reach, read and cite your site: robots.txt, llms.txt, sitemap, speed, server-side rendering, structured data and any firewall that blocks AI crawlers. You get a prioritized fix list with step-by-step instructions for your platform.
+
+### Fields
+
+| ID | Label | Type | Notes |
+|---|---|---|---|
+
+
+### Grant instructions
+
+**How the audit works**
+
+1. We request your robots.txt, llms.txt, sitemap and a few pages exactly like AI crawlers do (including with GPTBot, ClaudeBot and PerplexityBot user agents).
+2. We score each check from 0 to 100 and list the fixes that matter most first.
+3. Fix the top items, then press "Re-run audit" to see your score improve. You can re-run it any time from Site health.
+
+### Live tests
+
+| Test ID | What it proves | API call, and what "partial" looks like |
+|---|---|---|
+| `geo_score` | GEO readiness audit | Real requests to your site: robots.txt AI bot rules, llms.txt, sitemap freshness, PageSpeed Insights (LCP, CLS, INP, TTFB), server-side rendering, canonical/noindex, structured data, headings, author/date, internal links, HTTPS, hreflang, page weight and WAF/CDN bot blocking. Partial: some categories score below 70. Fail: most categories need work. |
+
+
+## 3. Brand book
 
 Group: brand · Icon: BookOpen · Required · 2 live test(s)
 
@@ -147,7 +122,7 @@ Group: brand · Icon: BookOpen · Required · 2 live test(s)
 | `brand_competitors_reachable` | Competitor sites reachable | GET each competitor homepage (200 OK). Partial: unreachable or redirecting to a different domain; we flag the row but do not block. |
 
 
-## 3. How you grant us access
+## 4. How you grant us access
 
 Group: access · Icon: KeyRound · Required · 2 live test(s)
 
@@ -188,7 +163,7 @@ Group: access · Icon: KeyRound · Required · 2 live test(s)
 | `access_user_credentials_stored` | Domain user credentials stored | Vault lookup confirms the secret exists and email domain matches the company website domain. We cannot test login generically; each later step proves access through its own API call. Partial: password stored but no TOTP while the later steps report an MFA challenge. |
 
 
-## 4. GitHub (blog repository)
+## 5. GitHub (blog repository)
 
 Group: stack · Icon: GitBranch · Required · 2 live test(s)
 
@@ -210,7 +185,7 @@ Group: stack · Icon: GitBranch · Required · 2 live test(s)
 
 1. Collaborator: Write role on that one repository (needed to push a branch and open PRs). Read is only partial.
 2. Token: Repository access = Only select repositories > your blog repo. Repository permissions: Contents = Read and write, Pull requests = Read and write, Metadata = Read-only (auto). Nothing else. Set expiry to 1 year.
-3. GitHub App route (we recommend if you have an org owner): install our app on that single repo with the same three permissions.
+3. There is no agency-registered GitHub app: you grant access yourself, with either a fine-grained token or a collaborator/deploy-key on this one repository.
 
 **Invite our user (GitHub UI as of Nov 2026)** _(variant: invite)_
 
@@ -239,7 +214,7 @@ Group: stack · Icon: GitBranch · Required · 2 live test(s)
 | `github_pr_probe` | Can open pull requests | Create branch beacon/connection-test from the default branch via the Git Refs API, commit one file under the content folder, open a draft PR, then close the PR and delete the branch. Partial: branch push works but PR creation fails (token lacks Pull requests: write), or branch protection blocks branch creation by pattern. |
 
 
-## 5. CMS (publishing)
+## 6. CMS (publishing)
 
 Group: stack · Icon: PenSquare · Required · 2 live test(s)
 
@@ -357,7 +332,7 @@ Group: stack · Icon: PenSquare · Required · 2 live test(s)
 | `cms_draft_write` | Can create a draft | Creates a draft titled "Beacon connection test", reads it back, then deletes it. Partial: read works but the draft create is denied (token is read-only, e.g. Sanity Viewer, WordPress Contributor, Webflow CMS read-only). |
 
 
-## 6. Google Search Console
+## 7. Google Search Console
 
 Group: access · Icon: Search · Required · 3 live test(s)
 
@@ -399,7 +374,7 @@ Group: access · Icon: Search · Required · 3 live test(s)
 | `gsc_data_flowing` | Search data available | searchanalytics.query for the last 7 days (dimension: query, rowLimit 5). Partial: 0 rows (property is new, less than 2 days old, or has no impressions), or the property was verified less than 48 hours ago. |
 
 
-## 7. Bing Webmaster Tools
+## 8. Bing Webmaster Tools
 
 Group: access · Icon: Globe · Required · 3 live test(s)
 
@@ -442,7 +417,7 @@ Group: access · Icon: Globe · Required · 3 live test(s)
 | `bing_api_quota` | API / URL submission works | GetUrlSubmissionQuota returns daily and monthly quota >0. Partial: quota 0 (new site, quota grows after verification) or API key rejected. |
 
 
-## 8. Google Analytics 4
+## 9. Google Analytics 4
 
 Group: access · Icon: BarChart3 · Required · 4 live test(s)
 
@@ -492,7 +467,7 @@ Group: access · Icon: BarChart3 · Required · 4 live test(s)
 | `ga4_data_flowing` | Data is flowing | Data API runReport last 28 days: sessions > 0 and eventCount for the key event > 0. Partial: sessions exist but the key event has zero count (not tracking yet). |
 
 
-## 9. Google Cloud (YouTube, Ads, Indexing)
+## 10. Google Cloud (YouTube, Ads, Indexing)
 
 Group: access · Icon: CloudCog · Required · 5 live test(s)
 
@@ -567,7 +542,7 @@ Group: access · Icon: CloudCog · Required · 5 live test(s)
 | `indexing_api_owner` | Indexing API permission | urlNotifications.getMetadata for the home page URL with the service account. 200/404 (never notified) = OK. Partial: 403 "Permission denied. Failed to verify the URL ownership" = service account is not an Owner in Search Console (step 6 + instruction 4). |
 
 
-## 10. DNS verification (TXT record)
+## 11. DNS verification (TXT record)
 
 Group: access · Icon: Network · Required · 2 live test(s)
 
@@ -640,7 +615,7 @@ Group: access · Icon: Network · Required · 2 live test(s)
 | `dns_authoritative_match` | Authoritative nameserver match | Query the domain NS records, then ask each authoritative nameserver directly for the TXT. Partial: TXT present at the authoritative server but not at public resolvers yet (wait), or the record was added at a provider that is not the authoritative one (common with Namecheap/GoDaddy when nameservers point to Cloudflare). |
 
 
-## 11. GEO / SEO analytics tools
+## 12. GEO / SEO analytics tools
 
 Group: stack · Icon: LineChart · Optional · 2 live test(s)
 
@@ -714,7 +689,7 @@ Group: stack · Icon: LineChart · Optional · 2 live test(s)
 | `analytics_seat_accepted` | Seat invitation accepted | For seat rows: a human confirms the invite (we cannot call the tools). We check by a scheduled login/API probe and mark the row "pending" until we can see the project. Partial: seat found but role is Admin (we flag as over-permissioned) or has no access to the right project. |
 
 
-## 12. AWS (S3 + CloudFront) for visual assets
+## 13. AWS (S3 + CloudFront) for visual assets
 
 Group: stack · Icon: Database · Optional · 4 live test(s)
 
@@ -842,7 +817,7 @@ Group: stack · Icon: Database · Optional · 4 live test(s)
 | `aws_public_fetch` | Asset is served publicly | GET {cdn_base_url}/beacon/_connection-test.txt must return 200 with content-type text/plain and a cache header (x-cache). Partial: 403 (OAC/bucket policy missing) or served over HTTP only or the custom domain certificate is invalid. |
 
 
-## 13. Cloudflare / CDN (AI crawler monitoring)
+## 14. Cloudflare / CDN (AI crawler monitoring)
 
 Group: stack · Icon: ShieldCheck · Optional · 4 live test(s)
 
@@ -908,7 +883,7 @@ Group: stack · Icon: ShieldCheck · Optional · 4 live test(s)
 | `cf_ai_crawl_control` | AI Crawl Control readable | Read the zone AI Crawl Control crawler list/metrics endpoint (exact REST path confirmed at build time; API reference: developers.cloudflare.com/ai-crawl-control). Partial: 403 means the "AI Crawl Control Read" permission is missing; feature unavailable means the zone is on a plan without it. |
 
 
-## 14. Slack / Teams (bot)
+## 15. Slack / Teams (bot)
 
 Group: stack · Icon: MessageSquare · Optional · 2 live test(s)
 
@@ -921,7 +896,7 @@ Group: stack · Icon: MessageSquare · Optional · 2 live test(s)
 | `chat_platform` | Where does your team chat? | radio (required) |  |
 | `slack_workspace_url` | Slack workspace URL | url (required) | shown if `chat_platform` = slack |
 | `slack_channel` | Channel for reports | text (required) | shown if `chat_platform` = slack |
-| `slack_bot_token` | Bot token (only if you cannot use "Add to Slack") | secret | shown if `chat_platform` = slack; xoxb-... from our manifest app installed in your workspace. |
+| `slack_bot_token` | Bot token or incoming webhook URL | secret (required) | shown if `chat_platform` = slack; Create a Slack app in your own workspace and install it (xoxb-... bot token), or add an Incoming Webhook to a channel and paste its URL. We do not run an agency-registered Slack app. |
 | `teams_tenant_id` | Microsoft Entra tenant ID | text (required) | shown if `chat_platform` = teams |
 | `teams_team_channel` | Team and channel name | text (required) | shown if `chat_platform` = teams |
 
@@ -942,8 +917,8 @@ Group: stack · Icon: MessageSquare · Optional · 2 live test(s)
 
 **Install (Slack admin or Workspace Owner)** _(variant: slack)_
 
-1. Click "Add to Slack" in this page. A Slack consent screen opens listing exactly the scopes above.
-2. If your workspace requires app approval: Slack shows "Request to install". A Workspace Admin then opens Slack > your workspace name > Tools & settings > Manage apps > Requests (or api.slack.com/apps > Manage distribution), and approves "Beacon GEO".
+1. Go to api.slack.com/apps > Create New App > From scratch, in your workspace. Add the scopes above (or, for posting only, enable Incoming Webhooks and add one for your channel).
+2. Click Install to Workspace. If your workspace requires app approval, a Workspace Admin approves it under Tools & settings > Manage apps > Requests. Copy the Bot User OAuth Token (or webhook URL) into the field above.
 3. In the target channel, type /invite @Beacon GEO (needed for private channels).
 4. Click Test in this wizard to see a "Beacon is connected" message appear in your channel.
 
@@ -970,7 +945,41 @@ Group: stack · Icon: MessageSquare · Optional · 2 live test(s)
 | `chat_post` | Test message delivered | Slack chat.postMessage to the channel then delete it (or leave "Beacon is connected"). Partial: not_in_channel (bot not invited to a private channel) or channel_not_found. Teams: POST /teams/{id}/channels/{id}/messages. |
 
 
-## 15. Review & submit
+## 16. YouTube channel (education)
+
+Group: stack · Icon: Video · Optional · 1 live test(s)
+
+**Why we need it:** A separate expert-education channel turns each approved article into a short video whose titles, descriptions, chapters and captions link back to your blog. Uploads run hands-free after a one-time Google consent. The presenter is a branded AI persona, videos are marked as synthetic media and the description says the voice is AI.
+
+### Fields
+
+| ID | Label | Type | Notes |
+|---|---|---|---|
+| `youtube_channel_name` | Channel name | text (required) | A branded name, never a person's name. Not your main brand channel. |
+| `youtube_persona_name` | Presenter persona | text (required) | A brand persona, not a real person. No titles or credentials. |
+| `youtube_channel_url` | Channel URL (after creating it) | url |  |
+
+### Grant instructions
+
+**One-time manual setup (YouTube cannot create channels through its API)**
+
+1. Use a Google account owned by your company (for example youtube@acme.com). Sign in at youtube.com.
+2. Click your avatar > Create a channel, and choose a Brand Account so ownership can move between people.
+3. Name it as in the field above. Add the avatar and banner from your brand assets. In About, say the videos use an AI presenter voice and put your blog link first.
+4. Verify the channel by phone (required for custom thumbnails). Defaults: category Education, made for kids: No.
+5. Open the YouTube tab in Beacon and press Connect channel. Pick the Brand Account channel in Google's account picker and accept. We request upload and manage-captions access only; the token is stored in your vault and you can revoke it at myaccount.google.com/permissions.
+6. Click Test here to confirm the channel is reachable.
+
+- [YouTube: create a channel with a Brand Account](https://support.google.com/youtube/answer/1646861)
+
+### Live tests
+
+| Test ID | What it proves | API call, and what "partial" looks like |
+|---|---|---|
+| `youtube_connected` | Channel connected | Exchange the stored refresh token for an access token and call channels.list (1 quota unit). Fail: token revoked or expired (reconnect from the YouTube tab) or the Google account has no channel. |
+
+
+## 17. Review & submit
 
 Group: stack · Icon: ClipboardCheck · Required · 1 live test(s)
 
