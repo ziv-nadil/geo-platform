@@ -30,6 +30,8 @@ const NAME_OVERRIDES: Record<string, string> = {
   cf_api_token: 'API_TOKEN',
   slack_bot_token: 'BOT_TOKEN',
   slack_webhook_url: 'WEBHOOK_URL',
+  slack_config_token: 'CONFIG_TOKEN',
+  slack_signing_secret: 'SIGNING_SECRET',
   api_key: 'API_KEY',
 };
 
@@ -69,6 +71,8 @@ const SHAPES: Record<string, (v: string) => string | null> = {
   aws_secret_access_key: (v) => (/^[A-Za-z0-9/+=]{40}$/.test(v.trim()) ? null : 'expected a 40-character AWS secret access key'),
   cf_api_token: (v) => (/^[A-Za-z0-9_-]{30,64}$/.test(v.trim()) ? null : 'expected a Cloudflare API token'),
   slack_webhook_url: (v) => (/^https:\/\/hooks\.slack\.com\/services\/[A-Za-z0-9/_-]+$/.test(v.trim()) ? null : 'expected a Slack incoming webhook URL'),
+  slack_config_token: (v) => (/^xoxe\.xoxp-[A-Za-z0-9-]+$/.test(v.trim()) ? null : 'expected a Slack app configuration token (xoxe.xoxp-...)'),
+  slack_signing_secret: (v) => (/^[a-f0-9]{32}$/i.test(v.trim()) ? null : 'expected a 32-character Slack signing secret'),
   slack_bot_token: (v) => (/^xoxb-[A-Za-z0-9-]+$/.test(v.trim()) ? null : 'expected a Slack bot token (xoxb-...)'),
 };
 

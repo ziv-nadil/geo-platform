@@ -18,7 +18,7 @@ import { Agent } from 'undici';
 
 export type Integration =
   | 'scrape' | 'infisical' | 'supabase' | 'stripe' | 'github' | 'google' | 'bing' | 'cloudflare'
-  | 'slack' | 'microsoft' | 'aws' | 'cms' | 'analytics';
+  | 'slack' | 'microsoft' | 'aws' | 'cms' | 'analytics' | 'apify';
 
 const ALLOW: Record<Integration, (string | RegExp)[]> = {
   scrape: [/.*/], // any public host, never with credentials
@@ -34,6 +34,7 @@ const ALLOW: Record<Integration, (string | RegExp)[]> = {
   bing: ['ssl.bing.com'],
   cloudflare: ['api.cloudflare.com'],
   slack: ['slack.com'],
+  apify: ['api.apify.com'],
   microsoft: ['login.microsoftonline.com', 'graph.microsoft.com'],
   aws: [/^sts(\.[a-z0-9-]+)?\.amazonaws\.com$/, /^[a-z0-9.-]+\.s3(\.[a-z0-9-]+)?\.amazonaws\.com$/, /^s3(\.[a-z0-9-]+)?\.amazonaws\.com$/, 'cloudfront.amazonaws.com'],
   cms: [

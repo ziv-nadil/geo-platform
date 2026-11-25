@@ -13,6 +13,7 @@ import {
   PenLine,
   Settings,
   Smile,
+  Radio,
   Swords,
   Clapperboard,
   type LucideIcon,
@@ -45,6 +46,7 @@ export const NAV: { section: string; items: NavItem[] }[] = [
       { href: "/content-gaps", label: "Content gaps", icon: FileSearch },
       { href: "/creators", label: "Creators", icon: Clapperboard },
       { href: "/outreach", label: "Outreach", icon: Megaphone },
+      { href: "/social-pulse", label: "Social pulse", icon: Radio },
     ],
   },
   {
