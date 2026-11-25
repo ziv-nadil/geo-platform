@@ -53,5 +53,7 @@ Read this first when resuming in a fresh or compacted session.
 
 - USAGE RULE (user): check usage every 30 min, narrowing to 15/10/5 min near the limit; on a warning, interrupt the children and wait for the reset. Never cross the limit.
 
+- USAGE RULE: check BOTH bars (5h + weekly). 09:25 UTC Wed: 5h 22%, weekly 39% (weekly resets Fri 01:00 UTC). Pace the weekly limit too.
+
 ## Next
 - Wave 2: QA + security review + integrate. Deploy once VERCEL_TOKEN exists.
