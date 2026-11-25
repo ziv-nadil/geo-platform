@@ -283,7 +283,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
         id: 'github_method', label: 'How to grant access', type: 'radio', required: true,
         options: [
           { value: 'invite', label: 'Invite our GitHub user as collaborator' },
-          { value: 'token', label: 'Give us a fine-grained token' },
+          { value: 'token', label: 'Give us a fine-grained token (or a deploy key, which our team will set up with you)' },
         ],
       },
       { id: 'github_token', label: 'Fine-grained personal access token', type: 'secret', required: true, showIf: { field: 'github_method', equals: 'token' } },
@@ -294,7 +294,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
         steps: [
           'Collaborator: Write role on that one repository (needed to push a branch and open PRs). Read is only partial.',
           'Token: Repository access = Only select repositories > your blog repo. Repository permissions: Contents = Read and write, Pull requests = Read and write, Metadata = Read-only (auto). Nothing else. Set expiry to 1 year.',
-          'GitHub App route (we recommend if you have an org owner): install our app on that single repo with the same three permissions.',
+          'There is no agency-registered GitHub app: you grant access yourself, with either a fine-grained token or a collaborator/deploy-key on this one repository.',
         ],
       },
       {
@@ -997,7 +997,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
       },
       { id: 'slack_workspace_url', label: 'Slack workspace URL', type: 'url', required: true, placeholder: 'https://acme.slack.com', showIf: { field: 'chat_platform', equals: 'slack' } },
       { id: 'slack_channel', label: 'Channel for reports', type: 'text', required: true, placeholder: '#geo-reports', showIf: { field: 'chat_platform', equals: 'slack' } },
-      { id: 'slack_bot_token', label: 'Bot token (only if you cannot use "Add to Slack")', type: 'secret', help: 'xoxb-... from our manifest app installed in your workspace.', showIf: { field: 'chat_platform', equals: 'slack' } },
+      { id: 'slack_bot_token', label: 'Bot token or incoming webhook URL', type: 'secret', required: true, help: 'Create a Slack app in your own workspace and install it (xoxb-... bot token), or add an Incoming Webhook to a channel and paste its URL. We do not run an agency-registered Slack app.', showIf: { field: 'chat_platform', equals: 'slack' } },
       { id: 'teams_tenant_id', label: 'Microsoft Entra tenant ID', type: 'text', required: true, showIf: { field: 'chat_platform', equals: 'teams' } },
       { id: 'teams_team_channel', label: 'Team and channel name', type: 'text', required: true, placeholder: 'Marketing > GEO', showIf: { field: 'chat_platform', equals: 'teams' } },
     ],
@@ -1020,8 +1020,8 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
       {
         variant: 'slack', title: 'Install (Slack admin or Workspace Owner)',
         steps: [
-          'Click "Add to Slack" in this page. A Slack consent screen opens listing exactly the scopes above.',
-          'If your workspace requires app approval: Slack shows "Request to install". A Workspace Admin then opens Slack > your workspace name > Tools & settings > Manage apps > Requests (or api.slack.com/apps > Manage distribution), and approves "Beacon GEO".',
+          'Go to api.slack.com/apps > Create New App > From scratch, in your workspace. Add the scopes above (or, for posting only, enable Incoming Webhooks and add one for your channel).',
+          'Click Install to Workspace. If your workspace requires app approval, a Workspace Admin approves it under Tools & settings > Manage apps > Requests. Copy the Bot User OAuth Token (or webhook URL) into the field above.',
           'In the target channel, type /invite @Beacon GEO (needed for private channels).',
           'Click Test in this wizard to see a "Beacon is connected" message appear in your channel.',
         ],

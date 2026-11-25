@@ -1,3 +1,4 @@
+import { billingEnabled } from '@/lib/server/env';
 import type Stripe from 'stripe';
 import { json, notConfiguredResponse } from '@/lib/server/auth';
 import { dbConfigured, withService } from '@/lib/server/db';
@@ -11,6 +12,7 @@ import { handleStripeEvent } from '@/lib/server/stripe-events';
  * Excluded from the auth proxy matcher.
  */
 export async function POST(request: Request) {
+  if (!billingEnabled()) return json({ error: 'billing_disabled' }, 404);
   const stripe = getStripe();
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!stripe || !secret) return notConfiguredResponse(['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'].filter((n) => !process.env[n]));

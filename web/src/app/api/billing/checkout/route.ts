@@ -1,9 +1,11 @@
+import { billingEnabled } from '@/lib/server/env';
 import { auditEvent, checkOrigin, json, notConfiguredResponse, requireOrgAccess } from '@/lib/server/auth';
 import { withService } from '@/lib/server/db';
 import { getStripe } from '@/lib/server/stripe';
 
 /** POST /api/billing/checkout  body { orgId, planId, interval: 'month' | 'year' } (admin+) -> { url } of a Stripe Checkout Session. */
 export async function POST(request: Request) {
+  if (!billingEnabled()) return json({ error: 'billing_disabled' }, 404);
   const bad = checkOrigin(request);
   if (bad) return bad;
   const body = (await request.json().catch(() => null)) as { orgId?: string; planId?: string; interval?: string } | null;

@@ -24,7 +24,7 @@ integrates into the migrations.
 | D3 | **Write-only is achievable.** Infisical splits secret read into `describeSecret` and `readValue`. `beacon-app-writer` gets project role **No Access** plus an **additional privilege** of `secrets: create, edit, describeSecret` and `secret-folders: create, read`, without `readValue`. Whether
 additional privileges are on our plan is unconfirmed (verify). The fallback is the built-in Member role (read+write), which loses write-only. |
 | D4 | **No static Infisical credentials on Vercel when avoidable.** Identities log in with **OIDC auth using Vercel's OIDC token**, bound to the production environment of the Vercel project. Fallback: Universal Auth with a 90-day client secret. Access-token TTL is 5–10 min. |
-| D5 | **Infisical Pro before the first real client credential.** Audit logs are Pro+ only and the Free plan caps identities at 5. We also keep our own `secret_access_log` in Postgres on every plan. |
+| D5 | **Stay on Infisical, FREE tier at launch (lead decision 2026-11-25).** 3 machine identities (`provisioner`, `app-writer`, `worker`) plus 1 break-glass human fit under the 5-identity cap at $0. Free has no Infisical audit logs, so our own `secret_access_log` is the audit trail; the nightly Infisical-vs-log reconciliation is **"enable on Pro"**. **Upgrade to Pro at the first paying client or when we need >5 identities.** Fallback if Infisical stops fitting: AWS Secrets Manager (see §1.6a). |
 | D6 | **Secret intake = application-layer encryption (JWE) from browser to our API route**, then decrypted in memory and written to Infisical. Nothing is logged or persisted. Only references live in Postgres. |
 | D7 | **Postgres never stores secret values or hashes of them.** It stores `organizations.infisical_project_id` plus `secret_refs` (step, field, path, name, test status). The broker always derives the project from `organizations`, never from a client-writable row. |
 | D8 | **Tenant RLS has no blanket super-admin bypass.** Platform admins read tenant data only through an **audited, time-boxed, per-org access grant** ("view-as" / "act-as"), and only with an **aal2 (MFA)** session. Fleet-wide console views run on the server with the secret key. |
@@ -86,7 +86,7 @@ but **default to agency-email access**. When domain-user mode is unavoidable, st
 | human `break-glass` | org | Org **Admin** with MFA | Infisical login + MFA | n/a | Never automated |
 
 This set uses **3 machine + 1–2 human = 4–5 identities**. It fits the Free cap of 5 (identities count humans and
-machines alike), but Free has no audit logs, so §1.6 schedules Pro before launch.
+machines alike), but Free has no audit logs, so `secret_access_log` is the audit trail until we move to Pro (first paying client or >5 identities).
 
 **Is one identity holding grants on many projects supported?** Yes. Infisical's docs ("Organization and project
 identities") say an *organization* identity can access "each project you add the identity to", with a role per
@@ -95,8 +95,7 @@ identity is the alternative: it lives inside one project and "can access only it
 
 ### 1.3 Creating the vault for a new client (provisioning)
 
-Trigger: org creation, after the org passes the gate (email verified **and** either a completed Stripe Checkout or a
-platform-admin approval). Gating stops an attacker from minting unlimited Infisical projects through signups.
+Trigger: org creation, after the org passes the gate (email verified **and** platform-admin approval; there is no self-serve org creation). Gating stops an attacker from minting unlimited Infisical projects through signups.
 
 ```
 signup/approval ──► INSERT organizations(status='onboarding')        (server, secret key)
@@ -157,8 +156,8 @@ per-client identities, the same bug would expose one client.
    value in a local variable inside the tool call. Zero it out (`value = ''`) after use and never return it.
 5. **Short TTL** (600 s) and no persistence of tokens.
 6. **Dual audit.** Every fetch inserts `secret_access_log(org_id, secret_ref_id, purpose, job_id, outcome)` *before* the
-   Infisical call. On Pro, Infisical's own audit log records `get-secret` per project. A nightly job reconciles the two
-   and alerts on Infisical reads with no matching log row, which signals use of the token outside the broker.
+   Infisical call. On Pro, Infisical's own audit log records `get-secret` per project. The nightly job that reconciles the two
+   and alerts on Infisical reads with no matching log row (use of the token outside the broker) is **"enable on Pro"**: on Free, only our log exists.
 7. **Anomaly alerts.** One job reading secrets of more than one org, or more than N reads per minute, pages us.
 8. **Optional tripwire.** An Infisical AWS honey token at `/aws/` in each project. If it's ever used, an alert fires (check plan).
 
@@ -173,7 +172,13 @@ per-client identities, the same bug would expose one client.
 |---|---|---|---|
 | Infisical audit log | Every secret create/read/update, identity login, membership change | Plan-dependent (Pro: verify 90 d) | **Pro+** (not Free) |
 | Infisical audit log streams | Push to our SIEM or log store | | Enterprise only, so we export via `GET /api/v1/organization/audit-logs` nightly instead |
-| `public.secret_access_log` (ours) | Broker fetches with purpose, job and outcome | 400 d | any |
+| `public.secret_access_log` (ours) | Broker fetches with purpose, job and outcome. **The audit trail on the Free tier.** | 400 d | any |
+
+### 1.6a Fallback: AWS Secrets Manager
+
+If Infisical Free/Pro stops fitting (identity count, pricing, audit needs), the documented fallback is AWS Secrets Manager:
+~$0.40 per secret per month (~$56/mo for 140 secrets, i.e. 20 clients x ~7 secrets) plus API calls, with **CloudTrail** as the audit log and IAM
+for per-org scoping (one secret path prefix per org). The broker interface (`fetch by reference`) is unchanged; only the backend swaps.
 | `public.platform_audit_log` (ours) | Staff actions: view-as, act-as, provisioning, admin console reads | 400 d, append-only | any |
 | `public.audit_events` (ours, client-visible) | Org-level actions by members; staff shown as "Agency team" | life of org | any |
 | Supabase Auth audit logs | Sign-ins, MFA, password resets | Per Supabase plan | any |
@@ -185,8 +190,7 @@ For each integration, the onboarding spec should offer options in this order:
    For GCP, grant `roles/iam.serviceAccountTokenCreator` on their SA to *our* SA (impersonation). Note: new Google Cloud orgs
    block SA key creation by default, so JSON keys often aren't even possible. For AWS, use a **cross-account IAM role with
    ExternalId** that our platform principal assumes; our principal itself authenticates via Vercel OIDC → AWS, so no
-   static AWS keys at all. For GitHub, install **our GitHub App** on their repo (one app private key in
-   `beacon-platform`, short-lived installation tokens). For Slack, use **our Slack app** with token rotation enabled.
+   static AWS keys at all. For GitHub, the **client grants access at onboarding**: a fine-grained PAT scoped to the blog repo, or a deploy key / collaborator invite. There is no agency-registered GitHub App. For Slack, the **client installs a Slack app they create in their own workspace** (we store the bot token) or adds an incoming webhook. No agency-registered Slack app.
 2. **Scoped, expiring tokens.** For example, a Cloudflare API token with an expiry date, zone scope and an optional IP filter.
    Store the expiry in a `rotates:<yyyy-mm>` tag and remind the client 14 days ahead.
 3. **Long-lived keys (last resort).** AWS access keys, CMS application passwords. We send a 90-day rotation reminder.
@@ -194,7 +198,7 @@ For each integration, the onboarding spec should offer options in this order:
    connection with permission to mint keys on the client's side. Offer it only to clients who explicitly want it.
 
 **Our own credentials.** Rotate Universal Auth client secrets (if used) every 90 days. Rotate the intake JWE key every 180 days
-(two `kid`s active during overlap). Rotate Stripe and LLM keys yearly or on staff change.
+(two `kid`s active during overlap). Rotate LLM keys (and Stripe, if `BILLING_ENABLED`) yearly or on staff change.
 **Offboarding a client.** Run the per-integration revoke checklist with the client. Then delete the `beacon-<slug>` and `-logins`
 projects, delete `secret_refs`, and log `vault.deleted`.
 **Incident: worker identity suspected compromised.** Remove its auth method (instant kill). Create a new identity and
@@ -562,3 +566,11 @@ Vercel functions have no network egress firewall, so we enforce egress in code a
 ## 8. Open decisions
 
 Logged in `docs/ISSUES.md` → "Found during the build" (Security agent).
+
+
+## Addendum 2026-11-25 (lead decisions)
+
+- **Billing dormant.** Stripe code is kept but gated by `BILLING_ENABLED=false` (default): Billing tab, plan limits and `/api/billing/*` + `/api/stripe/webhook` are off.
+- **Org creation is platform-admin only** (`POST /api/admin/orgs`, aal2). Signup creates a user, never an org.
+- **Anthropic** may use the existing company Anthropic account (the one Explorium exception, Claude itself).
+- Perplexity adapter kept but disabled unless `PERPLEXITY_API_KEY` is set and not enabled for new orgs by default. Cloudflare crawler code is kept, optional. Unsplash is removed (Bria covers imagery).

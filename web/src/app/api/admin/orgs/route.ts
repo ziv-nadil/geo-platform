@@ -5,7 +5,7 @@ import { provisionVault } from '@/lib/server/infisical';
 export const maxDuration = 60;
 
 /**
- * POST /api/admin/orgs — platform admin (aal2) only. Body:
+ * POST /api/admin/orgs — platform admin (aal2) only; the ONLY way an org is created (no self-serve creation). Body:
  *   { name, slug, website?, plan?, ownerEmail? }
  * Creates the org (server path), invites the owner if given (returns the one-time invite token),
  * then provisions the client's Infisical project (beacon-<slug>) and stores only its id.
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     const [org] = await sql`
       insert into public.organizations (name, slug, website, plan, status)
       values (${name}, ${slug}, ${b?.website ?? null}, ${plan.id}, 'onboarding') returning id, slug`;
-    await sql`insert into public.org_engines (org_id, engine_id) select ${org.id}, id from public.engines where active and method = 'api'`;
+    await sql`insert into public.org_engines (org_id, engine_id) select ${org.id}, id from public.engines where active and method = 'api' and (id <> 'perplexity' or ${!!process.env.PERPLEXITY_API_KEY})`;
     let inviteToken: string | null = null;
     if (b?.ownerEmail) {
       inviteToken = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, '');

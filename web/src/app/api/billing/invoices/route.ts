@@ -1,9 +1,11 @@
+import { billingEnabled } from '@/lib/server/env';
 import { json, notConfiguredResponse, requireOrgAccess } from '@/lib/server/auth';
 import { withService } from '@/lib/server/db';
 import { getStripe } from '@/lib/server/stripe';
 
 /** GET /api/billing/invoices?orgId= (admin+) -> { invoices } from the Stripe API (latest 12). */
 export async function GET(request: Request) {
+  if (!billingEnabled()) return json({ error: 'billing_disabled' }, 404);
   const orgId = new URL(request.url).searchParams.get('orgId') ?? '';
   const auth = await requireOrgAccess(orgId, 'admin');
   if (!auth.ok) return auth.response;

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkLimit, evaluateLimit, type PlanLimits } from '../limits';
 
 const starter: PlanLimits = { planId: 'starter', planName: 'Starter', seats: 5, prompts: 100, engines: 4 };
@@ -22,6 +22,14 @@ describe('evaluateLimit', () => {
 });
 
 describe('checkLimit (DB-backed)', () => {
+  beforeEach(() => vi.stubEnv('BILLING_ENABLED', 'true'));
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('is a no-op when billing is disabled', async () => {
+    vi.stubEnv('BILLING_ENABLED', 'false');
+    expect(await checkLimit((async () => { throw new Error('no db'); }) as never, 'o', 'seats')).toEqual({ ok: true });
+  });
+
   it('reads plan limits and usage through the query helper', async () => {
     const sql = (async (strings: TemplateStringsArray) => {
       const q = strings.join('?');

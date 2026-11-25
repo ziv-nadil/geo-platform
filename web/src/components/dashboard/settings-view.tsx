@@ -47,6 +47,7 @@ export function SettingsView({
   apiKeys,
   integrations,
   billing,
+  billingEnabled,
 }: {
   org: Org;
   tab: string;
@@ -56,6 +57,7 @@ export function SettingsView({
   apiKeys: ApiKey[];
   integrations: Integration[];
   billing: Billing | null;
+  billingEnabled: boolean;
 }) {
   const router = useRouter();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -84,7 +86,7 @@ export function SettingsView({
         <TabsTrigger value="sso">SSO</TabsTrigger>
         <TabsTrigger value="api-keys">API keys</TabsTrigger>
         <TabsTrigger value="integrations">Integrations</TabsTrigger>
-        <TabsTrigger value="billing">Billing</TabsTrigger>
+        {billingEnabled ? <TabsTrigger value="billing">Billing</TabsTrigger> : null}
       </TabsList>
 
       <TabsContent value="general">
@@ -133,7 +135,7 @@ export function SettingsView({
           {limitHit ? (
             <div className="mx-5 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-warn/30 bg-warn-soft px-3 py-2" role="status">
               <span className="text-sm text-ink">{limitHit}</span>
-              <Button size="sm" onClick={() => setActive("billing")}>See plans</Button>
+              {billingEnabled ? <Button size="sm" onClick={() => setActive("billing")}>See plans</Button> : null}
             </div>
           ) : null}
           {inviteLink ? (

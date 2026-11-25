@@ -142,3 +142,5 @@ Decisions were made so work didn't stop. Each item says what I chose and what yo
   mention the brand. The methodology score (`responses.visibility_score`, the per-observation score_o) and the CI helpers in
   `lib/analysis/scoring.ts` are ready for the dashboards, but no rollup uses them yet. Backend/UI should decide which number is the headline.
 - **Agency plan price:** Billing set it to $2,499 a month (annual = 10× monthly). Change it if you want.
+
+- **Decisions 2026-11-25.** Secrets: stay on Infisical Free at launch (see security.md D5, costs.md). Stripe dormant behind `BILLING_ENABLED=false`; org creation is platform-admin approval only. Perplexity off by default (adapter kept, needs `PERPLEXITY_API_KEY`). Unsplash removed. GitHub/Slack access is granted by the client at onboarding. Anthropic: the existing company Anthropic account may be used (the Claude exception).

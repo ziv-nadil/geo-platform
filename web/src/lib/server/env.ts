@@ -33,6 +33,11 @@ export function optionalEnv(name: string): string | undefined {
 }
 
 /** Env vars each server capability needs (see docs/ISSUES.md and the backend report). */
+/** Billing (Stripe) is dormant unless BILLING_ENABLED=true. Billing is handled outside the platform by default. */
+export function billingEnabled(): boolean {
+  return process.env.BILLING_ENABLED === 'true';
+}
+
 export const ENV = {
   // New Supabase API key names (legacy anon/service_role keys are deprecated; security.md §4).
   supabasePublic: ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY'],

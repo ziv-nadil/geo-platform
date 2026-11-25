@@ -10,7 +10,7 @@ As of 2026-11-24. Owner: Finance/Ops agent. Source of truth for budgets and upgr
 
 | Service | Free-tier limit | Blocks us when | Verdict |
 |---|---|---|---|
-| **Infisical Free** | **5 identities** (human + machine), **unlimited projects**, 100+ integrations (S) | More than 5 identities exist. Our design has one machine identity per worker, so this hits fast. | **Blocks at launch.** 20 projects are *not* the blocker. Identities are. |
+| **Infisical Free** | **5 identities** (human + machine), **unlimited projects**, no audit logs (S) | More than 5 identities. Our fixed design uses 3 machine + 1 human = 4. | **Decision: stay on Free at launch ($0).** Our `secret_access_log` is the audit trail. Upgrade to Pro at the first paying client or >5 identities. Fallback: AWS Secrets Manager (~$0.40/secret/mo, ~$56/mo for 140 secrets, CloudTrail audit). |
 | Infisical Pro | Per identity per month. Price conflicts across sources: $18, $20 annual, $23 monthly (most recent teardown, S). Unlimited projects (S). One source caps Pro at 50 identities (S, unverified). | Immediately after the free cap | Plan for $23/identity/mo until confirmed |
 | **Vercel Hobby** | Personal, non-commercial use only (V) | Any client billing or commercial use | **Must move to Pro before the first paying client** |
 | **Supabase Free** | 2 active projects; projects pause after 1 week of inactivity (S); no SAML/SSO (V) | We need a prod DB that stays up, or SSO for client orgs | Move to Pro before prod |
@@ -92,7 +92,7 @@ Notes:
 |---|---|---|---|---|
 | Vercel | $0 (Hobby, internal only) | $60 (Pro + 2 extra seats) | $80 (Pro + 3 extra seats) | Hobby cannot serve paying clients |
 | Supabase | $0 (Free) | $25 (Pro) | $50 (Pro + ~$25 usage, A) | Usage estimate is an assumption |
-| Infisical | $0 (≤5 identities) | $138 (6 identities × $23) | $230 (10 identities × $23) | Per-identity price, S. Annual billing ~13% lower. |
+| Infisical | $0 (Free, 3 machine identities, decided) | $0 until first paying client, then Pro ~$92-138 (4-6 identities × $23) | $230 (10 identities × $23, Pro) | Per-identity price, S. Pro adds audit logs and enables the nightly reconciliation. Fallback AWS Secrets Manager ~$56/mo for 140 secrets. |
 | **Platform total** | **$0** | **$223** | **$360** | |
 
 Identity assumptions: launch = 3 humans + 3 machines; full = 5 humans + 5 machines.
@@ -130,7 +130,7 @@ Engine APIs are about 68% of full-scale cost. Infisical is the largest platform 
 | Trigger | Action | Cost delta |
 |---|---|---|
 | First paying client, or any commercial use | **Vercel Hobby → Pro** (Hobby is non-commercial) | +$20 base + $20/extra seat |
-| More than 5 identities (almost certain at launch) | **Infisical Free → Pro** | ~$23/identity/mo |
+| First paying client, or more than 5 identities | **Infisical Free → Pro** (not needed at launch) | ~$23/identity/mo |
 | Need a prod DB that does not pause, or >2 active projects | **Supabase Free → Pro** | +$25/mo + usage |
 | Client org requires SSO (SAML) | Supabase Pro (per PLAN.md; confirm plan) | Included with Pro, MAU-based beyond quota (S) |
 | Client org requires SSO for the Supabase dashboard | Supabase Team (S) | $599/mo; not needed for our app login |
@@ -149,3 +149,10 @@ Engine APIs are about 68% of full-scale cost. Infisical is the largest platform 
 5. Decide per-client vs per-worker identity model with Security (see section 1).
 6. Decide Claude engine model: Sonnet 5.5 ($572/mo full) or Haiku 5.5 (~$275/mo).
 7. Set real pricing so Stripe fees and margins can be modelled.
+
+
+## Addendum 2026-11-25
+
+- Infisical stays on **Free at launch** ($0): 3 machine identities fit the cap. Pro at first paying client or >5 identities. AWS Secrets Manager is the documented fallback (~$0.40/secret/mo, ~$56/mo for 140 secrets).
+- Removed from cost scope: Stripe fees (billing handled elsewhere, `BILLING_ENABLED=false`), Perplexity (adapter off by default), Unsplash. Cloudflare is optional.
+- Anthropic runs on the existing company Anthropic account.

@@ -42,6 +42,8 @@ export async function getUsage(sql: Tagged, orgId: string): Promise<Record<Limit
 }
 
 export async function checkLimit(sql: Tagged, orgId: string, kind: LimitKind, adding = 1): Promise<LimitResult> {
+  // Plan limits only apply when billing is on (BILLING_ENABLED=true).
+  if (process.env.BILLING_ENABLED !== 'true') return { ok: true };
   const [limits, usage] = await Promise.all([getPlanLimits(sql, orgId), getUsage(sql, orgId)]);
   return evaluateLimit(kind, limits, usage[kind], adding);
 }

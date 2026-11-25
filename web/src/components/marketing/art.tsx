@@ -1,4 +1,3 @@
-import { getUnsplashPhoto } from "@/lib/unsplash";
 
 /** Abstract signal-field art: concentric hairline arcs and a data grid. Pure SVG, no assets. */
 export function SignalArt({ className }: { className?: string }) {
@@ -24,23 +23,12 @@ export function SignalArt({ className }: { className?: string }) {
   );
 }
 
-/** Dark banner: an Unsplash photo when UNSPLASH_ACCESS_KEY is set, otherwise SignalArt. */
-export async function ArtBanner({ query = "abstract architecture minimal", children }: { query?: string; children: React.ReactNode }) {
-  const photo = await getUnsplashPhoto(query);
+/** Dark banner with generated SignalArt (no stock photos; Bria covers imagery). */
+export function ArtBanner({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative isolate overflow-hidden rounded-lg border border-line bg-ink text-white shadow-shot">
-      {photo ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={photo.src} alt="" className="absolute inset-0 -z-10 size-full object-cover opacity-50" />
-      ) : (
-        <SignalArt className="absolute inset-0 -z-10 size-full" />
-      )}
+      <SignalArt className="absolute inset-0 -z-10 size-full" />
       <div className="relative p-8 md:p-12">{children}</div>
-      {photo ? (
-        <a href={photo.creditUrl} className="absolute right-3 bottom-2 text-2xs text-white/60 hover:text-white">
-          Photo: {photo.credit} / Unsplash
-        </a>
-      ) : null}
     </div>
   );
 }
