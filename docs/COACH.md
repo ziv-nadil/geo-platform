@@ -51,5 +51,7 @@ Read this first when resuming in a fresh or compacted session.
 
 - 04:00 UTC: Discovery + Design polish merged; build/tsc green. Usage warning reached, so Site is deferred until the next reset (~06:50 UTC). Remaining: Site, deploy (tokens), Athena UI (computer).
 
+- USAGE RULE (user): check usage every 30 min, narrowing to 15/10/5 min near the limit; on a warning, interrupt the children and wait for the reset. Never cross the limit.
+
 ## Next
 - Wave 2: QA + security review + integrate. Deploy once VERCEL_TOKEN exists.
