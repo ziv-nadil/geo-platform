@@ -11,12 +11,13 @@ on:
     - cron: "37 * * * *"    # alerts (Slack)
     - cron: "0 13 * * 1"    # weekly digest (Mon 13:00 UTC)
     - cron: "20 4 * * *"    # content planner (per-org cadence + mode decide what runs)
+    - cron: "41 * * * *"    # social pulse (hourly tick; each org has its own stable UTC hour, one run per org per day)
   workflow_dispatch:
     inputs:
       job:
         description: "Job to run"
         type: choice
-        options: [worker, crawlers, enqueue, alerts, digest, content]
+        options: [worker, crawlers, enqueue, alerts, digest, content, social-pulse]
         default: worker
 
 concurrency:
@@ -46,6 +47,7 @@ jobs:
             "37 * * * *")  job=alerts ;;
             "0 13 * * 1")  job=digest ;;
             "20 4 * * *")  job=content ;;
+            "41 * * * *")  job=social-pulse ;;
             *)             job="${JOB_INPUT:-worker}" ;;
           esac
           code=$(curl -sS -o body.json -w '%{http_code}' --max-time 330 -X POST \

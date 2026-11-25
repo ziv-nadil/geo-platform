@@ -172,3 +172,23 @@ Engine APIs are about 68% of full-scale cost. Infisical is the largest platform 
 - Infisical stays on **Free at launch** ($0): 3 machine identities fit the cap. Pro at first paying client or >5 identities. AWS Secrets Manager is the documented fallback (~$0.40/secret/mo, ~$56/mo for 140 secrets).
 - Removed from cost scope: Stripe fees (billing handled elsewhere, `BILLING_ENABLED=false`), Perplexity (adapter off by default), Unsplash. Cloudflare is optional.
 - Anthropic runs on the existing company Anthropic account.
+
+---
+
+## Social pulse (Apify public-data actors + Haiku)
+
+Added 2026-11-25. Actors (verified in the Apify store; public data only, no login, no cookies): `apify/reddit-scraper`, `apidojo/tweet-scraper`, `harvestapi/linkedin-post-search` (ids live in `web/src/lib/server/social-pulse/config.ts`). All are pay-per-event, so cost scales with items returned. The app never trusts these estimates for billing: each run's real `usageTotalUsd` is read back from Apify, stored in `social_pulse_runs.cost_usd`, and summed for the per-org monthly guard.
+
+**Estimated cost per run (A = assumption; replace with measured values after the first live runs).** Unit estimates used by the guard: actor start $0.002 per run; Reddit $0.004 / post, X $0.0004 / tweet (store lists ~$0.10 to $0.40 per 1K), LinkedIn $0.002 / post.
+
+| Platform | Items per run (default cap) | Est. cost per run | Conf. |
+|---|---|---|---|
+| Reddit | 30 | ~$0.12 | A |
+| X | 30 | ~$0.014 | A |
+| LinkedIn | 30 | ~$0.06 | A |
+| Haiku clustering (`claude-haiku-5-5`, ~90 posts in, ~2K out; $0.10 / $0.50 per 1M) | 1 call | ~$0.002 | V |
+| **One org, one daily pulse (all 3 platforms)** | 90 items | **~$0.20** | A |
+
+Monthly per org: ~$6 at one run per day (30 days), well inside the default $10 monthly budget. At 20 orgs: ~$120/mo. Raise caps per org only with a matching budget.
+
+**Controls** (per org, `social_pulse_settings`): max items per platform (5 to 100, default 30), max Apify runs per day (default 3), monthly USD budget (default $10; a run is refused when the remaining budget is below its estimate, and Apify's `maxTotalChargeUsd` hard-caps each run at the lesser of 2x the estimate and what is left), last-24h window, 14-day dedupe (`social_pulse_seen`). Global kill switch: env `SOCIAL_PULSE_DISABLED=1` stops all runs and Slack posts. Apify auth: env `APIFY_TOKEN` (never logged).
