@@ -140,3 +140,4 @@ Decisions were made so work didn't stop. Each item says what I chose and what yo
 - **Engines: metrics view.** `analytics.org_engine_daily` (metrics migration) still computes visibility as the % of runs that
   mention the brand. The methodology score (`responses.visibility_score`, the per-observation score_o) and the CI helpers in
   `lib/analysis/scoring.ts` are ready for the dashboards, but no rollup uses them yet. Backend/UI should decide which number is the headline.
+- **Agency plan price:** Billing set it to $2,499 a month (annual = 10× monthly). Change it if you want.
