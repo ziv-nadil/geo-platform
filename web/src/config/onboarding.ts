@@ -128,6 +128,24 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     ],
   },
 
+  // 1b ---------------------------------------------------------------------
+  {
+    id: 'geo_readiness',
+    title: 'GEO readiness',
+    short: 'GEO readiness',
+    icon: 'ScanSearch',
+    group: 'company',
+    optional: true,
+    why: 'Before we create content, we check whether AI engines can actually reach, read and cite your site: robots.txt, llms.txt, sitemap, speed, server-side rendering, structured data and any firewall that blocks AI crawlers. You get a prioritized fix list with step-by-step instructions for your platform.',
+    fields: [],
+    instructions: [
+      { title: 'How the audit works', steps: ['We request your robots.txt, llms.txt, sitemap and a few pages exactly like AI crawlers do (including with GPTBot, ClaudeBot and PerplexityBot user agents).', 'We score each check from 0 to 100 and list the fixes that matter most first.', 'Fix the top items, then press "Re-run audit" to see your score improve. You can re-run it any time from Site health.'] },
+    ],
+    tests: [
+      { id: 'geo_score', label: 'GEO readiness audit', description: 'Real requests to your site: robots.txt AI bot rules, llms.txt, sitemap freshness, PageSpeed Insights (LCP, CLS, INP, TTFB), server-side rendering, canonical/noindex, structured data, headings, author/date, internal links, HTTPS, hreflang, page weight and WAF/CDN bot blocking. Partial: some categories score below 70. Fail: most categories need work.', requires: ['website_url'] },
+    ],
+  },
+
   // 2 ----------------------------------------------------------------------
   {
     id: 'brand_book',

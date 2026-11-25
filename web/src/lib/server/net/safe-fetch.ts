@@ -29,7 +29,7 @@ const ALLOW: Record<Integration, (string | RegExp)[]> = {
   google: [
     'oauth2.googleapis.com', 'www.googleapis.com', 'searchconsole.googleapis.com',
     'analyticsadmin.googleapis.com', 'analyticsdata.googleapis.com', 'serviceusage.googleapis.com',
-    'indexing.googleapis.com', 'googleads.googleapis.com', 'youtube.googleapis.com',
+    'indexing.googleapis.com', 'pagespeedonline.googleapis.com', 'googleads.googleapis.com', 'youtube.googleapis.com',
   ],
   bing: ['ssl.bing.com'],
   cloudflare: ['api.cloudflare.com'],

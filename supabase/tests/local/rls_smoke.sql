@@ -380,6 +380,22 @@ begin
 end $$;
 rollback;
 
+-- ---------------------------------------------------------------- geo_audits tenancy
+begin;
+select set_config('request.jwt.claims', json_build_object('sub', :'dana', 'role', 'authenticated', 'aal', 'aal1')::text, true);
+set local role authenticated;
+do $$
+declare n int;
+begin
+  insert into public.geo_audits (org_id, url, score) values ('10000000-0000-4000-b000-000000000001', 'https://nw.example', 80);
+  select count(*) into n from public.geo_audits; assert n = 1, 'dana sees her org audit, got ' || n;
+  begin
+    insert into public.geo_audits (org_id, url, score) values ('10000000-0000-4000-b000-000000000002', 'https://x.example', 10);
+    raise exception 'FAIL: cross-tenant geo_audits insert allowed';
+  exception when insufficient_privilege or check_violation then null; end;
+end $$;
+rollback;
+
 -- ---------------------------------------------------------------- structural checks
 do $$
 declare n int;
