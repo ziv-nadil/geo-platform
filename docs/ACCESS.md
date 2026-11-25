@@ -21,7 +21,7 @@ Verified from this session on 2026-11-24: none of the vendor hosts below are rea
 
 `api.vercel.com`, `vercel.com`, `api.supabase.com`, `*.supabase.co`, `supabase.com`, `app.infisical.com`, `infisical.com`, `api.stripe.com`,
 `api.openai.com`, `api.perplexity.ai`, `generativelanguage.googleapis.com`, `api.dataforseo.com`, `oauth2.googleapis.com`,
-`www.googleapis.com`, `searchconsole.googleapis.com`, `api.cloudflare.com`, `slack.com`, `api.slack.com`, `api.github.com`.
+`www.googleapis.com`, `searchconsole.googleapis.com`, `api.cloudflare.com`, `engine.prod.bria-api.com`, `pagespeedonline.googleapis.com`, `api.unsplash.com`, `slack.com`, `api.slack.com`, `api.github.com`.
 `api.anthropic.com` is already routed by the harness; no entry needed.
 
 ## Checklist (ordered by what it unblocks)
@@ -42,6 +42,9 @@ Verified from this session on 2026-11-24: none of the vendor hosts below are rea
 | 12 | **GitHub App** (agency) | Onboarding step 4, repo access for blog publishing | Free | Use your personal email (not work) and a new personal org: github.com → Settings → Developer settings → GitHub Apps → New. Perms: Contents RW, Pull requests RW, Metadata R. Generate private key, note App ID | `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY` | `api.github.com` | sign JWT, `GET /app` | todo |
 | 13 | **Slack app** (agency) | Onboarding step 14 bots | Free | Use your personal email (not work) and a new personal org: api.slack.com/apps → Create New App → scopes `chat:write`, `channels:read` → note Client ID/Secret and Signing Secret | `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, `SLACK_SIGNING_SECRET` | `slack.com`, `api.slack.com` | n/a until installed; `auth.test` after install | todo (later) |
 | 14 | **Your computer via Remote Control** | AthenaHQ UI teardown while logged in | n/a | Claude desktop app → Settings → Claude Code → Remote Control → share a folder, or run `claude remote-control` in a terminal in that folder. Then tell the lead session | n/a | n/a | `list_computer_folders` shows it online | todo |
+| 15 | **Bria** (image generation) | Marketing and content imagery | Your existing personal Bria account | Use your personal Bria account (not work). Open the Bria console/dashboard and copy your API token. Add it in the environment settings, never in chat | `BRIA_API_KEY` | `engine.prod.bria-api.com` (**unverified**: from memory, docs.bria.ai was unreachable from this session; confirm in Bria's API docs) | a cheap read call per Bria docs (auth header `api_token`); confirm endpoint once docs are reachable | todo |
+| 16 | **Google PageSpeed Insights** (optional) | Site speed checks for audits | Free GCP API key | In your personal GCP project `beacon-geo` (same as row 5): APIs & Services → Library → enable PageSpeed Insights API → Credentials → Create API key → restrict to that API | `PAGESPEED_API_KEY` | `pagespeedonline.googleapis.com` | `GET https://pagespeedonline.googleapis.com/pagespeedonline/v5/runPagespeed?url=https://example.com&key=<key>` | todo (optional) |
+| 17 | **Unsplash** (optional) | Marketing imagery | Free (Demo, 50 requests/hour) | Sign up with your personal email at unsplash.com/developers → Your apps → New Application → copy the **Access Key** (not the Secret) | `UNSPLASH_ACCESS_KEY` | `api.unsplash.com` | `GET https://api.unsplash.com/photos/random` with header `Authorization: Client-ID <key>` | todo (optional) |
 
 ## Other items from ISSUES.md needing you (not tokens)
 
@@ -54,3 +57,4 @@ Verified from this session on 2026-11-24: none of the vendor hosts below are rea
 
 - 2026-11-24: initial checklist. All rows `todo`.
 - 2026-11-24: added personal-accounts-only rule (lead instruction); every signup step says so.
+- 2026-11-25: added Bria, PageSpeed Insights (optional), Unsplash (optional) at lead's request. Bria host unverified.
