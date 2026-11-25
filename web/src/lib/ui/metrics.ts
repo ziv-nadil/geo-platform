@@ -138,6 +138,28 @@ export const METRICS = {
     definition: "How closely the creator's recent videos match your tracked topics.",
     formula: "semantic similarity of recent titles and transcripts to your topics, 0–100",
   },
+  contentMode: {
+    label: "Content mode",
+    definition: "Approve: the planner suggests titles and you pick, review and approve each draft. Auto: the planner writes the top suggestion for each gap and delivers it to your CMS as a draft.",
+    formula: "mode = approve | auto",
+    note: "Nothing is ever published live. Drafts always wait in your CMS or as a draft pull request.",
+  },
+  contentWords: {
+    label: "Article length",
+    definition: "Target word count for new articles. You can override it per article before pressing Create.",
+    formula: "default 1,800 words, 600 to 5,000",
+    note: "Counts the direct answer, section text, tables and FAQ.",
+  },
+  contentCadence: {
+    label: "Planner cadence",
+    definition: "How often the planner looks at your latest monitoring results and proposes new titles for gaps that still have no content.",
+    formula: "off | daily | weekly",
+  },
+  researchBenchmarks: {
+    label: "Research benchmarks",
+    definition: "What the pages AI engines cite and the top Google results look like for this prompt: median length, share with tables, FAQ and schema, and how fresh they are. The article is briefed to match the table stakes and beat them on depth and evidence.",
+    formula: "median / share across analysed pages",
+  },
 } satisfies Record<string, MetricDef>;
 
 export type MetricId = keyof typeof METRICS;

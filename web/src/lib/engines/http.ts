@@ -15,6 +15,7 @@ export const EGRESS_ALLOWLIST = {
   gemini: ['generativelanguage.googleapis.com'],
   gemini_redirect: ['vertexaisearch.cloud.google.com'],
   dataforseo: ['api.dataforseo.com'],
+  bria: ['engine.prod.bria-api.com'],
   cloudflare: ['api.cloudflare.com'],
 } as const;
 export type Integration = keyof typeof EGRESS_ALLOWLIST;

@@ -18,6 +18,7 @@ Decisions were made so work didn't stop. Each item says what I chose and what yo
    | Google OAuth (SSO + GSC/GA4 checks) | GCP project → OAuth client (Web) | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
    | OpenAI / Perplexity / Gemini / Anthropic | API keys for engine monitoring | `OPENAI_API_KEY`, `PERPLEXITY_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY` (env var only) |
    | DataForSEO | Account (pay-as-you-go, $50 min) | `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD` |
+| Bria (images) | API key from Bria console | `BRIA_API_KEY` |
 3. **Network allowlist.** If the environment is on "Limited" network, allow: `api.vercel.com`, `api.supabase.com`,
    `*.supabase.co`, `app.infisical.com`, `api.stripe.com`, `api.openai.com`, `api.perplexity.ai`,
    `generativelanguage.googleapis.com`, `api.dataforseo.com`.

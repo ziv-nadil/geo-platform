@@ -352,6 +352,34 @@ begin
 end $$;
 rollback;
 
+-- ---------------------------------------------------------------- content pipeline tenant isolation
+begin;
+select set_config('request.jwt.claims', json_build_object('sub', :'dana', 'role', 'authenticated', 'aal', 'aal1')::text, true);
+set local role authenticated;
+do $$
+declare n int;
+begin
+  select count(*) into n from public.content_briefs where org_id = '10000000-0000-4000-b000-000000000002';
+  assert n = 0, 'dana sees no briefs of another org';
+  begin
+    insert into public.content_briefs (org_id, title) values ('10000000-0000-4000-b000-000000000002', 'cross-tenant');
+    raise exception 'FAIL: wrote a brief into another org';
+  exception when insufficient_privilege then null; end;
+  begin
+    insert into public.content_research (org_id, prompt_text) values ('10000000-0000-4000-b000-000000000002', 'x');
+    raise exception 'FAIL: wrote research into another org';
+  exception when insufficient_privilege then null; end;
+  begin
+    insert into public.content_settings (org_id, mode) values ('10000000-0000-4000-b000-000000000002', 'auto');
+    raise exception 'FAIL: changed another org content mode';
+  exception when insufficient_privilege then null; end;
+  begin
+    insert into public.content_settings (org_id, default_words) values ('10000000-0000-4000-b000-000000000001', 100);
+    raise exception 'FAIL: accepted default_words below 600';
+  exception when check_violation or insufficient_privilege then null; end;
+end $$;
+rollback;
+
 -- ---------------------------------------------------------------- structural checks
 do $$
 declare n int;
