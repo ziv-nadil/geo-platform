@@ -21,3 +21,9 @@
 ## Budget rule (user, 2026-11-24)
 Stay under the 5-hour usage limit (it was at 77% at 22:16 UTC and resets about 01:50 UTC). Start no new sessions until it resets.
 Default to sonnet/haiku at low or medium effort; opus only for security review.
+
+## Integration TODO (from Engines report, decided by the lead)
+- Wire `registerSecretBroker()` to the backend broker so the crawler poll works.
+- Headline metric = methodology `responses.visibility_score`. Update `analytics.org_engine_daily` and keep "% runs mentioned" as a secondary metric.
+- Vercel Hobby can't run 5-minute crons: add a GitHub Actions schedule calling /api/cron/* with CRON_SECRET until we're on Pro.
+- Run `next typegen` to clear the LayoutProps tsc error.
