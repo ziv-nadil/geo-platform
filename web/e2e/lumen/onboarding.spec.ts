@@ -56,6 +56,7 @@ test.describe("onboarding wizard (Lumen owner, org in onboarding)", () => {
     await expect.poll(async () => (await bar()) === (await pct()), { timeout: 10_000, message: "every progress bar should match the summary" }).toBe(true);
     await page.getByRole("button", { name: /undo skip/i }).click();
     await expect.poll(pct, { timeout: 10_000 }).toBe(before);
+    await page.waitForTimeout(1500); // let the debounced save of the undo land so later tests start clean
   });
 
   test("required (non-optional) step has no plain skip except GitHub", async ({ page }) => {
@@ -142,12 +143,17 @@ test.describe("onboarding wizard (Lumen owner, org in onboarding)", () => {
 
   test("skip state persists across reload", async ({ page }) => {
     await stepBtn(page, "Cloudflare").click();
+    if (await page.getByRole("button", { name: /undo skip/i }).isVisible()) {
+      await page.getByRole("button", { name: /undo skip/i }).click();
+      await page.waitForTimeout(1500);
+    }
     await page.getByRole("button", { name: /skip \/ not applicable/i }).click();
     await page.waitForTimeout(1500);
     await page.reload();
     await stepBtn(page, "Cloudflare").click();
     await expect(page.getByRole("button", { name: /undo skip/i })).toBeVisible();
     await page.getByRole("button", { name: /undo skip/i }).click();
+    await page.waitForTimeout(1500);
   });
 
   test("tenant isolation: Lumen owner cannot open Northwind", async ({ page }) => {
