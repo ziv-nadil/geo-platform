@@ -47,5 +47,7 @@ Read this first when resuming in a fresh or compacted session.
 
 - 02:15 UTC: backend, frontend and engines DONE and merged. Started sessions Integration (session_01AWqBEYKt7ChZ6CSNNVctoB → claude/integration) and QA (session_01AWqBEZGbSkdfvTZkLAebd8 → claude/qa), both sonnet/medium. Next: Security review after Integration merges.
 
+- 02:58 UTC: merged Integration, QA, Security review, Content gaps, Billing, Reports, Fixes (renumbered the security_fixes migration to 000700). All tests/build green. Running: Discovery (claude/discovery), Design polish (claude/design-polish). Remaining: Site, deploy (needs tokens), Athena UI (needs the computer).
+
 ## Next
 - Wave 2: QA + security review + integrate. Deploy once VERCEL_TOKEN exists.
