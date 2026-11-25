@@ -189,7 +189,7 @@ export function serialisableValues(values: StepValues): StepValues {
   const out: StepValues = {};
   for (const [k, v] of Object.entries(values)) {
     if (v && typeof v === "object" && !Array.isArray(v)) {
-      if (v.kind === "secret") out[k] = { kind: "secret", stored: v.stored, ref: v.ref, last4: v.last4, storedAt: v.storedAt };
+      if (v.kind === "secret") continue; // secrets are stored in the vault only; never in progress data
       else out[k] = { kind: "file", name: v.name, size: v.size, type: v.type, path: v.path, status: v.status };
     } else if (Array.isArray(v) && v.length && typeof v[0] === "object") {
       out[k] = (v as Row[]).map((r) => serialisableValues(r) as Row);

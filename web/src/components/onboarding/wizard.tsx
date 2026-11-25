@@ -31,7 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { StatusIcon, StatusPill, type Status } from "@/components/ui/status";
 import { Tooltip } from "@/components/ui/tooltip";
-import { saveStep, type TestResult } from "@/lib/ui/api-client";
+import { saveProgress, type TestResult } from "@/lib/ui/api-client";
 import { cn } from "@/lib/ui/cn";
 import {
   canSkip,
@@ -86,7 +86,8 @@ export function OnboardingWizard({
       setSaveState("saving");
       timer.current = setTimeout(async () => {
         const status = stepStatus(steps.find((s) => s.id === stepId)!, next);
-        const res = await saveStep(orgId, stepId, serialisableValues(next.values[stepId] ?? {}), status);
+        // Clients may only set not_started / in_progress; complete comes from live tests on the server.
+        const res = await saveProgress(orgId, stepId, serialisableValues(next.values[stepId] ?? {}), status === "idle" ? "not_started" : "in_progress", next.skipped[stepId] ? "skipped" : null);
         setSaveState(res.available ? "saved" : "unavailable");
       }, 700);
     },
@@ -355,7 +356,7 @@ function SubmitButton({
         loading={busy}
         onClick={async () => {
           setBusy(true);
-          const res = await saveStep(orgId, "review", serialisableValues(state.values.review ?? {}), "submitted");
+          const res = await saveProgress(orgId, "review", serialisableValues(state.values.review ?? {}), "in_progress", "submitted");
           setBusy(false);
           if (res.available) onSubmitted(new Date().toISOString());
           else setMsg(`Not submitted: ${res.error}`);

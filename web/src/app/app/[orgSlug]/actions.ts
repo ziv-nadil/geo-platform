@@ -111,23 +111,6 @@ export async function saveBrandKit(orgId: string, style: BrandStyle, terminology
   });
 }
 
-/* ---------------------------------------------------------------- onboarding */
-
-const ONB_STATUS: Record<string, string> = { idle: "not_started", pending: "in_progress", partial: "needs_attention", fail: "needs_attention", pass: "complete", skipped: "complete", submitted: "complete" };
-
-export async function saveOnboardingStep(orgId: string, stepId: string, data: Record<string, unknown>, status: string, skipped = false) {
-  if (!/^[a-z0-9_]{2,40}$/.test(stepId)) return { ok: false, error: "Unknown step." } as Result;
-  // Secrets never travel here: only {kind:'secret', stored} references survive serialisableValues().
-  const payload = JSON.parse(JSON.stringify({ ...data, ...(skipped ? { _skipped: true } : {}) }));
-  const s = ONB_STATUS[status] ?? "in_progress";
-  return write(orgId, (sql, claims) =>
-    sql`insert into public.onboarding_progress (org_id, step_id, status, data, updated_by, completed_at)
-        values (${orgId}, ${stepId}, ${s}, ${sql.json(payload)}, ${claims.sub}, ${s === "complete" ? sql`now()` : null})
-        on conflict (org_id, step_id) do update set status = excluded.status, data = excluded.data, updated_by = excluded.updated_by,
-          completed_at = case when excluded.status = 'complete' then coalesce(public.onboarding_progress.completed_at, now()) else null end`.then(() => undefined),
-  );
-}
-
 /* ---------------------------------------------------------------- members, invitations, keys */
 
 export async function inviteMember(orgId: string, email: string, role: Role) {

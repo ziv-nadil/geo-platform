@@ -5,9 +5,9 @@ import { useState } from "react";
 import type { OnboardingStep } from "@/config/onboarding";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status";
-import { runTest, type TestResult } from "@/lib/ui/api-client";
+import { runStepTest, type TestResult } from "@/lib/ui/api-client";
 import { fmtDateTime } from "@/lib/ui/format";
-import { applicableTests, serialisableValues, testRunnable, type StepValues } from "@/lib/ui/onboarding-logic";
+import { applicableTests, testRunnable, type StepValues } from "@/lib/ui/onboarding-logic";
 
 export function TestsPanel({
   orgId,
@@ -28,18 +28,32 @@ export function TestsPanel({
   const skippedTests = step.tests.filter((t) => !tests.includes(t));
   if (!step.tests.length) return null;
 
+  /** The backend tests a whole step at once; results are mapped onto each TestDef by check id. */
   async function run(ids: string[]) {
     setUnavailable(null);
     setRunning((r) => ({ ...r, ...Object.fromEntries(ids.map((i) => [i, true])) }));
-    const payload = serialisableValues(values);
-    await Promise.all(
-      ids.map(async (id) => {
-        const res = await runTest(orgId, step.id, id, payload);
-        if (res.available) onResult(id, res.data);
-        else setUnavailable(res.error);
-        setRunning((r) => ({ ...r, [id]: false }));
-      }),
-    );
+    const res = await runStepTest(orgId, step.id);
+    if (!res.available) setUnavailable(res.error);
+    else if (res.data.status === "not_configured") setUnavailable(`The test service is not configured${res.data.missing?.length ? ` (${res.data.missing.join(", ")})` : ""}.`);
+    else {
+      const ranAt = res.data.ranAt ?? new Date().toISOString();
+      const all = res.data.checks.map((c) => ({ label: c.label, status: (c.ok ? "pass" : "fail") as TestResult["status"], detail: c.detail }));
+      for (const id of ids) {
+        const own = res.data.checks.filter((c) => c.id === id || c.id.startsWith(`${id}.`) || c.id.startsWith(`${id}:`));
+        const checks = own.length ? own.map((c) => ({ label: c.label, status: (c.ok ? "pass" : "fail") as TestResult["status"], detail: c.detail })) : all;
+        const status: TestResult["status"] = own.length ? (own.every((c) => c.ok) ? "pass" : own.some((c) => c.ok) ? "partial" : "fail") : (res.data.status as TestResult["status"]);
+        const failing = checks.filter((c) => c.status !== "pass");
+        onResult(id, {
+          testId: id,
+          status,
+          summary: status === "pass" ? "All checks passed." : failing.length ? failing.map((c) => c.detail ?? c.label).slice(0, 2).join(" ") : "Some checks did not pass.",
+          missing: res.data.missing,
+          checks,
+          ranAt,
+        });
+      }
+    }
+    setRunning((r) => ({ ...r, ...Object.fromEntries(ids.map((i) => [i, false])) }));
   }
 
   const runnable = tests.filter((t) => testRunnable(step, t, values).ok).map((t) => t.id);

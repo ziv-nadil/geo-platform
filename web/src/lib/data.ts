@@ -61,7 +61,7 @@ import type { StepStatus, WizardState } from "@/lib/ui/onboarding-logic";
 /* ------------------------------------------------------------------ identity */
 
 export function devBypassClaims(): JwtClaims | null {
-  const id = process.env.DEV_AUTH_USER_ID;
+  const id = process.env.DEV_AUTH_USER_ID ?? process.env.DEV_IMPERSONATE_USER_ID;
   const url = process.env.DATABASE_URL;
   if (!id || !url || process.env.NODE_ENV === "production") return null;
   let host = "";
@@ -630,11 +630,10 @@ export async function getOnboardingState(orgId: string): Promise<Load<WizardStat
       const state: WizardState = { values: {}, tests: {}, skipped: {}, serverStatus: {} };
       for (const s of p.steps) {
         const data = { ...(s.data ?? {}) } as Record<string, unknown>;
-        if (data._skipped) state.skipped[s.stepId] = true;
-        delete data._skipped;
+        if (s.notes === "skipped") state.skipped[s.stepId] = true;
         state.values[s.stepId] = data as WizardState["values"][string];
         state.serverStatus![s.stepId] = STEP_STATUS[s.status];
-        if (s.stepId === "review" && s.status === "complete") state.submittedAt = s.completedAt ?? s.updatedAt;
+        if (s.stepId === "review" && (s.status === "complete" || s.notes === "submitted")) state.submittedAt = s.completedAt ?? s.updatedAt;
       }
       for (const sec of p.secrets) {
         state.values[sec.stepId] = { ...(state.values[sec.stepId] ?? {}), [sec.fieldId]: { kind: "secret", stored: true, storedAt: sec.updatedAt } };

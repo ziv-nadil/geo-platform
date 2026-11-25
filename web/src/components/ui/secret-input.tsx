@@ -16,8 +16,8 @@ export interface SecretState {
 
 /**
  * Masked secret field. The value lives only in the uncontrolled <input> until submit; it is
- * posted to /api/onboarding/:orgId/secrets and the input is wiped immediately afterwards
- * (success or failure). Only a reference ("stored", optional last 4) is kept in React state.
+ * encrypted in the browser (JWE to the server intake key), posted to /api/onboarding/:orgId/secrets,
+ * and the input is wiped immediately afterwards (success or failure). Only a "stored" flag is kept.
  */
 export function SecretInput({
   id,
@@ -58,10 +58,10 @@ export function SecretInput({
     setReveal(false);
     setBusy(false);
     if (res.available) {
-      onStored({ stored: true, ref: res.data.ref, last4: res.data.last4, storedAt: new Date().toISOString() });
+      onStored({ stored: res.data.stored, storedAt: new Date().toISOString() });
       setReplacing(false);
     } else {
-      setError(`Not saved. ${res.error} The secret vault (Infisical) is not connected in this environment, so the value was discarded. Re-enter it once the vault is live.`);
+      setError(`Not saved: ${res.error} The value was discarded; enter it again when the vault is available.`);
     }
   }
 
@@ -70,7 +70,7 @@ export function SecretInput({
       <div className="flex items-center justify-between gap-3 rounded-sm border border-good/30 bg-good-soft px-3 py-2">
         <span className="flex items-center gap-2 text-sm text-good">
           <ShieldCheck className="size-4" aria-hidden="true" />
-          Stored in the vault{state.last4 ? ` · ends in ${state.last4}` : ""}
+          Stored in the vault
         </span>
         <Button size="sm" variant="ghost" onClick={() => setReplacing(true)}>
           Replace
