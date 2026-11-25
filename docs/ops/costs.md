@@ -192,3 +192,7 @@ Added 2026-11-25. Actors (verified in the Apify store; public data only, no logi
 Monthly per org: ~$6 at one run per day (30 days), well inside the default $10 monthly budget. At 20 orgs: ~$120/mo. Raise caps per org only with a matching budget.
 
 **Controls** (per org, `social_pulse_settings`): max items per platform (5 to 100, default 30), max Apify runs per day (default 3), monthly USD budget (default $10; a run is refused when the remaining budget is below its estimate, and Apify's `maxTotalChargeUsd` hard-caps each run at the lesser of 2x the estimate and what is left), last-24h window, 14-day dedupe (`social_pulse_seen`). Global kill switch: env `SOCIAL_PULSE_DISABLED=1` stops all runs and Slack posts. Apify auth: env `APIFY_TOKEN` (never logged).
+
+## Addendum 2026-11-25: per-client isolation
+
+The infisical.com/pricing page now resolves (**V**): Pro is $20 per identity per month billed annually or $23 monthly, with unlimited identities and 30-day audit retention. Dynamic secrets require Advanced ($40/$46). Hard per-client isolation (see [`../architecture/isolation.md`](../architecture/isolation.md) §4) costs about **$230/mo at 5 clients** (Infisical Pro + GitHub environments) and about **$110–135/mo at 20 clients** after moving to AWS Secrets Manager. Staying on Infisical at 20 clients would cost about $607/mo.
