@@ -126,7 +126,7 @@ async function Overview(props: RouteProps) {
               <div key={label} className="min-w-0">
                 <p className="mb-2 text-2xs font-semibold tracking-wider text-ink-4 uppercase">{label}</p>
                 <ul className="flex flex-col divide-y divide-line">
-                  {list.length === 0 ? <li className="py-2 text-sm text-ink-3">No significant changes.</li> : null}
+                  {list.length === 0 ? <li className="py-2 text-sm text-ink-3">{movers.up.length + movers.down.length === 0 ? "Needs answers from the previous period to compare." : "No significant changes."}</li> : null}
                   {list.map((m) => (
                     <li key={m.promptId} className="py-2">
                       <Link href={`/app/${org.slug}/prompts/${m.promptId}${qs}`} className="group flex items-start justify-between gap-2">

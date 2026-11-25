@@ -206,8 +206,8 @@ export function PromptsView({
                       </span>
                     </Td>
                     <Td>
-                      <span className="block text-sm text-ink-2">{r.topic ?? "No topic"}</span>
-                      <span className="block text-xs text-ink-4">{r.persona ?? "Any persona"}</span>
+                      <span className="block max-w-44 truncate text-sm whitespace-nowrap text-ink-2" title={r.topic ?? undefined}>{r.topic ?? "No topic"}</span>
+                      <span className="block max-w-44 truncate text-xs whitespace-nowrap text-ink-4">{r.persona ?? "Any persona"}</span>
                     </Td>
                     <Td className="text-right font-semibold text-ink">{r.visibility === null ? "—" : `${r.visibility.toFixed(0)}%`}</Td>
                     <Td className={cn("text-right text-sm", d === null ? "text-ink-4" : d > 0.5 ? "text-good" : d < -0.5 ? "text-bad" : "text-ink-4")}>
@@ -240,7 +240,7 @@ export function PromptsView({
               <Sparkles className="size-4 text-accent" aria-hidden="true" /> Prompt discovery
             </span>
           }
-          description="Questions your buyers ask AI engines where competitors show up and you don't. Add the ones worth tracking."
+          description="Prompts found by the weekly discovery job from your ICP, Search Console queries and community threads. They are tracked like any other prompt."
         />
         <CardBody>
           {suggestions.length === 0 ? (

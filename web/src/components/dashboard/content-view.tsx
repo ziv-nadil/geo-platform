@@ -1,12 +1,11 @@
 "use client";
 
-import { Check, FilePlus2, Plus, Trash2 } from "lucide-react";
+import { Check, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/card";
 import { Slider } from "@/components/ui/controls";
-import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Field, Input, Textarea } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Table, TableWrap, TBody, Td, Th, THead, Tr } from "@/components/ui/table";

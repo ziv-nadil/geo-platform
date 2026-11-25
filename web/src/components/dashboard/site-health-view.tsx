@@ -3,7 +3,6 @@
 import { CheckCircle2, ChevronDown, Circle, ExternalLink } from "lucide-react";
 import { Fragment, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MetricHelp } from "@/components/ui/metric-help";
 import { Select } from "@/components/ui/select";

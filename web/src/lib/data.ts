@@ -1,5 +1,6 @@
 import "server-only";
 import { createHash } from "node:crypto";
+import { connection } from "next/server";
 import { currentClaims, dbConfigured, runAs, withRls, withService, type JwtClaims, type TxSql } from "@/lib/server/db";
 import * as Q from "@/lib/server/queries";
 import { ONBOARDING_STEPS } from "@/config/onboarding";
@@ -75,7 +76,8 @@ export function devBypassClaims(): JwtClaims | null {
 }
 
 /** Run backend queries as the dev-bypass user when active, otherwise as the session user. */
-function as<T>(fn: () => Promise<T>): Promise<T> {
+async function as<T>(fn: () => Promise<T>): Promise<T> {
+  await connection(); // per-request data: never prerender it into the static shell
   const c = devBypassClaims();
   return c ? runAs(c, fn) : fn();
 }
@@ -99,6 +101,7 @@ async function unwrap<T, U>(p: Promise<Q.QueryResult<T>>, map: (d: T) => U | Pro
 }
 
 export async function getViewer(): Promise<Load<Viewer>> {
+  await connection();
   if (!dbConfigured()) return { ok: false, reason: "not_configured", missing: ["DATABASE_URL"] };
   const claims = await viewerClaims();
   if (!claims) return { ok: false, reason: "unauthenticated" };
@@ -684,7 +687,7 @@ export async function getOnboardingPlaceholders(orgId: string): Promise<Record<s
 /* ------------------------------------------------------------------ admin */
 
 export async function adminListOrgs(): Promise<Load<AdminOrg[]>> {
-  const total = ONBOARDING_STEPS.filter((s) => s.id !== "review").length;
+  const total = ONBOARDING_STEPS.length;
   return as(() =>
     unwrap(Q.adminListOrgs(), (rows) =>
       rows.map((r) => ({
@@ -695,7 +698,7 @@ export async function adminListOrgs(): Promise<Load<AdminOrg[]>> {
         status: r.status,
         createdAt: r.createdAt,
         members: r.members,
-        onboardingPct: Math.round(((r.onboardingComplete + 0.5 * r.onboardingNeedsAttention) / total) * 100),
+        onboardingPct: Math.min(100, Math.round(((r.onboardingComplete + 0.5 * r.onboardingNeedsAttention) / total) * 100)),
         onboardingNeedsAttention: r.onboardingNeedsAttention,
         subscriptionStatus: r.subscriptionStatus,
         vaultProvisioned: r.vaultProvisioned,
