@@ -6,11 +6,13 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { getReports } from "@/lib/data";
+import { buttonClass } from "@/components/ui/button";
 import { fmtDate } from "@/lib/ui/format";
+import { DigestToggle, ReportGenerator } from "./report-tools";
 
 export const metadata = { title: "Reports" };
 
-const STATUS_TONE: Record<string, "good" | "info" | "warn" | "bad" | "neutral"> = { ready: "good", sent: "good", generating: "info", queued: "info", draft: "neutral", failed: "bad" };
+const STATUS_TONE: Record<string, "good" | "info" | "warn" | "bad" | "neutral"> = { ready: "good", succeeded: "good", running: "info", sent: "good", generating: "info", queued: "info", draft: "neutral", failed: "bad" };
 
 export default function ReportsPage(props: PageProps<"/app/[orgSlug]/reports">) {
   return (
@@ -28,10 +30,11 @@ async function Reports(props: RouteProps) {
   return (
     <>
       <PageHeader title="Reports" description="Scheduled and one-off summaries for your team and stakeholders." />
+      <ReportGenerator orgId={org.id} />
       {!r.ok ? (
         <LoadFail result={r} />
       ) : r.data.length === 0 ? (
-        <EmptyState icon={FileText} title="No reports yet" description="Your strategist schedules a weekly digest and a monthly executive report after onboarding." />
+        <EmptyState icon={FileText} title="No reports yet" description="Pick a date range above and generate your first client report." />
       ) : (
         <div className="grid gap-4 lg:grid-cols-3">
           {r.data.map((rep) => (
@@ -61,10 +64,19 @@ async function Reports(props: RouteProps) {
                   <dd className="text-ink-2">{fmtDate(rep.createdAt)}</dd>
                 </div>
               </dl>
+              {rep.status === "succeeded" ? (
+                <div className="flex flex-wrap gap-2 border-t border-line pt-4">
+                  <a className={buttonClass("secondary", "sm")} href={`/api/reports/${rep.id}/download?format=pdf`}>PDF</a>
+                  {["kpis", "engines", "trend", "gaps", "competitor_movers"].map((t) => (
+                    <a key={t} className={buttonClass("ghost", "sm")} href={`/api/reports/${rep.id}/download?format=csv&table=${t}`}>CSV: {t.replace("_", " ")}</a>
+                  ))}
+                </div>
+              ) : null}
             </Card>
           ))}
         </div>
       )}
+      <DigestToggle />
     </>
   );
 }

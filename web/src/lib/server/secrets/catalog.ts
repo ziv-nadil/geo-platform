@@ -29,6 +29,7 @@ const NAME_OVERRIDES: Record<string, string> = {
   aws_secret_access_key: 'SECRET_ACCESS_KEY',
   cf_api_token: 'API_TOKEN',
   slack_bot_token: 'BOT_TOKEN',
+  slack_webhook_url: 'WEBHOOK_URL',
   api_key: 'API_KEY',
 };
 
@@ -67,6 +68,7 @@ const SHAPES: Record<string, (v: string) => string | null> = {
   },
   aws_secret_access_key: (v) => (/^[A-Za-z0-9/+=]{40}$/.test(v.trim()) ? null : 'expected a 40-character AWS secret access key'),
   cf_api_token: (v) => (/^[A-Za-z0-9_-]{30,64}$/.test(v.trim()) ? null : 'expected a Cloudflare API token'),
+  slack_webhook_url: (v) => (/^https:\/\/hooks\.slack\.com\/services\/[A-Za-z0-9/_-]+$/.test(v.trim()) ? null : 'expected a Slack incoming webhook URL'),
   slack_bot_token: (v) => (/^xoxb-[A-Za-z0-9-]+$/.test(v.trim()) ? null : 'expected a Slack bot token (xoxb-...)'),
 };
 

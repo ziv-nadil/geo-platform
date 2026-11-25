@@ -8,12 +8,14 @@ on:
     - cron: "*/5 * * * *"   # worker
     - cron: "7 * * * *"     # crawlers
     - cron: "0 2 * * *"     # enqueue
+    - cron: "37 * * * *"    # alerts (Slack)
+    - cron: "0 13 * * 1"    # weekly digest (Mon 13:00 UTC)
   workflow_dispatch:
     inputs:
       job:
         description: "Job to run"
         type: choice
-        options: [worker, crawlers, enqueue]
+        options: [worker, crawlers, enqueue, alerts, digest]
         default: worker
 
 concurrency:
@@ -40,6 +42,8 @@ jobs:
             "*/5 * * * *") job=worker ;;
             "7 * * * *")   job=crawlers ;;
             "0 2 * * *")   job=enqueue ;;
+            "37 * * * *")  job=alerts ;;
+            "0 13 * * 1")  job=digest ;;
             *)             job="${JOB_INPUT:-worker}" ;;
           esac
           code=$(curl -sS -o body.json -w '%{http_code}' --max-time 330 -X POST \
