@@ -64,7 +64,7 @@ import type { StepStatus, WizardState } from "@/lib/ui/onboarding-logic";
 export function devBypassClaims(): JwtClaims | null {
   const id = process.env.DEV_AUTH_USER_ID ?? process.env.DEV_IMPERSONATE_USER_ID;
   const url = process.env.DATABASE_URL;
-  if (!id || !url || process.env.NODE_ENV === "production") return null;
+  if (!id || !url || process.env.NODE_ENV === "production" || process.env.VERCEL || process.env.VERCEL_ENV) return null;
   let host = "";
   try {
     host = new URL(url).hostname;

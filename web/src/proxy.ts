@@ -8,7 +8,7 @@ import { updateSession } from "@/lib/server/supabase/proxy";
  */
 export async function proxy(request: NextRequest) {
   const { response, userId } = await updateSession(request);
-  const configured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  const configured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
   const protectedPath = /^\/(app|admin)(\/|$)/.test(request.nextUrl.pathname);
   if (configured && protectedPath && !userId) {
     const login = new URL("/login", request.url);

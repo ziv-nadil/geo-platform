@@ -22,6 +22,16 @@ type Fail = { ok: false; response: Response };
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (v: string) => UUID_RE.test(v);
 
+/**
+ * Mirrors the restrictive RLS policies private.aal_ok() + private.org_mfa_ok(): a user who enrolled a
+ * verified MFA factor must present aal2, and an org with settings.require_mfa needs aal2 from everyone.
+ * Route handlers that continue with the secret key (withService) bypass RLS, so they must check this.
+ */
+export function mfaSatisfied(aal: string, hasVerifiedFactor: boolean, orgRequiresMfa: boolean): boolean {
+  if (aal === 'aal2') return true;
+  return !hasVerifiedFactor && !orgRequiresMfa;
+}
+
 export function json(body: unknown, status = 200, headers?: Record<string, string>): Response {
   return Response.json(body, { status, headers: { 'Cache-Control': 'private, no-store', ...headers } });
 }
@@ -49,18 +59,24 @@ export async function requireOrgAccess(orgId: string, minRole: OrgRole): Promise
   const caller: Caller = { userId: auth.userId, aal: auth.aal, claims: auth.claims };
 
   const found = await withService(async (sql) => {
-    const [m] = await sql`select role::text as role from public.memberships where org_id = ${orgId} and user_id = ${auth.userId}`;
-    if (m) return { role: m.role as OrgRole, grant: null };
-    if (auth.aal !== 'aal2') return { role: null, grant: null };
+    const [m] = await sql`
+      select m.role::text as role,
+             exists (select 1 from auth.mfa_factors f where f.user_id = m.user_id and f.status = 'verified') as has_factor,
+             coalesce((o.settings ->> 'require_mfa')::boolean, false) as org_requires_mfa
+      from public.memberships m join public.organizations o on o.id = m.org_id
+      where m.org_id = ${orgId} and m.user_id = ${auth.userId}`;
+    if (m) return { role: m.role as OrgRole, grant: null, mfaOk: mfaSatisfied(auth.aal, !!m.has_factor, !!m.org_requires_mfa) };
+    if (auth.aal !== 'aal2') return { role: null, grant: null, mfaOk: false };
     const [g] = await sql`
       select g.id, g.mode from public.platform_access_grants g
       join public.platform_admins pa on pa.user_id = g.admin_user_id and pa.disabled_at is null
       where g.admin_user_id = ${auth.userId} and g.org_id = ${orgId} and g.ended_at is null and g.expires_at > now()
       order by g.mode asc limit 1`;
-    return { role: null, grant: g ? { id: g.id as string, mode: g.mode as 'view' | 'act' } : null };
+    return { role: null, grant: g ? { id: g.id as string, mode: g.mode as 'view' | 'act' } : null, mfaOk: true };
   });
 
   if (found.role) {
+    if (!found.mfaOk) return { ok: false, response: json({ error: 'mfa_required' }, 403) };
     if (RANK[found.role] >= RANK[minRole]) return { ok: true, ...caller, orgId, role: found.role, staff: null };
     return { ok: false, response: json({ error: 'forbidden', required_role: minRole }, 403) };
   }

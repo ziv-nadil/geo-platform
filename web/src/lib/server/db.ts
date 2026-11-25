@@ -104,8 +104,21 @@ export async function currentClaims(): Promise<JwtClaims | null> {
     return c?.sub ? { sub: c.sub, role: 'authenticated', aal: (c.aal as 'aal1' | 'aal2') ?? 'aal1', email: c.email as string | undefined } : null;
   }
   const dev = process.env.DEV_IMPERSONATE_USER_ID;
-  if (dev && process.env.NODE_ENV !== 'production') {
+  if (dev && devBypassAllowed()) {
     return { sub: dev, role: 'authenticated', aal: process.env.DEV_IMPERSONATE_AAL === 'aal2' ? 'aal2' : 'aal1' };
   }
   return null;
+}
+
+/**
+ * The dev identity bypass is never available in a deployed environment: it needs a non-production
+ * NODE_ENV, no Vercel deployment marker, and a DATABASE_URL on localhost (same rule as lib/data.ts).
+ */
+export function devBypassAllowed(): boolean {
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL || process.env.VERCEL_ENV) return false;
+  try {
+    return ['localhost', '127.0.0.1', '::1', '[::1]'].includes(new URL(process.env.DATABASE_URL ?? '').hostname);
+  } catch {
+    return false;
+  }
 }

@@ -1,4 +1,4 @@
-import { auditEvent, json, rateLimited, requireOrgAccess } from '@/lib/server/auth';
+import { auditEvent, checkOrigin, json, rateLimited, requireOrgAccess } from '@/lib/server/auth';
 import { runStepTest, TESTERS } from '@/lib/server/integrations';
 
 export const maxDuration = 60;
@@ -7,8 +7,10 @@ export const maxDuration = 60;
  * POST /api/onboarding/[orgId]/test/[stepId] — run the step's live connection test (member+).
  * 200: { stepId, status: 'pass'|'partial'|'fail'|'not_configured', checks: [{id,label,ok,detail}], missing: string[], durationMs, ranAt }
  */
-export async function POST(_request: Request, ctx: { params: Promise<{ orgId: string; stepId: string }> }) {
+export async function POST(request: Request, ctx: { params: Promise<{ orgId: string; stepId: string }> }) {
   const { orgId, stepId } = await ctx.params;
+  const bad = checkOrigin(request);
+  if (bad) return bad;
   const auth = await requireOrgAccess(orgId, 'member');
   if (!auth.ok) return auth.response;
   if (!TESTERS[stepId]) return json({ error: 'unknown_step' }, 404);

@@ -264,6 +264,43 @@ begin
 end $$;
 rollback;
 
+-- ---------------------------------------------------------------- H1: admins cannot escalate to owner via invitations
+begin;
+select set_config('request.jwt.claims', '{}', true);
+update public.memberships set role = 'admin' where org_id = :'nw' and user_id = :'sam';
+insert into public.invitations (id, org_id, email, role, token_hash, expires_at) values
+  ('20000000-0000-4000-c000-000000000001', :'nw', 'alt@evil.example', 'admin', 'h1-admin', now() + interval '1 day'),
+  ('20000000-0000-4000-c000-000000000002', :'nw', 'newowner@northwind.example', 'owner', 'h1-owner', now() + interval '1 day');
+select set_config('request.jwt.claims', json_build_object('sub', :'sam', 'role', 'authenticated', 'aal', 'aal1')::text, true);
+set local role authenticated;
+do $$
+declare n int;
+begin
+  begin
+    update public.invitations set role = 'owner' where id = '20000000-0000-4000-c000-000000000001';
+    raise exception 'FAIL: admin promoted an invitation to owner';
+  exception when insufficient_privilege then null; end;
+  update public.invitations set email = 'alt@evil.example' where id = '20000000-0000-4000-c000-000000000002';
+  get diagnostics n = row_count; assert n = 0, 'admin retargeted a pending owner invitation';
+  begin
+    insert into public.invitations (org_id, email, role, token_hash) values ('10000000-0000-4000-b000-000000000001', 'x@evil.example', 'owner', 'h1-x');
+    raise exception 'FAIL: admin created an owner invitation';
+  exception when insufficient_privilege then null; end;
+  update public.invitations set role = 'member' where id = '20000000-0000-4000-c000-000000000001';
+  get diagnostics n = row_count; assert n = 1, 'admin can still edit non-owner invitations';
+end $$;
+rollback;
+begin;
+select set_config('request.jwt.claims', json_build_object('sub', :'dana', 'role', 'authenticated', 'aal', 'aal1')::text, true);
+set local role authenticated;
+do $$
+declare n int;
+begin
+  update public.invitations set role = 'owner' where org_id = '10000000-0000-4000-b000-000000000001' and email = 'priya@northwind.example';
+  get diagnostics n = row_count; assert n = 1, 'owner can change an invitation to owner';
+end $$;
+rollback;
+
 -- ---------------------------------------------------------------- structural checks
 do $$
 declare n int;
