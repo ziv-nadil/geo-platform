@@ -15,7 +15,7 @@ Network hosts: set Network access to **Full**, or **Limited/Custom** with the ho
 
 Status key: `todo` · `added` (you say it's in) · `verified` (read-only call succeeded, value never printed).
 
-Verified from this session on 2026-11-24: none of the vendor hosts below are reachable yet (only `api.github.com` and `generativelanguage.googleapis.com` respond), and no vendor env vars are present.
+2026-11-25: Network access is **Full**; all hosts below are reachable. The allowlist section is only needed if you switch back to Limited.
 
 ## Network allowlist (do once, unblocks everything)
 
@@ -71,6 +71,7 @@ User asked the Access agent to drive a browser on their computer while they sign
 - 2026-11-25: Anchor Browser network secret saved by user (row 18); Remote Control folder sharing not offered in user's app (only a "Connect new sessions" toggle), so Anchor is the browser path.
 - 2026-11-25: Access agent verification: api.anchorbrowser.io 403 (blocked), anchorbrowser.io 200 (site only, no API), engine.prod.bria-api.com 403 (blocked), bria.ai 200. Secrets need correct hosts.
 - 2026-11-25 (new session): re-verified, unchanged. Proxy still refuses CONNECT to `api.anchorbrowser.io`, `engine.prod.bria-api.com`, and every vendor API host (Supabase, Vercel, Infisical, OpenAI, DataForSEO). Only `anchorbrowser.io`, `bria.ai` (websites) and Google hosts respond. No vendor env vars present. Network allowlist and secret hosts have not been updated yet.
+- 2026-11-25: user switched Network access to **Full**. All vendor API hosts now reachable (unauthenticated 401s as expected). Anchor (`api.anchorbrowser.io`) and Bria (`engine.prod.bria-api.com`) return 401 missing credentials: the saved Network secrets are bound to `anchorbrowser.io` / `bria.ai` and are not injected on the API hosts. Rows 15 and 18 now blocked only on re-saving the secrets for the API hosts.
 
 ## Handoff for the next Access session (read this first)
 
