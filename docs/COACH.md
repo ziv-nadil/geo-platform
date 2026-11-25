@@ -45,5 +45,7 @@ Read this first when resuming in a fresh or compacted session.
 
 - 22:25 UTC: paused at 86% usage. Backend/frontend subagents stopped, Engines interrupted. Work is snapshotted. On reset: resume them (SendMessage to the backend/frontend agents; send_message to Engines) on cheaper settings.
 
+- 02:15 UTC: backend, frontend and engines DONE and merged. Started sessions Integration (session_01AWqBEYKt7ChZ6CSNNVctoB → claude/integration) and QA (session_01AWqBEZGbSkdfvTZkLAebd8 → claude/qa), both sonnet/medium. Next: Security review after Integration merges.
+
 ## Next
 - Wave 2: QA + security review + integrate. Deploy once VERCEL_TOKEN exists.
