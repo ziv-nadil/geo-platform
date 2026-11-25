@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { CreatorsView } from "@/components/dashboard/creators-view";
-import { loadPage, NoData, PageSkeleton, type RouteProps } from "@/components/dashboard/page-kit";
+import { loadPage, LoadFail, NoData, PageSkeleton, type RouteProps } from "@/components/dashboard/page-kit";
 import { PageHeader } from "@/components/ui/page-header";
-import { getCreators } from "@/lib/mock";
+import { getCreators } from "@/lib/data";
 
 export const metadata = { title: "Creators" };
 
@@ -15,13 +15,15 @@ export default function CreatorsPage(props: PageProps<"/app/[orgSlug]/creators">
 }
 
 async function Creators(props: RouteProps) {
-  const { org } = await loadPage(props);
-  if (!org.hasData) return (<><PageHeader title="Creators" demo={false} /><NoData org={org} /></>);
-  const creators = await getCreators(org.id);
+  const ctx = await loadPage(props);
+  if ("gate" in ctx) return ctx.gate;
+  const { org } = ctx;
+  const r = await getCreators(org.id);
+  if (!r.ok) return <LoadFail result={r} />;
   return (
     <>
       <PageHeader title="Creators" description="YouTube and TikTok creators covering your topics. Videos are a growing source in AI answers, especially Google AI Overviews and Gemini." />
-      <CreatorsView creators={creators} />
+      {r.data.length ? <CreatorsView orgId={org.id} creators={r.data} /> : <NoData org={org} what="creators" />}
     </>
   );
 }

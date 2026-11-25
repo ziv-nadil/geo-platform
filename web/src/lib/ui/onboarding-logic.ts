@@ -32,6 +32,8 @@ export interface WizardState {
   values: Record<string, StepValues>;
   tests: Record<string, Record<string, TestResult>>;
   skipped: Record<string, boolean>;
+  /** Status stored on the server (onboarding_progress), used until a test runs in this session. */
+  serverStatus?: Record<string, StepStatus>;
   submittedAt?: string;
 }
 
@@ -129,6 +131,13 @@ export function applicableTests(step: OnboardingStep, values: StepValues): TestD
 
 export function stepStatus(step: OnboardingStep, st: WizardState): StepStatus {
   if (st.skipped[step.id]) return "skipped";
+  const computed = computedStatus(step, st);
+  const server = st.serverStatus?.[step.id];
+  if (server && server !== "idle" && (computed === "idle" || computed === "pending")) return server;
+  return computed;
+}
+
+function computedStatus(step: OnboardingStep, st: WizardState): StepStatus {
   const values = st.values[step.id] ?? {};
   const { done, total } = stepFieldProgress(step, values);
   const tests = applicableTests(step, values);

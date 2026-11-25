@@ -26,12 +26,3 @@ export function Badge({ tone = "neutral", className, ...rest }: ComponentProps<"
   );
 }
 
-/** Small, always-visible label for anything generated from the mock data layer. */
-export function DemoBadge({ className }: { className?: string }) {
-  return (
-    <Badge tone="warn" className={className} title="Generated demo data. Connect Supabase and the engine workers to see real results.">
-      <svg viewBox="0 0 12 12" aria-hidden="true" className="size-3"><circle cx="6" cy="6" r="3" fill="currentColor" /></svg>
-      Demo data
-    </Badge>
-  );
-}

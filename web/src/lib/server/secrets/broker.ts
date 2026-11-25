@@ -40,7 +40,13 @@ export async function readSecret(ctx: BrokerContext, ref: { stepId: string; fiel
       insert into public.secret_access_log (org_id, secret_ref_id, purpose, job_id, worker)
       values (${ctx.orgId}, ${row.id}, ${ctx.purpose}, ${ctx.jobId ?? null}, ${ctx.worker ?? `beacon-worker@${process.env.VERCEL_ENV ?? 'local'}`})
       returning id`;
-    return { ...row, logId: log.id as string };
+    return {
+      projectId: row.infisical_project_id as string,
+      environment: (row.environment as string | null) ?? INFISICAL_ENV,
+      secretPath: row.secret_path as string,
+      secretName: row.secret_name as string,
+      logId: log.id as string,
+    };
   });
   if (!found) return { status: 'missing_secret' };
 
@@ -50,10 +56,10 @@ export async function readSecret(ctx: BrokerContext, ref: { stepId: string; fiel
   try {
     const sdk = await sdkAs('worker');
     const secret = await sdk.secrets().getSecret({
-      projectId: found.infisical_project_id,
-      environment: found.environment ?? INFISICAL_ENV,
-      secretPath: found.secret_path,
-      secretName: found.secret_name,
+      projectId: found.projectId,
+      environment: found.environment,
+      secretPath: found.secretPath,
+      secretName: found.secretName,
       expandSecretReferences: false,
       viewSecretValue: true,
     });

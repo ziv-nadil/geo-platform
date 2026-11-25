@@ -32,7 +32,7 @@ export function OrgSwitcher({ org, orgs, canSwitch }: { org: Org; orgs: Org[]; c
                 <OrgMark name={o.name} color={o.color} size={24} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium text-ink">{o.name}</span>
-                  <span className="block truncate text-2xs text-ink-3">{o.industry}</span>
+                  <span className="block truncate text-2xs text-ink-3">{o.domain}</span>
                 </span>
                 {o.id === org.id ? <Check className="size-4 text-accent" aria-label="Current" /> : null}
               </Link>

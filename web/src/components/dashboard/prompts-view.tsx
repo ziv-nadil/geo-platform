@@ -13,16 +13,20 @@ import { MetricHelp } from "@/components/ui/metric-help";
 import { Select } from "@/components/ui/select";
 import { Table, TableWrap, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
 import { Tooltip } from "@/components/ui/tooltip";
-import { ENGINES } from "@/lib/ui/engines";
-import type { DiscoverySuggestion, Funnel, PromptRow } from "@/lib/ui/data-types";
+import { useRouter } from "next/navigation";
+import { addPrompts as addPromptsAction } from "@/app/app/[orgSlug]/actions";
+import { engineMeta } from "@/lib/ui/engines";
+import type { EngineId, PromptRow } from "@/lib/ui/data-types";
 import { cn } from "@/lib/ui/cn";
 import { fmtNumber } from "@/lib/ui/format";
 
-type SortKey = "visibility" | "delta" | "volume" | "avgPosition" | "text";
+type SortKey = "visibility" | "delta" | "runs" | "avgPosition" | "text";
+type Funnel = string;
 
-const FUNNEL_LABEL: Record<Funnel, string> = { awareness: "Awareness", consideration: "Consideration", decision: "Decision" };
+const FUNNEL_LABEL: Record<string, string> = { awareness: "Awareness", consideration: "Consideration", decision: "Decision", retention: "Retention" };
 
-function VisCell({ v }: { v: number }) {
+function VisCell({ v }: { v: number | null }) {
+  if (v === null) return <span className="text-ink-4">—</span>;
   // Sequential single-hue cell: magnitude → teal opacity. Text stays in ink.
   return (
     <span className="inline-flex h-6 w-11 items-center justify-center rounded-xs text-xs font-medium tabular text-ink" style={{ background: `rgba(0,140,153,${0.06 + (v / 100) * 0.5})` }}>
@@ -60,22 +64,25 @@ function SortTh({
 }
 
 export function PromptsView({
+  orgId,
   orgSlug,
   qs,
-  rows: initialRows,
+  rows,
+  engineIds,
   topics,
-  personas,
-  suggestions: initialSuggestions,
 }: {
+  orgId: string;
   orgSlug: string;
   qs: string;
   rows: PromptRow[];
-  topics: string[];
-  personas: string[];
-  suggestions: DiscoverySuggestion[];
+  engineIds: EngineId[];
+  topics: { id: string; name: string }[];
 }) {
-  const [rows, setRows] = useState(initialRows);
-  const [suggestions, setSuggestions] = useState(initialSuggestions);
+  const router = useRouter();
+  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
+  const personas = [...new Set(rows.map((r) => r.persona).filter(Boolean) as string[])];
+  const topicNames = [...new Set(rows.map((r) => r.topic).filter(Boolean) as string[])];
+  const suggestions = rows.filter((r) => r.source === "suggested" || r.source === "discovered");
   const [q, setQ] = useState("");
   const [topic, setTopic] = useState("all");
   const [persona, setPersona] = useState("all");
@@ -91,7 +98,7 @@ export function PromptsView({
         (!q || r.text.toLowerCase().includes(q.toLowerCase())),
     );
     const val = (r: PromptRow): number | string =>
-      sort.key === "delta" ? r.visibility - r.visibilityPrev : sort.key === "text" ? r.text : sort.key === "avgPosition" ? r.avgPosition ?? 99 : r[sort.key];
+      sort.key === "delta" ? (r.visibility ?? 0) - (r.visibilityPrev ?? r.visibility ?? 0) : sort.key === "text" ? r.text : sort.key === "avgPosition" ? r.avgPosition ?? 99 : sort.key === "runs" ? r.runs : r.visibility ?? -1;
     return [...list].sort((a, b) => {
       const x = val(a);
       const y = val(b);
@@ -99,31 +106,15 @@ export function PromptsView({
     });
   }, [rows, q, topic, persona, funnel, sort]);
 
-  const avg = filtered.length ? filtered.reduce((s, r) => s + r.visibility, 0) / filtered.length : 0;
+  const withVis = filtered.filter((r) => r.visibility !== null);
+  const avg = withVis.length ? withVis.reduce((s, r) => s + r.visibility!, 0) / withVis.length : null;
 
-  function addPrompts(texts: string[], t = topics[0]!, p = personas[0]!, f: Funnel = "consideration", source: PromptRow["source"] = "manual") {
-    const now = "2026-11-24";
-    setRows((prev) => [
-      ...texts.map((text, i) => ({
-        id: `new-${prev.length + i}-${text.length}`,
-        text,
-        topic: t,
-        persona: p,
-        funnel: f,
-        tags: ["New"],
-        volume: 0,
-        createdAt: now,
-        source,
-        visibility: 0,
-        visibilityPrev: 0,
-        avgPosition: null,
-        sentiment: 0,
-        byEngine: { chatgpt: 0, perplexity: 0, gemini: 0, claude: 0, google_aio: 0 },
-        topCompetitor: null,
-        citations: 0,
-      })),
-      ...prev,
-    ]);
+  async function addPrompts(texts: string[], topicName?: string, _persona?: string, funnelStage?: Funnel, source: "manual" | "imported" = "manual") {
+    void _persona;
+    const topicId = topics.find((t) => t.name === topicName)?.id ?? null;
+    const res = await addPromptsAction(orgId, texts, { topicId, funnel: funnelStage ?? null, source });
+    setNotice(res.ok ? { ok: true, text: `Added ${texts.length} prompt${texts.length > 1 ? "s" : ""}. They run in the next daily batch.` } : { ok: false, text: res.error });
+    if (res.ok) router.refresh();
   }
 
   return (
@@ -135,7 +126,7 @@ export function PromptsView({
             <Input aria-label="Search prompts" placeholder="Search prompts" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
           </div>
           <div className="w-44">
-            <Select aria-label="Topic" value={topic} onValueChange={setTopic} options={[{ value: "all", label: "All topics" }, ...topics.map((t) => ({ value: t, label: t }))]} />
+            <Select aria-label="Topic" value={topic} onValueChange={setTopic} options={[{ value: "all", label: "All topics" }, ...topicNames.map((t) => ({ value: t, label: t }))]} />
           </div>
           <div className="w-44">
             <Select aria-label="Persona" value={persona} onValueChange={setPersona} options={[{ value: "all", label: "All personas" }, ...personas.map((t) => ({ value: t, label: t }))]} />
@@ -149,8 +140,8 @@ export function PromptsView({
             />
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <ImportDialog onImport={(texts) => addPrompts(texts, undefined, undefined, undefined, "import")} />
-            <AddPromptDialog topics={topics} personas={personas} onAdd={(text, t, p, f) => addPrompts([text], t, p, f)} />
+            <ImportDialog onImport={(texts) => void addPrompts(texts, undefined, undefined, undefined, "imported")} />
+            <AddPromptDialog topics={topicNames.length ? topicNames : ["General"]} personas={personas.length ? personas : ["Any"]} onAdd={(text, t, p, f) => void addPrompts([text], t, p, f)} />
           </div>
         </div>
         <div className="flex items-center gap-4 border-t border-line px-5 py-2.5 text-sm text-ink-3">
@@ -158,9 +149,10 @@ export function PromptsView({
             <strong className="font-semibold text-ink tabular">{filtered.length}</strong> of {rows.length} prompts
           </span>
           <span className="inline-flex items-center gap-1">
-            Avg. visibility <strong className="font-semibold text-ink tabular">{avg.toFixed(1)}%</strong>
+            Avg. visibility <strong className="font-semibold text-ink tabular">{avg === null ? "—" : `${avg.toFixed(1)}%`}</strong>
             <MetricHelp id="promptVisibility" />
           </span>
+          {notice ? <span className={cn("text-sm", notice.ok ? "text-good" : "text-bad")} role="status">{notice.text}</span> : null}
           <span className="ml-auto text-xs">Cells show visibility per engine, 0–100.</span>
         </div>
         <TableWrap>
@@ -175,7 +167,7 @@ export function PromptsView({
                 <SortTh sort={sort} setSort={setSort} k="delta" className="text-right">
                   Change
                 </SortTh>
-                {ENGINES.map((e) => (
+                {engineIds.map((id) => engineMeta(id)).map((e) => (
                   <Th key={e.id} className="text-center">
                     <Tooltip content={e.name}>
                       <span className="inline-flex items-center gap-1">
@@ -188,14 +180,14 @@ export function PromptsView({
                 <SortTh sort={sort} setSort={setSort} k="avgPosition" className="text-right">
                   Pos.
                 </SortTh>
-                <SortTh sort={sort} setSort={setSort} k="volume" className="text-right">
-                  Volume
+                <SortTh sort={sort} setSort={setSort} k="runs" className="text-right">
+                  Answers
                 </SortTh>
               </tr>
             </THead>
             <TBody>
               {filtered.map((r) => {
-                const d = r.visibility - r.visibilityPrev;
+                const d = r.visibility !== null && r.visibilityPrev !== null ? r.visibility - r.visibilityPrev : null;
                 return (
                   <Tr key={r.id}>
                     <Td className="max-w-0">
@@ -203,31 +195,31 @@ export function PromptsView({
                         {r.text}
                       </Link>
                       <span className="mt-0.5 flex gap-1">
-                        <Badge tone="outline">{FUNNEL_LABEL[r.funnel]}</Badge>
-                        {r.tags.filter((t) => !["TOFU", "MOFU", "BOFU"].includes(t)).map((t) => (
-                          <Badge key={t} tone={t === "New" ? "info" : "neutral"}>
+                        {r.funnel ? <Badge tone="outline">{FUNNEL_LABEL[r.funnel] ?? r.funnel}</Badge> : null}
+                        {r.tags.map((t) => (
+                          <Badge key={t} tone="neutral">
                             {t}
                           </Badge>
                         ))}
-                        {r.source === "discovery" ? <Badge tone="accent">Discovered</Badge> : null}
+                        {r.source === "discovered" || r.source === "suggested" ? <Badge tone="accent">Discovered</Badge> : null}
+                        {r.runs === 0 ? <Badge tone="info">Awaiting first run</Badge> : null}
                       </span>
                     </Td>
                     <Td>
-                      <span className="block text-sm text-ink-2">{r.topic}</span>
-                      <span className="block text-xs text-ink-4">{r.persona}</span>
+                      <span className="block text-sm text-ink-2">{r.topic ?? "No topic"}</span>
+                      <span className="block text-xs text-ink-4">{r.persona ?? "Any persona"}</span>
                     </Td>
-                    <Td className="text-right font-semibold text-ink">{r.visibility.toFixed(0)}%</Td>
-                    <Td className={cn("text-right text-sm", d > 0.5 ? "text-good" : d < -0.5 ? "text-bad" : "text-ink-4")}>
-                      {d > 0 ? "+" : d < 0 ? "−" : "±"}
-                      {Math.abs(d).toFixed(0)}
+                    <Td className="text-right font-semibold text-ink">{r.visibility === null ? "—" : `${r.visibility.toFixed(0)}%`}</Td>
+                    <Td className={cn("text-right text-sm", d === null ? "text-ink-4" : d > 0.5 ? "text-good" : d < -0.5 ? "text-bad" : "text-ink-4")}>
+                      {d === null ? "—" : `${d > 0 ? "+" : d < 0 ? "−" : "±"}${Math.abs(d).toFixed(0)}`}
                     </Td>
-                    {ENGINES.map((e) => (
-                      <Td key={e.id} className="text-center">
-                        <VisCell v={r.byEngine[e.id]} />
+                    {engineIds.map((e) => (
+                      <Td key={e} className="text-center">
+                        <VisCell v={r.byEngine[e] ?? null} />
                       </Td>
                     ))}
                     <Td className="text-right">{r.avgPosition ? r.avgPosition.toFixed(1) : "—"}</Td>
-                    <Td className="text-right">{r.volume ? fmtNumber(r.volume) : "—"}</Td>
+                    <Td className="text-right">{fmtNumber(r.runs)}</Td>
                   </Tr>
                 );
               })}
@@ -252,35 +244,18 @@ export function PromptsView({
         />
         <CardBody>
           {suggestions.length === 0 ? (
-            <EmptyState icon={Lightbulb} title="All suggestions reviewed" description="New suggestions arrive after the next weekly discovery run." />
+            <EmptyState icon={Lightbulb} title="No discovered prompts yet" description="The weekly discovery job adds questions your buyers ask where competitors appear and you don't. They show up here with a Discovered tag." />
           ) : (
             <ul className="grid gap-3 md:grid-cols-2">
-              {suggestions.map((s) => (
+              {suggestions.slice(0, 8).map((s) => (
                 <li key={s.id} className="flex flex-col gap-2 rounded-sm border border-line p-3">
-                  <p className="text-sm font-medium text-ink">{s.text}</p>
+                  <Link href={`/app/${orgSlug}/prompts/${s.id}${qs}`} className="text-sm font-medium text-ink hover:text-accent">
+                    {s.text}
+                  </Link>
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <Badge tone="outline">{s.topic}</Badge>
-                    <Badge tone="outline">{s.persona}</Badge>
-                    <Badge tone="outline">{FUNNEL_LABEL[s.funnel]}</Badge>
-                    <span className="text-xs text-ink-3">
-                      {fmtNumber(s.volume)}/mo · competitors visible in {s.competitorVisibility}%
-                    </span>
-                  </div>
-                  <p className="text-xs text-ink-3">{s.reason}</p>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="subtle"
-                      onClick={() => {
-                        addPrompts([s.text], s.topic, s.persona, s.funnel, "discovery");
-                        setSuggestions((l) => l.filter((x) => x.id !== s.id));
-                      }}
-                    >
-                      <Plus /> Track prompt
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setSuggestions((l) => l.filter((x) => x.id !== s.id))}>
-                      Dismiss
-                    </Button>
+                    {s.topic ? <Badge tone="outline">{s.topic}</Badge> : null}
+                    {s.persona ? <Badge tone="outline">{s.persona}</Badge> : null}
+                    <span className="text-xs text-ink-3">Visibility {s.visibility === null ? "not measured yet" : `${s.visibility.toFixed(0)}%`}</span>
                   </div>
                 </li>
               ))}

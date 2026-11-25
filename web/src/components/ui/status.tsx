@@ -28,14 +28,10 @@ export function StatusIcon({ status, className }: { status: Status; className?: 
   return <m.Icon className={cn("size-4", m.cls.split(" ")[0], status === "running" && "animate-spin", className)} aria-label={m.label} />;
 }
 
-export type Severity = "critical" | "warning" | "notice";
+export type Severity = "critical" | "high" | "medium" | "low" | "info";
 export function SeverityBadge({ severity }: { severity: Severity }) {
-  const cls = {
-    critical: "bg-bad-soft text-bad",
-    warning: "bg-warn-soft text-warn",
-    notice: "bg-info-soft text-info",
-  }[severity];
-  const Icon = severity === "critical" ? XCircle : severity === "warning" ? AlertTriangle : Circle;
+  const cls = { critical: "bg-bad-soft text-bad", high: "bg-bad-soft text-bad", medium: "bg-warn-soft text-warn", low: "bg-info-soft text-info", info: "bg-subtle text-ink-3" }[severity];
+  const Icon = severity === "critical" || severity === "high" ? XCircle : severity === "medium" ? AlertTriangle : Circle;
   return (
     <span className={cn("inline-flex h-5 items-center gap-1 rounded-xs px-1.5 text-2xs font-semibold capitalize", cls)}>
       <Icon className="size-3" aria-hidden="true" />

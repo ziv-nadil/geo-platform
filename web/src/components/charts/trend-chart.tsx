@@ -20,7 +20,7 @@ export function TrendChart({
   yDomain,
   showLegend = true,
 }: {
-  data: Record<string, number | string>[];
+  data: Record<string, number | string | null>[];
   series: Series[];
   unit?: string;
   height?: number;

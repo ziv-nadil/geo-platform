@@ -2,17 +2,17 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { TrendChart } from "@/components/charts/trend-chart";
+import { BarList } from "@/components/charts/bar-list";
 import { AnswerText } from "@/components/dashboard/answer-text";
 import { EngineAnswerTabs } from "@/components/dashboard/engine-answer-tabs";
-import { filterQs, loadPage, PageSkeleton, rangeLabel } from "@/components/dashboard/page-kit";
+import { filterQs, fmtMaybe, loadPage, LoadFail, PageSkeleton, rangeLabel } from "@/components/dashboard/page-kit";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { MetricHelp } from "@/components/ui/metric-help";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatTile } from "@/components/ui/stat-tile";
-import { getPromptDetail } from "@/lib/mock";
-import { fmtNumber } from "@/lib/ui/format";
+import { getPromptDetail } from "@/lib/data";
+import { engineMeta } from "@/lib/ui/engines";
 
 export const metadata = { title: "Prompt detail" };
 
@@ -27,10 +27,13 @@ export default function PromptDetailPage(props: PageProps<"/app/[orgSlug]/prompt
 }
 
 async function PromptDetail(props: Props) {
-  const { org, filters } = await loadPage(props);
+  const ctx = await loadPage(props);
+  if ("gate" in ctx) return ctx.gate;
+  const { org, filters } = ctx;
   const { promptId } = await props.params;
-  if (!org.hasData) notFound();
-  const d = await getPromptDetail(org.id, promptId, filters);
+  const r = await getPromptDetail(org.id, promptId, filters);
+  if (!r.ok) return <LoadFail result={r} />;
+  const d = r.data;
   if (!d) notFound();
   const qs = filterQs(filters);
   const mentionedCount = d.answers.filter((a) => a.mentioned).length;
@@ -43,29 +46,28 @@ async function PromptDetail(props: Props) {
         title={`“${d.prompt.text}”`}
         description={
           <span className="flex flex-wrap items-center gap-1.5">
-            <Badge tone="outline">{d.prompt.topic}</Badge>
-            <Badge tone="outline">{d.prompt.persona}</Badge>
-            <Badge tone="outline" className="capitalize">{d.prompt.funnel}</Badge>
-            <span className="text-sm text-ink-3">
-              · {fmtNumber(d.prompt.volume)} est. monthly searches <MetricHelp id="promptVolume" />
-            </span>
+            {d.prompt.topic ? <Badge tone="outline">{d.prompt.topic}</Badge> : null}
+            {d.prompt.persona ? <Badge tone="outline">{d.prompt.persona}</Badge> : null}
+            {d.prompt.funnel ? <Badge tone="outline" className="capitalize">{d.prompt.funnel}</Badge> : null}
+            <span className="text-sm text-ink-3">· {d.prompt.runs.toLocaleString()} answers in range</span>
           </span>
         }
       />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatTile label="Prompt visibility" metric="promptVisibility" value={d.row.visibility.toFixed(0)} unit="%" delta={d.row.visibility - d.row.visibilityPrev} />
-        <StatTile label="Avg. position" metric="avgPosition" value={d.row.avgPosition?.toFixed(1) ?? "—"} />
-        <StatTile label="Net sentiment" metric="sentiment" value={d.row.sentiment > 0 ? `+${d.row.sentiment}` : d.row.sentiment} />
-        <StatTile label="Mentioned today" metric="mentions" value={`${mentionedCount}/${d.answers.length}`} footer={<span className="text-xs text-ink-3">engines that named you</span>} />
+        <StatTile label="Prompt visibility" metric="promptVisibility" value={fmtMaybe(d.prompt.visibility, 0)} unit="%" />
+        <StatTile label="Avg. position" metric="avgPosition" value={fmtMaybe(d.prompt.avgPosition)} />
+        <StatTile label="Answers collected" metric="answers" value={d.prompt.runs.toLocaleString()} />
+        <StatTile label="Latest answers naming you" metric="mentions" value={`${mentionedCount}/${d.answers.length}`} footer={<span className="text-xs text-ink-3">most recent answer per engine</span>} />
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-2">
-          <CardHeader title="Today's answers" description="Latest answer from each engine. Your brand is highlighted in teal, competitors in amber." />
+          <CardHeader title="Latest answers" description="Most recent answer from each engine. Your brand is highlighted in teal, competitors in amber." />
           <CardBody>
             <EngineAnswerTabs
               answers={d.answers.map((a) => ({
                 engine: a.engine,
+                date: a.date,
                 mentioned: a.mentioned,
                 position: a.position,
                 sentiment: a.sentiment,
@@ -77,15 +79,24 @@ async function PromptDetail(props: Props) {
         </Card>
         <div className="flex flex-col gap-6">
           <Card>
-            <CardHeader title="Visibility trend" help={<MetricHelp id="promptVisibility" />} description={rangeLabel(filters)} />
+            <CardHeader title="Visibility by engine" help={<MetricHelp id="promptVisibility" />} description={rangeLabel(filters)} />
             <CardBody>
-              <TrendChart data={d.trend} series={[{ key: "all", name: "All engines", color: "#008c99" }]} height={180} />
+              <BarList items={d.byEngine.map((e) => ({ key: e.engine, label: engineMeta(e.engine).short, sub: `${e.runs} answers`, value: e.visibility ?? 0, color: engineMeta(e.engine).color }))} max={100} />
             </CardBody>
           </Card>
+          {d.competitorsMentioned.length ? (
+            <Card>
+              <CardHeader title="Competitors named" description="Across answers in range" />
+              <CardBody>
+                <BarList unit="" items={d.competitorsMentioned.slice(0, 6).map((c) => ({ key: c.name, label: c.name, value: c.mentions, color: "#8a929c" }))} />
+              </CardBody>
+            </Card>
+          ) : null}
           <Card>
             <CardHeader title="Top sources for this prompt" help={<MetricHelp id="domainCitations" />} />
             <CardBody>
               <ul className="flex flex-col divide-y divide-line">
+                {d.topSources.length === 0 ? <li className="py-2 text-sm text-ink-3">No citations in range.</li> : null}
                 {d.topSources.map((s) => (
                   <li key={s.url} className="flex items-center justify-between gap-3 py-2">
                     <a href={s.url} target="_blank" rel="noreferrer" className="group min-w-0">

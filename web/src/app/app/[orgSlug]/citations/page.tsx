@@ -1,9 +1,7 @@
 import { ExternalLink } from "lucide-react";
 import { Suspense } from "react";
 import { SegmentedBar } from "@/components/charts/bar-list";
-import { Sparkline } from "@/components/charts/sparkline";
-import { EngineChip } from "@/components/dashboard/engine-chip";
-import { loadPage, NoData, PageSkeleton, rangeLabel, type RouteProps } from "@/components/dashboard/page-kit";
+import { loadPage, LoadFail, NoData, PageSkeleton, rangeLabel, type RouteProps } from "@/components/dashboard/page-kit";
 import { SourceTags } from "@/components/dashboard/source-tags";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
@@ -11,18 +9,18 @@ import { MetricHelp } from "@/components/ui/metric-help";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatTile } from "@/components/ui/stat-tile";
 import { Table, TableWrap, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
-import { getCitationDomains, getCitationUrls, getKpis, getSourceTags, getSourceTypeSplit, type SourceType } from "@/lib/mock";
+import { getCitations, getOverview, getSourceTags } from "@/lib/data";
+import type { SourceType } from "@/lib/ui/data-types";
+import { fmtDate } from "@/lib/ui/format";
 
 export const metadata = { title: "Citations & sources" };
 
 const TYPE_META: Record<SourceType, { label: string; color: string }> = {
   owned: { label: "Your site", color: "#008c99" },
   competitor: { label: "Competitor", color: "#eb6834" },
-  editorial: { label: "Editorial", color: "#2a78d6" },
-  review: { label: "Review", color: "#6250d6" },
+  earned: { label: "Earned media", color: "#2a78d6" },
   ugc: { label: "UGC / forum", color: "#e87ba4" },
-  reference: { label: "Reference", color: "#eda100" },
-  social: { label: "Social / video", color: "#8a929c" },
+  other: { label: "Other", color: "#8a929c" },
 };
 
 export default function CitationsPage(props: PageProps<"/app/[orgSlug]/citations">) {
@@ -34,25 +32,25 @@ export default function CitationsPage(props: PageProps<"/app/[orgSlug]/citations
 }
 
 async function Citations(props: RouteProps) {
-  const { org, filters } = await loadPage(props);
-  if (!org.hasData) return (<><PageHeader title="Citations & sources" demo={false} /><NoData org={org} /></>);
-  const [domains, urls, split, tags, kpi] = await Promise.all([
-    getCitationDomains(org.id, filters),
-    getCitationUrls(org.id, filters),
-    getSourceTypeSplit(org.id, filters),
-    getSourceTags(org.id),
-    getKpis(org.id, filters),
-  ]);
+  const ctx = await loadPage(props);
+  if ("gate" in ctx) return ctx.gate;
+  const { org, filters } = ctx;
+  const [c, tags, ov] = await Promise.all([getCitations(org.id, filters), getSourceTags(org.id), getOverview(org.id, filters)]);
+  const header = <PageHeader title="Citations & sources" description={`The pages AI engines cite when they answer your prompts. ${rangeLabel(filters)}.`} />;
+  if (!c.ok) return (<>{header}<LoadFail result={c} /></>);
+  const { domains, urls, split } = c.data;
   const total = split.reduce((s, x) => s + x.count, 0);
-  const owned = domains.find((d) => d.type === "owned");
+  if (total === 0) return (<>{header}<NoData org={org} what="citations" /></>);
+  const owned = domains.filter((d) => d.type === "owned").reduce((s, d) => s + d.answersCiting, 0);
+  const cs = ov.ok ? ov.data.kpis.citationShare : null;
   return (
     <>
-      <PageHeader title="Citations & sources" description={`The pages AI engines cite when they answer your prompts. ${rangeLabel(filters)}.`} />
+      {header}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatTile label="Citation share" metric="citationShare" value={kpi.citationShare.toFixed(1)} unit="%" delta={kpi.citationShare - kpi.citationSharePrev} trend={kpi.sparkCitation} />
+        <StatTile label="Citation share" metric="citationShare" value={cs?.value === null || cs === null ? "—" : cs.value.toFixed(1)} unit="%" delta={cs?.delta ?? undefined} trend={ov.ok ? ov.data.kpis.sparkCitation : undefined} />
         <StatTile label="Total citations" metric="domainCitations" value={total.toLocaleString()} />
         <StatTile label="Unique domains" metric="sourceType" value={domains.length} />
-        <StatTile label="Answers citing you" metric="domainInfluence" value={owned ? owned.answersInfluenced.toFixed(1) : "0"} unit="%" />
+        <StatTile label="Answers citing you" metric="domainInfluence" value={owned.toLocaleString()} />
       </div>
 
       <Card className="mt-6">
@@ -73,14 +71,14 @@ async function Citations(props: RouteProps) {
                   <Th>Type</Th>
                   <Th className="text-right">Citations</Th>
                   <Th className="text-right">
-                    <span className="inline-flex items-center gap-1">Influence <MetricHelp id="domainInfluence" /></span>
+                    <span className="inline-flex items-center gap-1">Share <MetricHelp id="domainInfluence" /></span>
                   </Th>
-                  <Th>Trend</Th>
+                  <Th className="text-right">Answers</Th>
                   <Th>Tags</Th>
                 </tr>
               </THead>
               <TBody>
-                {domains.slice(0, 14).map((d) => (
+                {domains.slice(0, 15).map((d) => (
                   <Tr key={d.domain}>
                     <Td className="font-medium text-ink">{d.domain}</Td>
                     <Td>
@@ -90,10 +88,8 @@ async function Citations(props: RouteProps) {
                       </span>
                     </Td>
                     <Td className="text-right font-semibold text-ink">{d.citations.toLocaleString()}</Td>
-                    <Td className="text-right">{d.answersInfluenced.toFixed(1)}%</Td>
-                    <Td>
-                      <Sparkline data={d.trend} className="h-6 w-20" color={d.type === "owned" ? "#008c99" : "#5f6874"} />
-                    </Td>
+                    <Td className="text-right">{d.share.toFixed(1)}%</Td>
+                    <Td className="text-right">{d.answersCiting.toLocaleString()}</Td>
                     <Td>
                       <span className="flex flex-wrap gap-1">
                         {d.tags.map((t) => (
@@ -119,7 +115,7 @@ async function Citations(props: RouteProps) {
                       <ExternalLink className="size-3 shrink-0 text-ink-4" aria-hidden="true" />
                     </span>
                     <span className="block truncate text-xs text-ink-4">
-                      {u.domain} · {u.prompts} prompts
+                      {u.domain} · last seen {fmtDate(u.lastSeenAt)}
                     </span>
                   </a>
                   <span className="flex shrink-0 items-center gap-2">
@@ -134,15 +130,8 @@ async function Citations(props: RouteProps) {
       </div>
 
       <div className="mt-6">
-        <SourceTags initial={tags} knownDomains={domains.map((d) => d.domain)} />
+        <SourceTags orgId={org.id} initial={tags.ok ? tags.data : []} knownDomains={domains.map((d) => d.domain)} />
       </div>
-
-      <p className="mt-4 flex flex-wrap items-center gap-3 text-xs text-ink-4">
-        Engines in range:
-        {["chatgpt", "perplexity", "gemini", "claude", "google_aio"].map((e) => (
-          <EngineChip key={e} id={e as "chatgpt"} short className="text-xs" />
-        ))}
-      </p>
     </>
   );
 }

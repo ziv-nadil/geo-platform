@@ -7,7 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/ui/cn";
-import type { User } from "@/lib/ui/data-types";
+import type { Viewer } from "@/lib/ui/data-types";
 import { ENGINES } from "@/lib/ui/engines";
 import { exitViewAs } from "@/app/admin/actions";
 
@@ -18,7 +18,7 @@ const RANGES = [
 ];
 
 /** Global filters (date range, engine) live in the URL so every tab and link shares them. */
-export function Topbar({ user, viewAs, showFilters = true }: { user: User; viewAs: boolean; showFilters?: boolean }) {
+export function Topbar({ user, viewAs, showFilters = true }: { user: Viewer; viewAs: boolean; showFilters?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const sp = useSearchParams();
@@ -66,7 +66,7 @@ export function Topbar({ user, viewAs, showFilters = true }: { user: User; viewA
                 options={[{ value: "all", label: "All engines" }, ...ENGINES.map((e) => ({ value: e.id, label: e.name }))]}
               />
             </div>
-            <span className="ml-1 hidden text-xs text-ink-4 xl:inline">Through Nov 24, 2026 · daily runs</span>
+            <span className="ml-1 hidden text-xs text-ink-4 xl:inline">Daily runs · times in UTC</span>
           </>
         ) : null}
       </div>
@@ -75,7 +75,7 @@ export function Topbar({ user, viewAs, showFilters = true }: { user: User; viewA
           <Avatar name={user.name} size={28} />
           <span className="hidden text-left lg:block">
             <span className="block text-sm leading-tight font-medium text-ink">{user.name}</span>
-            <span className="block text-2xs leading-tight text-ink-3">{viewAs ? "Viewing as client" : user.isPlatformAdmin ? "Agency staff" : "Member"}</span>
+            <span className="block text-2xs leading-tight text-ink-3">{viewAs ? "Viewing as client" : user.isPlatformAdmin ? "Agency staff" : user.devBypass ? "Dev session" : "Member"}</span>
           </span>
           <ChevronDown className="size-4 text-ink-3" aria-hidden="true" />
         </DM.Trigger>

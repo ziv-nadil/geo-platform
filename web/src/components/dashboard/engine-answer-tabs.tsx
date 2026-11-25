@@ -6,14 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { StatusPill } from "@/components/ui/status";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ENGINE_BY_ID } from "@/lib/ui/engines";
+import { fmtDateTime } from "@/lib/ui/format";
 import type { Citation, EngineId, Sentiment } from "@/lib/ui/data-types";
 
 export function EngineAnswerTabs({
   answers,
 }: {
-  answers: { engine: EngineId; mentioned: boolean; position: number | null; sentiment: Sentiment | null; citations: Citation[]; body: ReactNode }[];
+  answers: { engine: EngineId; date: string; mentioned: boolean; position: number | null; sentiment: Sentiment | null; citations: Citation[]; body: ReactNode }[];
 }) {
   return (
+    <>
+    {answers.length === 0 ? <p className="text-sm text-ink-3">No answers collected for this prompt yet.</p> : null}
     <Tabs defaultValue={answers[0]?.engine}>
       <TabsList>
         {answers.map((a) => (
@@ -35,7 +38,7 @@ export function EngineAnswerTabs({
                 {a.sentiment}
               </Badge>
             ) : null}
-            <span className="text-xs text-ink-4">Collected Nov 24, 2026 · 06:00 UTC</span>
+            <span className="text-xs text-ink-4">Collected {fmtDateTime(a.date)}</span>
           </div>
           <div className="rounded-sm border border-line bg-subtle/40 p-4">{a.body}</div>
           <h3 className="mt-5 mb-2 font-sans text-sm font-semibold text-ink">Citations ({a.citations.length})</h3>
@@ -55,5 +58,6 @@ export function EngineAnswerTabs({
         </TabsContent>
       ))}
     </Tabs>
+    </>
   );
 }

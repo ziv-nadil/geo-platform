@@ -7,19 +7,23 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field, Input, Textarea } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
+import { deleteSourceTag, saveSourceTag } from "@/app/app/[orgSlug]/actions";
 import type { SourceTag } from "@/lib/ui/data-types";
 import { SERIES } from "@/lib/ui/chart-colors";
 
 const COLORS = [SERIES[0], SERIES[1], SERIES[6], SERIES[2], SERIES[4], SERIES[3]];
 
-/** Source tags CRUD. Local state in demo mode; maps to /api source-tag routes once wired. */
-export function SourceTags({ initial, knownDomains }: { initial: SourceTag[]; knownDomains: string[] }) {
-  const [tags, setTags] = useState(initial);
+/** Source tags CRUD through server actions (RLS decides who may edit). */
+export function SourceTags({ orgId, initial, knownDomains }: { orgId: string; initial: SourceTag[]; knownDomains: string[] }) {
+  const router = useRouter();
+  const tags = initial;
+  const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<SourceTag | null>(null);
   const [open, setOpen] = useState(false);
 
   function startNew() {
-    setEditing({ id: `t${Date.now()}`, name: "", color: COLORS[tags.length % COLORS.length]!, domains: [], description: "" });
+    setEditing({ id: "", name: "", color: COLORS[tags.length % COLORS.length]!, domains: [], description: "", citations: 0 });
     setOpen(true);
   }
 
@@ -35,6 +39,7 @@ export function SourceTags({ initial, knownDomains }: { initial: SourceTag[]; kn
         }
       />
       <CardBody>
+        {error ? <p className="mb-3 text-sm text-bad" role="alert">{error}</p> : null}
         {tags.length === 0 ? (
           <EmptyState icon={Tag} title="No source tags yet" description="Create a tag and assign domains to it." />
         ) : (
@@ -50,12 +55,13 @@ export function SourceTags({ initial, knownDomains }: { initial: SourceTag[]; kn
                     <button type="button" className="rounded-xs p-1 text-ink-4 hover:bg-subtle hover:text-ink" aria-label={`Edit ${t.name}`} onClick={() => { setEditing(t); setOpen(true); }}>
                       <Pencil className="size-3.5" />
                     </button>
-                    <button type="button" className="rounded-xs p-1 text-ink-4 hover:bg-bad-soft hover:text-bad" aria-label={`Delete ${t.name}`} onClick={() => setTags((l) => l.filter((x) => x.id !== t.id))}>
+                    <button type="button" className="rounded-xs p-1 text-ink-4 hover:bg-bad-soft hover:text-bad" aria-label={`Delete ${t.name}`} onClick={async () => { const r = await deleteSourceTag(orgId, t.id); if (r.ok) router.refresh(); else setError(r.error); }}>
                       <Trash2 className="size-3.5" />
                     </button>
                   </span>
                 </div>
                 {t.description ? <p className="text-xs text-ink-3">{t.description}</p> : null}
+                <p className="text-xs text-ink-4 tabular">{t.citations.toLocaleString()} citations in range</p>
                 <div className="flex flex-wrap gap-1">
                   {t.domains.map((d) => (
                     <span key={d} className="rounded-xs bg-subtle px-1.5 py-0.5 font-mono text-2xs text-ink-2">
@@ -71,10 +77,14 @@ export function SourceTags({ initial, knownDomains }: { initial: SourceTag[]; kn
       <Dialog open={open} onOpenChange={setOpen}>
         {editing ? (
           <TagForm
-            key={editing.id}
+            key={editing.id || "new"}
             tag={editing}
             knownDomains={knownDomains}
-            onSave={(t) => setTags((l) => (l.some((x) => x.id === t.id) ? l.map((x) => (x.id === t.id ? t : x)) : [...l, t]))}
+            onSave={async (t) => {
+              const r = await saveSourceTag(orgId, { id: t.id || undefined, name: t.name, color: t.color, description: t.description, domains: t.domains });
+              if (r.ok) router.refresh();
+              else setError(r.error);
+            }}
           />
         ) : null}
       </Dialog>
@@ -82,7 +92,7 @@ export function SourceTags({ initial, knownDomains }: { initial: SourceTag[]; kn
   );
 }
 
-function TagForm({ tag, knownDomains, onSave }: { tag: SourceTag; knownDomains: string[]; onSave: (t: SourceTag) => void }) {
+function TagForm({ tag, knownDomains, onSave }: { tag: SourceTag; knownDomains: string[]; onSave: (t: SourceTag) => void | Promise<void> }) {
   const [name, setName] = useState(tag.name);
   const [description, setDescription] = useState(tag.description ?? "");
   const [domains, setDomains] = useState(tag.domains.join("\n"));
@@ -96,7 +106,7 @@ function TagForm({ tag, knownDomains, onSave }: { tag: SourceTag; knownDomains: 
             <Button variant="secondary">Cancel</Button>
           </DialogClose>
           <DialogClose asChild>
-            <Button disabled={!name.trim()} onClick={() => onSave({ ...tag, name: name.trim(), description, domains: list })}>
+            <Button disabled={!name.trim()} onClick={() => void onSave({ ...tag, name: name.trim(), description, domains: list })}>
               Save tag
             </Button>
           </DialogClose>

@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import { loadPage, NoData, PageSkeleton, type RouteProps } from "@/components/dashboard/page-kit";
+import { loadPage, LoadFail, NoData, PageSkeleton, type RouteProps } from "@/components/dashboard/page-kit";
 import { SiteHealthView } from "@/components/dashboard/site-health-view";
 import { PageHeader } from "@/components/ui/page-header";
-import { getSiteIssues, getSitePages, getSiteProperties, getSiteTasks } from "@/lib/mock";
+import { getSiteHealth } from "@/lib/data";
 
 export const metadata = { title: "Site health" };
 
@@ -15,13 +15,14 @@ export default function SiteHealthPage(props: PageProps<"/app/[orgSlug]/site-hea
 }
 
 async function SiteHealth(props: RouteProps) {
-  const { org } = await loadPage(props);
-  if (!org.hasData) return (<><PageHeader title="Site health" demo={false} /><NoData org={org} /></>);
-  const [properties, issues, pages, tasks] = await Promise.all([getSiteProperties(org.id), getSiteIssues(org.id), getSitePages(org.id), getSiteTasks(org.id)]);
+  const ctx = await loadPage(props);
+  if ("gate" in ctx) return ctx.gate;
+  const { org } = ctx;
+  const r = await getSiteHealth(org.id);
   return (
     <>
-      <PageHeader title="Site health" description="A weekly crawl of your sites checks what stops AI engines from reading, understanding and citing your pages." />
-      <SiteHealthView properties={properties} issues={issues} pages={pages} tasks={tasks} />
+      <PageHeader title="Site health" description="A crawl of your sites checks what stops AI engines from reading, understanding and citing your pages." />
+      {!r.ok ? <LoadFail result={r} /> : r.data.properties.length === 0 ? <NoData org={org} what="site audits" /> : <SiteHealthView orgId={org.id} {...r.data} />}
     </>
   );
 }

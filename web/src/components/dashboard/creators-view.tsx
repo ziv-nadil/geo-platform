@@ -10,17 +10,19 @@ import { MetricHelp } from "@/components/ui/metric-help";
 import { Select } from "@/components/ui/select";
 import { Table, TableWrap, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
 import { SegmentedList, SegmentedTrigger, Tabs } from "@/components/ui/tabs";
+import { setCreatorStatus } from "@/app/app/[orgSlug]/actions";
 import type { Creator } from "@/lib/ui/data-types";
-import { fmtDate, fmtNumber } from "@/lib/ui/format";
+import { fmtNumber } from "@/lib/ui/format";
 
 const STATUS = [
   { value: "new", label: "New" },
   { value: "shortlisted", label: "Shortlisted" },
   { value: "contacted", label: "Contacted" },
   { value: "partner", label: "Partner" },
+  { value: "ignored", label: "Ignored" },
 ];
 
-export function CreatorsView({ creators: initial }: { creators: Creator[] }) {
+export function CreatorsView({ orgId, creators: initial }: { orgId: string; creators: Creator[] }) {
   const [creators, setCreators] = useState(initial);
   const [platform, setPlatform] = useState("all");
   const list = creators.filter((c) => platform === "all" || c.platform === platform);
@@ -59,8 +61,7 @@ export function CreatorsView({ creators: initial }: { creators: Creator[] }) {
                   <span className="inline-flex items-center gap-1">Relevance <MetricHelp id="creatorRelevance" /></span>
                 </Th>
                 <Th>Topics</Th>
-                <Th>Mentions</Th>
-                <Th>Last post</Th>
+                <Th className="text-right">Cited in answers</Th>
                 <Th className="w-36">Status</Th>
               </tr>
             </THead>
@@ -71,21 +72,25 @@ export function CreatorsView({ creators: initial }: { creators: Creator[] }) {
                     <span className="flex items-center gap-2.5">
                       <Avatar name={c.name} size={28} />
                       <span>
-                        <span className="block font-medium text-ink">{c.name}</span>
+                        {c.url ? <a href={c.url} target="_blank" rel="noreferrer" className="block font-medium text-ink hover:text-accent">{c.name}</a> : <span className="block font-medium text-ink">{c.name}</span>}
                         <span className="block text-xs text-ink-4">{c.handle}</span>
                       </span>
                     </span>
                   </Td>
                   <Td>{c.platform === "youtube" ? "YouTube" : "TikTok"}</Td>
-                  <Td className="text-right font-semibold text-ink">{fmtNumber(c.followers)}</Td>
-                  <Td className="text-right">{fmtNumber(c.avgViews)}</Td>
+                  <Td className="text-right font-semibold text-ink">{c.followers === null ? "—" : fmtNumber(c.followers)}</Td>
+                  <Td className="text-right">{c.avgViews === null ? "—" : fmtNumber(c.avgViews)}</Td>
                   <Td className="text-right">
-                    <span className="inline-flex items-center gap-2">
-                      <span className="h-1.5 w-12 rounded-full bg-subtle">
-                        <span className="block h-full rounded-full bg-accent" style={{ width: `${c.relevance}%` }} />
+                    {c.relevance === null ? (
+                      "—"
+                    ) : (
+                      <span className="inline-flex items-center gap-2">
+                        <span className="h-1.5 w-12 rounded-full bg-subtle">
+                          <span className="block h-full rounded-full bg-accent" style={{ width: `${c.relevance}%` }} />
+                        </span>
+                        <span className="w-6 text-ink tabular">{c.relevance}</span>
                       </span>
-                      <span className="w-6 text-ink tabular">{c.relevance}</span>
-                    </span>
+                    )}
                   </Td>
                   <Td>
                     <span className="flex flex-wrap gap-1">
@@ -94,18 +99,12 @@ export function CreatorsView({ creators: initial }: { creators: Creator[] }) {
                       ))}
                     </span>
                   </Td>
+                  <Td className="text-right">{c.citedCount}</Td>
                   <Td>
-                    <span className="flex flex-wrap gap-1">
-                      {c.mentionsBrand ? <Badge tone="accent">You</Badge> : null}
-                      {c.mentionsCompetitors.map((m) => (
-                        <Badge key={m} tone="warn">{m}</Badge>
-                      ))}
-                      {!c.mentionsBrand && !c.mentionsCompetitors.length ? <span className="text-ink-4">—</span> : null}
-                    </span>
-                  </Td>
-                  <Td>{c.lastPost ? fmtDate(c.lastPost) : "—"}</Td>
-                  <Td>
-                    <Select size="sm" aria-label={`Status for ${c.name}`} value={c.status} onValueChange={(v) => setCreators((l) => l.map((x) => (x.id === c.id ? { ...x, status: v as Creator["status"] } : x)))} options={STATUS} />
+                    <Select size="sm" aria-label={`Status for ${c.name}`} value={c.status} onValueChange={(v) => {
+                        setCreators((l) => l.map((x) => (x.id === c.id ? { ...x, status: v } : x)));
+                        void setCreatorStatus(orgId, c.id, v);
+                      }} options={STATUS} />
                   </Td>
                 </Tr>
               ))}
