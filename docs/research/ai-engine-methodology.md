@@ -1,4 +1,4 @@
-# AI Engine Measurement Methodology (Beacon GEO)
+# AI Engine Measurement Methodology (ASO Engine)
 
 Author: Researcher-Engines agent. Date: 2026-11-24. Status: research draft for the lead and Backend.
 Scope: how we measure brand visibility in AI engines using **direct vendor APIs + DataForSEO** (no scraping of consumer UIs, per the user's decision in `docs/PLAN.md`).

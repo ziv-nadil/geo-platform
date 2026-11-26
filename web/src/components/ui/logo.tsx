@@ -1,8 +1,8 @@
 import { cn } from "@/lib/ui/cn";
 
 /**
- * Beacon GEO mark: an ink tile holding a single signal point and one precise arc.
- * Wordmark: Geist semibold "Beacon" + Geist Mono "GEO" as a quiet technical suffix.
+ * ASO Engine mark: an ink tile holding a single signal point and one precise arc.
+ * Wordmark: Geist semibold "ASO Engine" + Geist Mono "GEO" as a quiet technical suffix.
  */
 export function Logo({ className, withWordmark = true }: { className?: string; withWordmark?: boolean }) {
   return (
@@ -16,7 +16,7 @@ export function Logo({ className, withWordmark = true }: { className?: string; w
       </svg>
       {withWordmark ? (
         <span className="flex items-baseline gap-1.5 font-display text-[15px] font-semibold tracking-[-0.03em] text-ink">
-          Beacon
+          ASO Engine
           <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-ink-3">GEO</span>
         </span>
       ) : null}

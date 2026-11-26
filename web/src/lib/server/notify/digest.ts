@@ -9,7 +9,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 /** Send via Resend's REST API (no SDK needed). Returns not_configured without RESEND_API_KEY. */
 export async function sendEmail(to: string, subject: string, html: string): Promise<{ status: 'sent' | 'error'; message?: string }> {
   const key = process.env.RESEND_API_KEY!;
-  const from = process.env.DIGEST_FROM_EMAIL ?? 'Beacon GEO <digest@beacongeo.com>';
+  const from = process.env.DIGEST_FROM_EMAIL ?? 'ASO Engine <digest@beacongeo.com>';
   const r = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify({ from, to, subject, html }), signal: AbortSignal.timeout(15_000) });
   return r.ok ? { status: 'sent' } : { status: 'error', message: `resend HTTP ${r.status}` };
 }

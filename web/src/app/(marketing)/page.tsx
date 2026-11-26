@@ -4,7 +4,7 @@ import { ArtBanner } from "@/components/marketing/art";
 import { ENGINES } from "@/lib/ui/engines";
 
 const STEPS = [
-  { icon: Radar, title: "We monitor the answers", body: "Beacon asks ChatGPT, Perplexity, Gemini, Claude and Google AI Overviews the questions your buyers ask, every day, and records every brand they name and every source they cite." },
+  { icon: Radar, title: "We monitor the answers", body: "ASO Engine asks ChatGPT, Claude, Gemini and Google AI Overviews the questions your buyers ask, every day, and records every brand they name and every source they cite." },
   { icon: SearchX, title: "We find the content gaps", body: "Where competitors win an answer and you are absent, we score the gap by how much the prompt matters and how authoritative the cited sources are." },
   { icon: ListOrdered, title: "We turn gaps into listicles", body: "Each gap becomes a briefed listicle or comparison in your brand voice, with the facts AI engines already trust, ready for your CMS as a draft." },
 ];
@@ -29,17 +29,17 @@ export default function Home() {
           </p>
           <h1 className="mx-auto max-w-3xl text-balance text-3xl font-semibold tracking-[-0.045em] text-ink md:text-[64px] md:leading-[1.02]">Be the answer AI engines give.</h1>
           <p className="mx-auto mt-6 max-w-xl text-md leading-relaxed text-ink-3">
-            Beacon GEO measures how often ChatGPT, Perplexity, Gemini, Claude and Google AI Overviews recommend your brand, shows the sources behind every answer, and tells you what to change.
+            ASO Engine measures how often ChatGPT, Claude, Gemini and Google AI Overviews recommend your brand, shows the sources behind every answer, and tells you what to change.
           </p>
           <div className="mt-9 flex flex-wrap justify-center gap-3">
-            <ButtonLink href="/signup" size="lg">
+            <ButtonLink href="/login" size="lg">
               Start onboarding <ArrowRight />
             </ButtonLink>
             <ButtonLink href="/features" size="lg" variant="secondary">
               See features
             </ButtonLink>
           </div>
-          <figure className="relative mx-auto mt-16 max-w-5xl" aria-label="Beacon GEO overview dashboard">
+          <figure className="relative mx-auto mt-16 max-w-5xl" aria-label="ASO Engine overview dashboard">
             <div className="overflow-hidden rounded-t-lg border border-b-0 border-line-strong bg-surface shadow-shot">
               <div className="flex h-9 items-center gap-1.5 border-b border-line bg-subtle px-3" aria-hidden="true">
                 <span className="size-2.5 rounded-full bg-line-strong" />
@@ -124,7 +124,7 @@ export default function Home() {
               <p className="mt-2 max-w-xl text-sm text-white/70">Connect your site and tools in guided steps. Every step runs a live test, so you know what works before the first report.</p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-3">
-              <ButtonLink href="/signup" className="bg-white !text-ink hover:bg-white/90">Get started <ArrowRight /></ButtonLink>
+              <ButtonLink href="/login" className="bg-white !text-ink hover:bg-white/90">Get started <ArrowRight /></ButtonLink>
               <ButtonLink href="/pricing" variant="ghost" className="!text-white hover:bg-white/10">View pricing</ButtonLink>
             </div>
           </div>

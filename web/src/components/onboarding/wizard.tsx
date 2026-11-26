@@ -48,6 +48,7 @@ import {
   type FieldValue,
   type StepStatus,
   type WizardState,
+  autoSkipReason,
 } from "@/lib/ui/onboarding-logic";
 import { FieldList } from "./field-renderer";
 import { InstructionsPanel } from "./instructions-panel";
@@ -85,6 +86,7 @@ export function OnboardingWizard({
   const step = steps.find((s) => s.id === current)!;
   const idx = steps.findIndex((s) => s.id === current);
   const values = useMemo(() => state.values[current] ?? {}, [state.values, current]);
+  const autoSkip = autoSkipReason(step, state);
   const pct = overallProgress(steps, state);
 
   const persist = useCallback(
@@ -228,8 +230,8 @@ export function OnboardingWizard({
               </div>
               <div className="flex items-center gap-2">
                 {status === "skipped" ? <Badge tone="neutral">Skipped / not applicable</Badge> : <StatusPill status={STATUS_FOR_PILL[status]} label={STATUS_LABEL[status]} />}
-                {skippable && step.id !== "review" ? (
-                  <Tooltip content={step.id === "github" && !step.optional ? "Skip when your blog is not in a Git repository (e.g. WordPress, Webflow, Shopify)." : "Optional step. Skipping counts as done."}>
+                {skippable && !autoSkip && step.id !== "review" ? (
+                  <Tooltip content={step.id === "github" && !step.optional ? "Skipped automatically unless your CMS is Git-based." : "Optional step. Skipping counts as done."}>
                     <Button size="sm" variant="ghost" onClick={toggleSkip}>
                       {state.skipped[current] ? <Undo2 /> : <SkipForward />}
                       {state.skipped[current] ? "Undo skip" : "Skip / not applicable"}
@@ -246,9 +248,9 @@ export function OnboardingWizard({
 
           {step.id === "review" ? <ReviewSummary steps={steps} state={state} onGo={go} /> : null}
 
-          {state.skipped[current] ? (
+          {autoSkip || state.skipped[current] ? (
             <p className="rounded-md border border-dashed border-line-strong px-5 py-6 text-center text-sm text-ink-3">
-              You marked this step as skipped. It counts as done. Undo the skip to fill it in.
+              {autoSkip ?? "You marked this step as skipped. It counts as done. Undo the skip to fill it in."}
             </p>
           ) : (
             <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_400px]">

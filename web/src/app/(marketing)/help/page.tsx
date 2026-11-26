@@ -13,7 +13,7 @@ export default function HelpIndex() {
   return (
     <div>
       <p className="text-xs font-semibold tracking-wide text-accent-ink uppercase">Help center</p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink md:text-3xl">How to connect Beacon GEO</h1>
+      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink md:text-3xl">How to connect ASO Engine</h1>
       <p className="mt-3 max-w-2xl text-md leading-relaxed text-ink-2">
         Each onboarding step below explains why we need it, what to provide and how to grant access. Every step ends with a live test.
       </p>

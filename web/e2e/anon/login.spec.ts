@@ -5,10 +5,9 @@ test.describe("anonymous, no auth env", () => {
     await page.goto("/login");
     await expect(page.getByText(/auth not configured/i).first()).toBeVisible();
   });
-  test("signup page renders without crashing", async ({ page }) => {
+  test("signup route is gone", async ({ page }) => {
     const r = await page.goto("/signup");
-    expect(r?.status()).toBeLessThan(500);
-    await expect(page.getByText(/auth not configured/i).first()).toBeVisible();
+    expect(r?.status()).toBe(404);
   });
   test("/app without any identity does not expose dashboard data", async ({ page }) => {
     await page.goto("/app/northwind");

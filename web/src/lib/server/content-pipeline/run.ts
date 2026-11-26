@@ -1,4 +1,5 @@
 import 'server-only';
+import { notifyPublished } from '../indexing';
 import type { TxSql } from '../db';
 import { articleWordCount, buildArticleJsonLd, renderArticleMarkdown, sanitizeArticle, type ArticleDoc, type AssetMap } from '../../content/article';
 import { publishArticleDraft, type ArticleImage, type Target } from '../content-gaps/publish';
@@ -82,6 +83,7 @@ export async function deliverItem(run: Runner, orgId: string, itemId: string, ta
     return fail(r.message);
   }
   await run((sql) => sql`update public.content_items set status = 'published', cms_platform = ${r.platform}, cms_post_id = ${r.postId}, cms_post_url = ${r.postUrl}, published_url = ${r.postUrl}, publish_error = null where id = ${itemId} and org_id = ${orgId}`);
+  await notifyPublished(orgId, r.postUrl);
   return { ok: true, data: { url: r.postUrl } };
 }
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Production provisioning for Beacon GEO. See docs/ops/runbook.md for the full procedure.
+# Production provisioning for ASO Engine. See docs/ops/runbook.md for the full procedure.
 #
 #   scripts/provision.sh [--dry-run] [--skip-deploy]
 #

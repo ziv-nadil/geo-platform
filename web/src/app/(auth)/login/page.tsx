@@ -7,9 +7,9 @@ export default function Page() {
   return (
     <>
       <h1 className="text-xl font-semibold text-ink">Sign in</h1>
-      <p className="mt-1 mb-6 text-sm text-ink-3">Welcome back. Sign in to your Beacon GEO workspace.</p>
+      <p className="mt-1 mb-6 text-sm text-ink-3">Welcome back. Sign in to your ASO Engine workspace.</p>
       <Suspense fallback={<div className="h-96" />}>
-        <AuthForm mode="login" />
+        <AuthForm />
       </Suspense>
     </>
   );

@@ -28,11 +28,10 @@ async function Invite({ params, searchParams }: { params: Promise<{ token: strin
   if (!viewer.ok && viewer.reason === "unauthenticated") {
     return (
       <>
-        <h1 className="text-lg font-semibold text-ink">You&apos;re invited to Beacon GEO</h1>
-        <p className="mt-2 text-sm text-ink-3">Sign in or create an account with the email address the invitation was sent to. You&apos;ll come back here to join.</p>
+        <h1 className="text-lg font-semibold text-ink">You&apos;re invited to ASO Engine</h1>
+        <p className="mt-2 text-sm text-ink-3">Sign in with the email address the invitation was sent to. You&apos;ll come back here to join.</p>
         <div className="mt-6 flex gap-2">
           <ButtonLink href={`/login?next=/invite/${token}`}>Sign in</ButtonLink>
-          <ButtonLink href={`/signup?next=/invite/${token}`} variant="secondary">Create account</ButtonLink>
         </div>
       </>
     );

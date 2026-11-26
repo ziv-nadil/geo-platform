@@ -11,7 +11,7 @@ Read this first when resuming in a fresh or compacted session.
 
 ## User answers (2026-11-24)
 - AthenaHQ UI: user chose "connect my computer". Not connected yet (no folders listed). Use MCP + public docs meanwhile.
-- Name: Beacon GEO (placeholder). Engines: direct APIs + DataForSEO. Secrets: Infisical Cloud.
+- Name: ASO Engine (placeholder). Engines: direct APIs + DataForSEO. Secrets: Infisical Cloud.
 
 ## State
 - Wave 1 launched: research (Athena, engines), product onboarding spec, security design, backend schema,

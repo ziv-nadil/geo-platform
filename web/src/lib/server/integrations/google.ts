@@ -2,7 +2,7 @@ import 'server-only';
 import { importPKCS8, SignJWT } from 'jose';
 import { safeJson } from '../net/safe-fetch';
 
-/** Access token for our agency Google identity (OAuth refresh token; GSC, GA4, Indexing). */
+/** Access token for our agency Google identity (OAuth refresh token; GSC, GA4). */
 export async function agencyGoogleToken(): Promise<{ token: string } | { missing: string[] } | { error: string }> {
   const need = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'AGENCY_GOOGLE_REFRESH_TOKEN'];
   const missing = need.filter((n) => !process.env[n]);

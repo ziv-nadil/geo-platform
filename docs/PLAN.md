@@ -1,6 +1,6 @@
-# Beacon GEO — Master Plan
+# ASO Engine — Master Plan
 
-Working name: **Beacon GEO**. It's a placeholder and easy to rename.
+Working name: **ASO Engine**. It's a placeholder and easy to rename.
 Goal: an agency platform to onboard GEO (Generative Engine Optimization) clients, then
 monitor and improve their visibility in AI engines (ChatGPT, Perplexity, Gemini, Claude,
 Google AI Overviews / AI Mode). The scope is AthenaHQ's feature set with a cleaner light-mode design.
@@ -30,7 +30,7 @@ references are stored in Postgres.
 
 Steps: 1. Company info & assets · 2. Brand book · 3. Access method (our email vs a user in
 their domain) · 4. GitHub (blog) · 5. CMS · 6. GSC (Owner) · 7. Bing Webmaster (Owner) ·
-8. GA4 + key event · 9. Google Cloud (YouTube Data, Keyword Planner/Ads, Indexing API) ·
+8. GA4 + key event · 9. Google Cloud (YouTube Data, Keyword Planner/Ads; indexing is via sitemap refresh + IndexNow, see docs/research/gsc-request-indexing.md) ·
 10. DNS verification (TXT) · 11. GEO/ASO analytics (Peec, Ahrefs, Similarweb, Profound,
 AthenaHQ, …) · 12. AWS (S3 + CloudFront) or similar · 13. Cloudflare (AI crawler monitoring) ·
 14. Slack admin (bots) · 15. Review & submit.

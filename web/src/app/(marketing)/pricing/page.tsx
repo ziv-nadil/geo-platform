@@ -66,7 +66,7 @@ async function PlanGrid() {
         <h2 className="text-lg font-semibold text-ink">Pricing is unavailable right now</h2>
         <p className="mt-2 text-sm text-ink-3">We could not load the plan list. Sign up to start onboarding, or try this page again in a moment.</p>
         <div className="mt-6">
-          <ButtonLink href="/signup">Get started</ButtonLink>
+          <ButtonLink href="/login">Get started</ButtonLink>
         </div>
       </div>
     );
@@ -109,7 +109,7 @@ async function PlanGrid() {
             </ul>
 
             <div className="mt-auto pt-8">
-              <ButtonLink href="/signup" size="lg" variant={featured ? "primary" : "secondary"} className="w-full">
+              <ButtonLink href="/login" size="lg" variant={featured ? "primary" : "secondary"} className="w-full">
                 {isAgency ? "Talk to us, then sign up" : `Choose ${p.name}`}
               </ButtonLink>
             </div>

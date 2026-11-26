@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * Beacon GEO design tokens (light mode).
+ * ASO Engine design tokens (light mode).
  * Layout concept: a quiet off-white canvas, white working surfaces separated by hairline
  * borders (not shadows), one confident teal accent for action and the brand's own data.
  * Spacing follows an 8px grid (Tailwind steps 2/4/6/8/12/16 = 8/16/24/32/48/64px).

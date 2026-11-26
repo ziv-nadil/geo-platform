@@ -31,7 +31,7 @@ function stripSecrets(fields: FieldDef[], data: Record<string, unknown>): Record
 /**
  * PUT /api/onboarding/[orgId]/progress — body { stepId, data?, status?, notes? } (member+).
  * Clients may set status not_started|in_progress; 'complete'/'needs_attention' come from live tests
- * (or Beacon staff with an act-as grant). Unknown and secret fields are dropped. Written with RLS.
+ * (or ASO Engine staff with an act-as grant). Unknown and secret fields are dropped. Written with RLS.
  */
 export async function PUT(request: Request, ctx: { params: Promise<{ orgId: string }> }) {
   const { orgId } = await ctx.params;

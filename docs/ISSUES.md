@@ -34,7 +34,7 @@ Decisions were made so work didn't stop. Each item says what I chose and what yo
 
 - **All services go on your personal accounts** (personal email, new personal orgs). No Explorium accounts, connectors or branding. Claude is the only exception.
 
-- Name "Beacon GEO" → subdomain `beacon-geo.vercel.app`.
+- Name "ASO Engine" → subdomain `beacon-geo.vercel.app`.
 - Vercel Hobby is non-commercial. Upgrade to Pro before paying clients use it.
 - Our agency email address for the "give our email access" option: placeholder `geo-ops@<yourdomain>`. Tell me the real one.
 - Anchor Browser / agentic signups: not used. Signups need your email verification and payment details, so a one-time manual
@@ -49,7 +49,7 @@ Decisions were made so work didn't stop. Each item says what I chose and what yo
 
 ### Product agent (onboarding spec) — open questions
 - Real agency email for `{{AGENCY_EMAIL}}` (placeholder geo-ops@<yourdomain>), GitHub login for `{{AGENCY_GITHUB_USER}}`, AWS principal ARN for the cross-account role, and our Google Ads manager (MCC) ID plus a developer token (apply for Basic access; approval takes days). The wizard can't go live without these.
-- Google Indexing API officially supports only JobPosting/BroadcastEvent pages. Keep it in step 9 as best-effort, or drop it?
+- RESOLVED: Google Indexing API dropped. Replaced by sitemap refresh + IndexNow; browser-agent "Request indexing" is a design only (docs/research/gsc-request-indexing.md).
 - Bing: confirm "Administrator" is the intended Owner-equivalent; verify current Bing Webmaster UI path with a real login (could not confirm online).
 - Peec.ai and Profound API endpoints for the key test are unverified; need a trial account each. Also Cloudflare AI Crawl Control REST path.
 - Domain-user access mode stores a password and TOTP secret in the vault. Accept the risk, or restrict to agency-email mode only? (Security agent should review.)
@@ -75,8 +75,7 @@ Decisions were made so work didn't stop. Each item says what I chose and what yo
   staff may access account data for support. Do you want the client to see "Agency team viewed your account" entries instead?
 - **Domain-user access mode (product agent's question).** Allowed, but agency-email access is the default. Client passwords and
   TOTP seeds go in a separate `beacon-<slug>-logins` Infisical project with no machine identity, so agents never use them. OK?
-- **Infisical region.** US cloud by default. Any EU clients needing EU data residency? (The EU region is a separate org/URL; decide before
-  creating projects.)
+- **Infisical region.** DECIDED: US cloud (app.infisical.com). EU is not configured; the egress allowlist only permits app.infisical.com.
 - **Needed from you for the delegated-access design:** an AWS account for our cross-account role principal (no stored client AWS
   keys), a GitHub App and Slack app registered under the agency, and a separate registrable domain for user content (or accept
   `beacon-geo-usercontent.vercel.app` for now).

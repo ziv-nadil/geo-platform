@@ -1,7 +1,6 @@
 "use client";
 
 import { AlertTriangle, Mail } from "lucide-react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -30,14 +29,13 @@ function MicrosoftMark() {
   );
 }
 
-export function AuthForm({ mode }: { mode: "login" | "signup" }) {
+export function AuthForm() {
   const router = useRouter();
   const sp = useSearchParams();
   const next = sp.get("next") ?? "/app";
   const supabase = getBrowserSupabase();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(sp.get("error") ? { ok: false, text: "Sign-in link expired or was already used. Try again." } : null);
   const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` : undefined;
@@ -59,7 +57,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         <div className="flex gap-3 rounded-sm border border-warn/30 bg-warn-soft px-3 py-2.5 text-sm text-warn" role="status">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <span>
-            <strong className="font-semibold">Auth not configured.</strong> Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to enable sign-in. For local QA, use the DEV_AUTH_USER_ID bypass described in docs/design/design-system.md.
+            <strong className="font-semibold">Auth not configured.</strong> Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to enable sign-in. For local QA, use the DEV_AUTH_USER_ID bypass described in docs/design/design-system.md.
           </span>
         </div>
       ) : null}
@@ -85,53 +83,34 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         onSubmit={(e) => {
           e.preventDefault();
           void withBusy("password", async () => {
-            if (mode === "login") {
-              const { error } = await supabase!.auth.signInWithPassword({ email, password });
-              if (error) setMsg({ ok: false, text: "Email or password is incorrect." });
-              else router.replace(next);
-            } else {
-              const { error } = await supabase!.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo, data: { full_name: name } } });
-              if (error) setMsg({ ok: false, text: error.message });
-              else setMsg({ ok: true, text: `Check ${email} for a link to confirm your account.` });
-            }
+            const { error } = await supabase!.auth.signInWithPassword({ email, password });
+            if (error) setMsg({ ok: false, text: "Email or password is incorrect." });
+            else router.replace(next);
           });
         }}
       >
-        {mode === "signup" ? (
-          <Field label="Full name" htmlFor="name" required>
-            <Input id="name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} disabled={disabled} required />
-          </Field>
-        ) : null}
         <Field label="Work email" htmlFor="email" required>
           <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={disabled} required />
         </Field>
-        <Field label="Password" htmlFor="password" required help={mode === "signup" ? "At least 10 characters." : undefined} aside={mode === "login" ? <span className="text-xs text-ink-3">Forgot it? Use a magic link.</span> : undefined}>
-          <Input id="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={mode === "signup" ? 10 : undefined} value={password} onChange={(e) => setPassword(e.target.value)} disabled={disabled} required />
+        <Field label="Password" htmlFor="password" required aside={<span className="text-xs text-ink-3">Forgot it? Use a magic link.</span>}>
+          <Input id="password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={disabled} required />
         </Field>
         <Button type="submit" size="lg" disabled={disabled || !email || !password} loading={busy === "password"}>
-          {mode === "login" ? "Sign in" : "Create account"}
+          Sign in
         </Button>
-        {mode === "login" ? (
-          <Button variant="ghost" disabled={disabled || !email} loading={busy === "magic"} onClick={() => withBusy("magic", async () => {
-            const { error } = await supabase!.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo, shouldCreateUser: false } });
-            setMsg(error ? { ok: false, text: error.message } : { ok: true, text: `We sent a sign-in link to ${email}.` });
-          })}>
-            <Mail /> Email me a magic link
-          </Button>
-        ) : null}
+        <Button variant="ghost" disabled={disabled || !email} loading={busy === "magic"} onClick={() => withBusy("magic", async () => {
+          const { error } = await supabase!.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo, shouldCreateUser: false } });
+          setMsg(error ? { ok: false, text: error.message } : { ok: true, text: `We sent a sign-in link to ${email}.` });
+        })}>
+          <Mail /> Email me a magic link
+        </Button>
       </form>
       {msg ? (
         <p className={`text-sm ${msg.ok ? "text-good" : "text-bad"}`} role={msg.ok ? "status" : "alert"}>
           {msg.text}
         </p>
       ) : null}
-      <p className="text-center text-sm text-ink-3">
-        {mode === "login" ? (
-          <>New to Beacon GEO? <Link href="/signup" className="font-medium text-accent hover:underline">Create an account</Link></>
-        ) : (
-          <>Already have an account? <Link href="/login" className="font-medium text-accent hover:underline">Sign in</Link></>
-        )}
-      </p>
+      <p className="text-center text-xs text-ink-4">Access is by invitation. Ask your workspace admin if you need an account.</p>
     </div>
   );
 }

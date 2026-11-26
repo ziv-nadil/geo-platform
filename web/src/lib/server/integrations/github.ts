@@ -31,9 +31,9 @@ export const test: Tester = async (ctx) => {
       if (created?.ok) {
         const path = `${(str(ctx.data.github_content_path) ?? 'beacon').replace(/^\/|\/$/g, '')}/.beacon-connection-test.md`;
         const file = await safeJson(`https://api.github.com/repos/${repo}/contents/${path}`, { integration: 'github', method: 'PUT', headers: gh(token),
-          body: JSON.stringify({ message: 'Beacon connection test', content: Buffer.from('Beacon GEO connection test. Safe to delete.\n').toString('base64'), branch }) });
+          body: JSON.stringify({ message: 'ASO Engine connection test', content: Buffer.from('ASO Engine connection test. Safe to delete.\n').toString('base64'), branch }) });
         const pr = file.ok ? await safeJson<{ number?: number }>(`https://api.github.com/repos/${repo}/pulls`, { integration: 'github', method: 'POST', headers: gh(token),
-          body: JSON.stringify({ title: 'Beacon connection test (auto-closed)', head: branch, base, draft: true }) }) : null;
+          body: JSON.stringify({ title: 'ASO Engine connection test (auto-closed)', head: branch, base, draft: true }) }) : null;
         prOk = !!pr?.ok;
         detail = !file.ok ? `commit HTTP ${file.status}` : prOk ? 'branch, commit and draft PR created, then cleaned up' : `branch push works but PR creation failed (HTTP ${pr?.status})`;
         if (pr?.data?.number) await safeJson(`https://api.github.com/repos/${repo}/pulls/${pr.data.number}`, { integration: 'github', method: 'PATCH', headers: gh(token), body: JSON.stringify({ state: 'closed' }) });

@@ -4,7 +4,7 @@ import { ButtonLink } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Features",
-  description: "Track ChatGPT, Perplexity, Gemini, Claude and Google AI Overviews, see the sources behind every answer, and turn gaps into content.",
+  description: "Track ChatGPT, Claude, Geminiand Google AI Overviews, see the sources behind every answer, and turn gaps into content.",
 };
 
 const SECTIONS = [
@@ -14,7 +14,7 @@ const SECTIONS = [
     lead: "Know what AI engines say about your category, every day.",
     points: [
       "Tracked prompts built from your buyers' questions and personas",
-      "Five engines: ChatGPT, Perplexity, Gemini, Claude and Google AI Overviews",
+      "Five engines: ChatGPT, Claude, Geminiand Google AI Overviews",
       "Each answer records which brands appear, in what order, and the sentiment of each mention",
     ],
   },
@@ -84,7 +84,7 @@ export default function FeaturesPage() {
         <p className="text-xs font-semibold tracking-wide text-accent-ink uppercase">Features</p>
         <h1 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight text-ink md:text-4xl">Everything it takes to win the answer.</h1>
         <p className="mt-4 max-w-2xl text-md leading-relaxed text-ink-2">
-          Beacon GEO watches the AI engines your buyers use, shows you why they choose who they choose, and gives you the work list to change it.
+          ASO Engine watches the AI engines your buyers use, shows you why they choose who they choose, and gives you the work list to change it.
         </p>
       </section>
 
