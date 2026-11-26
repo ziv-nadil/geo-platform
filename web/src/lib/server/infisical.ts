@@ -5,7 +5,7 @@ import { optionalEnv, notConfigured, type NotConfigured } from './env';
 import { safeJson } from './net/safe-fetch';
 
 /**
- * Infisical access for ASO Engine (docs/architecture/security.md §1).
+ * Infisical access for GEO Engine (docs/architecture/security.md §1).
  *
  * One Infisical project per client org (`beacon-<slug>`, env `prod`, one folder per integration).
  * Three machine identities, each used for one job only:

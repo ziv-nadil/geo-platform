@@ -34,7 +34,7 @@ export function parseInteraction(rawBody: string): SlackInteraction | null {
 
 export function buildManifest(appUrl: string, brand: string) {
   return {
-    display_information: { name: `${brand} Social pulse`.slice(0, 35), description: 'Daily social insights and content title approvals from ASO Engine.' },
+    display_information: { name: `${brand} Social pulse`.slice(0, 35), description: 'Daily social insights and content title approvals from GEO Engine.' },
     features: { bot_user: { display_name: `${brand} pulse`.slice(0, 80), always_online: false } },
     oauth_config: { scopes: { bot: ['chat:write', 'chat:write.public', 'channels:read', 'channels:manage', 'channels:join'] } },
     settings: { interactivity: { is_enabled: true, request_url: `${appUrl.replace(/\/$/, '')}/api/slack/interactions` }, org_deploy_enabled: false, socket_mode_enabled: false, token_rotation_enabled: false },

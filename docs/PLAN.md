@@ -1,6 +1,6 @@
-# ASO Engine — Master Plan
+# GEO Engine — Master Plan
 
-Working name: **ASO Engine**. It's a placeholder and easy to rename.
+Working name: **GEO Engine**. It's a placeholder and easy to rename.
 Goal: an agency platform to onboard GEO (Generative Engine Optimization) clients, then
 monitor and improve their visibility in AI engines (ChatGPT, Perplexity, Gemini, Claude,
 Google AI Overviews / AI Mode). The scope is AthenaHQ's feature set with a cleaner light-mode design.

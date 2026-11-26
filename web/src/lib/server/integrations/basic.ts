@@ -5,7 +5,7 @@ import { result, str, type Check, type Tester } from './types';
 
 async function reachable(url: string): Promise<{ ok: boolean; status: number | null; finalHost: string | null; detail: string }> {
   try {
-    const r = await safeFetch(url, { integration: 'scrape', method: 'GET', headers: { 'user-agent': 'ASOEngine-ConnectionTest/1.0' }, maxBytes: 2 * 1024 * 1024 });
+    const r = await safeFetch(url, { integration: 'scrape', method: 'GET', headers: { 'user-agent': 'GEOEngine-ConnectionTest/1.0' }, maxBytes: 2 * 1024 * 1024 });
     return { ok: r.ok, status: r.status, finalHost: new URL(r.url).hostname, detail: `HTTP ${r.status}` };
   } catch (e) {
     return { ok: false, status: null, finalHost: null, detail: e instanceof Error ? e.message : 'unreachable' };
@@ -73,7 +73,7 @@ export const accessMethod: Tester = async (ctx) => {
     const site = str(ctx.allData.company?.website_url);
     const same = !!email && !!site && email.split('@')[1]?.toLowerCase() === bareHost(new URL(site).hostname);
     checks.push({ id: 'access_user_credentials_stored', label: 'Domain user recorded', ok: same, detail: same ? 'email domain matches the website' : 'email domain does not match the company website' });
-    return result(checks, ['Password/TOTP are stored by ASO Engine staff in the -logins vault (not via the wizard)']);
+    return result(checks, ['Password/TOTP are stored by GEO Engine staff in the -logins vault (not via the wizard)']);
   }
   return result(checks);
 };

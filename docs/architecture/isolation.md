@@ -1,4 +1,4 @@
-# ASO Engine: Per-Client Isolation Design
+# GEO Engine: Per-Client Isolation Design
 
 Status: **proposal, design only** (2026-11-25). Owner requirement: **hard per-client separation**. Each client's agents
 (content, social pulse, YouTube, monitoring) may reach only that client's credentials and data, even if an agent is
@@ -23,7 +23,7 @@ single source, **A** = our assumption.
 **Core idea.** Isolation has to come from **who the platform thinks the job is**, not from our code checking an org id.
 A GitHub Actions job that declares `environment: client-acme` receives an OIDC token whose `sub` is
 `repo:<owner>/geo-platform:environment:client-acme`. The vault trusts that exact subject for Acme's credentials and
-nothing else. A job running for Acme cannot obtain a token with ASO Engine's subject. So even with full code execution
+nothing else. A job running for Acme cannot obtain a token with GEO Engine's subject. So even with full code execution
 inside that job, a prompt-injected agent cannot read Beta Corp's secrets. Today's single `beacon-worker` identity reads every
 client (security.md §1.5). That is the gap this document closes.
 

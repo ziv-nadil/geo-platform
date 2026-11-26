@@ -1,4 +1,4 @@
-# ASO Engine design system
+# GEO Engine design system
 
 ## Rebrand direction (Nov 2026): "precision instrument"
 
@@ -12,7 +12,7 @@ Goal: techy, sophisticated, numbers-first, luxury high-end tech, still a clean l
 - **One accent:** "signal" indigo `accent #4338ca` (7.9:1 on white), soft washes `#eeedfb` / `#d9d7f6`. Used for links, focus, selected marks and the brand series in charts. Replaces the previous teal.
 - **Data-viz:** brand series `#4a45e0`. Competitor slots are now `#eb6834, #0b9a94, #e87ba4, #eda100, #5b616c`: the blue and purple slots were dropped because they sat too close to the indigo brand. Engine slots (series 1-5) are unchanged. Contrast of the new accent/ink values was computed; the competitor set was **not** re-run through the CVD validator, so charts keep legends and table values (orange, yellow, pink remain under 3:1 on white).
 - **Depth:** hairline borders first; `shadow-card` (inset top highlight + soft 1px + diffuse drop) on cards and stat tiles; `shadow-shot` for product screenshots; `shadow-pop` for floating layers.
-- **Logo:** ink rounded tile with a signal dot and two hairline arcs (indigo-tinted dot); wordmark is Geist semibold "ASO Engine" plus Geist Mono small-caps "GEO".
+- **Logo:** ink rounded tile with a signal dot and two hairline arcs (indigo-tinted dot); wordmark is Geist semibold "GEO Engine" plus Geist Mono small-caps "GEO".
 - **Marketing:** centered hero with a framed real screenshot of the Overview, a hairline-grid backdrop faded by a radial mask, a two-up product section (Competitors, Content; images in `web/public/shots/`), and a dark closing banner. Imagery: `ArtBanner` (`web/src/components/marketing/art.tsx`) renders the abstract `SignalArt` SVG; stock photos (Unsplash) were removed, and Bria covers generated imagery.
 - **App shell:** active nav is an ink-on-subtle chip (accent on the active icon), section labels in mono caps.
 

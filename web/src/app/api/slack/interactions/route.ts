@@ -33,7 +33,7 @@ export async function POST(req: Request): Promise<Response> {
     const out = await approveSuggestion(dbApproveDeps((fn) => withService(fn), orgId), act.value, who);
     const bot = await readSecret({ orgId, purpose: 'job', worker: 'beacon-slack-interactions' }, { stepId: 'chat', fieldId: 'slack_bot_token' });
     if (bot.status === 'ok' && ia.channelId && ia.messageTs) {
-      const text = out.status === 'created' ? ':white_check_mark: Approved. The article draft is ready in ASO Engine (Content).'
+      const text = out.status === 'created' ? ':white_check_mark: Approved. The article draft is ready in GEO Engine (Content).'
         : out.status === 'already_decided' ? 'That title was already decided.' : `:warning: Approved, but content creation failed: ${out.error}`;
       await replyInThread(bot.value, ia.channelId, ia.messageTs, text);
     }

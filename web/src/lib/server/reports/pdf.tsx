@@ -48,7 +48,7 @@ export function ReportDocument({ title, orgName, data }: { title: string; orgNam
     ['Sentiment', k.sentiment.value, k.sentiment.delta, ''],
   ];
   return (
-    <Document title={title} author="ASO Engine">
+    <Document title={title} author="GEO Engine">
       <Page size="A4" style={s.page}>
         <Text style={s.h1}>{title}</Text>
         <Text style={s.sub}>{orgName} · {data.period.from} to {data.period.to} ({data.period.days} days) · vs {data.previous.from} – {data.previous.to}</Text>

@@ -31,7 +31,7 @@ try {
 
   for (const plan of plans) {
     const params = {
-      name: `ASO Engine ${plan.name}`,
+      name: `GEO Engine ${plan.name}`,
       description: plan.description ?? undefined,
       metadata: { beacon_plan_id: plan.id, seat_limit: String(plan.seat_limit ?? 'unlimited'), prompt_limit: String(plan.prompt_limit ?? 'unlimited'), engine_limit: String(plan.engine_limit ?? 'unlimited') },
       marketing_features: [{ name: fmt(plan.seat_limit, 'seat') }, { name: fmt(plan.prompt_limit, 'tracked prompt') }, { name: fmt(plan.engine_limit, 'AI engine') }],

@@ -3,7 +3,7 @@ import { METRICS } from "@/lib/ui/metrics";
 
 export const metadata: Metadata = {
   title: "Metric definitions",
-  description: "What each number in ASO Engine means and how it is calculated.",
+  description: "What each number in GEO Engine means and how it is calculated.",
 };
 
 export default function MetricsPage() {

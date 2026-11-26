@@ -17,7 +17,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
       </a>
       <header className="sticky top-0 z-30 border-b border-line bg-surface/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-6">
-          <Link href="/" aria-label="ASO Engine home">
+          <Link href="/" aria-label="GEO Engine home">
             <Logo />
           </Link>
           <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
@@ -65,7 +65,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             <Link href="/login" className="hover:text-ink">Sign in</Link>
           </nav>
         </div>
-        <div className="mx-auto max-w-6xl px-6 pb-8 text-xs text-ink-4">© ASO Engine</div>
+        <div className="mx-auto max-w-6xl px-6 pb-8 text-xs text-ink-4">© GEO Engine</div>
       </footer>
     </div>
   );

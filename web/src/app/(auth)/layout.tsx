@@ -6,7 +6,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="grid min-h-screen lg:grid-cols-[1fr_minmax(0,560px)]">
       <aside className="hidden flex-col justify-between bg-ink p-12 text-white lg:flex">
-        <Link href="/" aria-label="ASO Engine home" className="[&_span]:!text-white">
+        <Link href="/" aria-label="GEO Engine home" className="[&_span]:!text-white">
           <Logo />
         </Link>
         <div className="max-w-md">

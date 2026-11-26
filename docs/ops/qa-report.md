@@ -1,4 +1,4 @@
-# QA report: ASO Engine web (e2e)
+# QA report: GEO Engine web (e2e)
 
 Run date: 2026-11-25. Branch `claude/qa` (code at `e9b3026`). Dev DB via `scripts/dev-db.sh`, app via `next dev` with the dev auth bypass.
 Suite: `web/e2e/` (Playwright 1.63, chromium). Run all: `web/e2e/run.sh` (one dev server per identity, because `DEV_AUTH_USER_ID` is process-wide).

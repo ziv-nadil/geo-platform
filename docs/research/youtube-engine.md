@@ -11,7 +11,7 @@ The YouTube Data API v3 has no `channels.insert`. A channel only exists once a h
 1. Pick (or create) a Google account owned by the client, for example `youtube@client.com`. It must be the client's, not the agency's.
 2. Sign in at youtube.com, click the avatar, "Create a channel" (or Settings > Add or manage your channel(s) > Create a new channel). Choose a **Brand Account** (a channel not tied to a personal name) so ownership can move between people and the client can add managers without sharing a password.
 3. Channel name: `<Brand> Insights` or `<Brand> Academy` (a branded name, never a person's name). Handle: `@<brand>insights`. Keep it distinct from the main brand channel, if there is one.
-4. Persona (set in the app): a **branded presenter persona**, for example "ASO Engine Insights Desk, the AI presenter of Acme's research team". Put the persona and the AI disclosure in the channel About text: "Videos here are narrated by an AI voice and written by Acme's team. Sources are linked in every description."
+4. Persona (set in the app): a **branded presenter persona**, for example "GEO Engine Insights Desk, the AI presenter of Acme's research team". Put the persona and the AI disclosure in the channel About text: "Videos here are narrated by an AI voice and written by Acme's team. Sources are linked in every description."
 5. Fill About, links (blog URL first), banner, avatar (client brand assets), country, default upload settings: category "Education" (27) or "Science & Technology" (28), language, "Made for kids: No".
 6. Verify the channel by phone (needed for custom thumbnails and videos over 15 minutes).
 7. Create playlists by topic (the engine can create more later; one per blog category is the default).

@@ -23,7 +23,7 @@ export function Sidebar({ org, orgs, canSwitch }: { org: Org; orgs: Org[]; canSw
   return (
     <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-line bg-surface" aria-label="Main navigation">
       <div className="flex h-14 items-center px-4">
-        <Link href={`${base}${qs}`} aria-label="ASO Engine home">
+        <Link href={`${base}${qs}`} aria-label="GEO Engine home">
           <Logo />
         </Link>
       </div>

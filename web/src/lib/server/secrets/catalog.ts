@@ -92,7 +92,7 @@ export function resolveSecretTarget(stepId: string, fieldId: string, savedData: 
   if (!step) return { error: 'unknown_step', detail: stepId };
   if (!/^[a-z0-9_]{1,64}$/.test(fieldId)) return { error: 'unknown_field', detail: fieldId };
   if (HUMAN_ONLY_STEPS.has(stepId)) {
-    return { error: 'human_only_secret', detail: 'Interactive logins are stored by ASO Engine staff in the separate -logins vault, not through the wizard.' };
+    return { error: 'human_only_secret', detail: 'Interactive logins are stored by GEO Engine staff in the separate -logins vault, not through the wizard.' };
   }
   const folder = STEP_FOLDERS[stepId];
   if (!folder) return { error: 'no_vault_folder', detail: `step ${stepId} does not accept secrets` };

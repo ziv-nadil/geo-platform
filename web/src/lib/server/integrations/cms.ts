@@ -15,7 +15,7 @@ export const test: Tester = async (ctx) => {
   const cms = str(ctx.data.cms_platform);
   const siteUrl = str(ctx.data.cms_site_url);
   if (!cms) return result([], ['cms_platform']);
-  if (cms === 'other') return result([], ['Custom CMS: reviewed manually by ASO Engine'], true);
+  if (cms === 'other') return result([], ['Custom CMS: reviewed manually by GEO Engine'], true);
   if (cms === 'framer') return result([], ['Framer has no public content API: reviewed manually'], true);
   const cred = await ctx.secret('cms_api_credential');
   if (!cred) return result([], ['cms_api_credential (stored secret)'], true);
@@ -37,7 +37,7 @@ export const test: Tester = async (ctx) => {
         const me = await safeJson<{ name?: string; roles?: string[] }>(`${site.origin}/wp-json/wp/v2/users/me?context=edit`, { integration: 'cms', extraHosts, headers: h });
         auth(me.ok, me.ok ? `signed in as ${me.data?.name} (${me.data?.roles?.join(', ')})` : `HTTP ${me.status}`);
         if (me.ok) {
-          const post = await safeJson<{ id?: number }>(`${site.origin}/wp-json/wp/v2/posts`, { integration: 'cms', extraHosts, method: 'POST', headers: h, body: JSON.stringify({ title: 'ASO Engine connection test', status: 'draft' }) });
+          const post = await safeJson<{ id?: number }>(`${site.origin}/wp-json/wp/v2/posts`, { integration: 'cms', extraHosts, method: 'POST', headers: h, body: JSON.stringify({ title: 'GEO Engine connection test', status: 'draft' }) });
           if (post.data?.id) await safeJson(`${site.origin}/wp-json/wp/v2/posts/${post.data.id}?force=true`, { integration: 'cms', extraHosts, method: 'DELETE', headers: h });
           draft(post.ok, post.ok ? 'draft created and deleted' : `draft create denied (HTTP ${post.status}): role may be Contributor`);
         }
@@ -52,7 +52,7 @@ export const test: Tester = async (ctx) => {
         const s = await safeJson(`${site.origin}/ghost/api/admin/site/`, { integration: 'cms', extraHosts, headers: h });
         auth(s.ok, s.ok ? 'site reachable with Admin API key' : `HTTP ${s.status}`);
         if (s.ok) {
-          const p = await safeJson<{ posts?: { id: string }[] }>(`${site.origin}/ghost/api/admin/posts/`, { integration: 'cms', extraHosts, method: 'POST', headers: h, body: JSON.stringify({ posts: [{ title: 'ASO Engine connection test', status: 'draft' }] }) });
+          const p = await safeJson<{ posts?: { id: string }[] }>(`${site.origin}/ghost/api/admin/posts/`, { integration: 'cms', extraHosts, method: 'POST', headers: h, body: JSON.stringify({ posts: [{ title: 'GEO Engine connection test', status: 'draft' }] }) });
           const id = p.data?.posts?.[0]?.id;
           if (id) await safeJson(`${site.origin}/ghost/api/admin/posts/${id}/`, { integration: 'cms', extraHosts, method: 'DELETE', headers: h });
           draft(p.ok, p.ok ? 'draft created and deleted' : `HTTP ${p.status}`);

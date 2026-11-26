@@ -1,5 +1,5 @@
 -- =====================================================================================
--- ASO Engine: RLS helper functions and policy reference (Security architect, 2026-11-24)
+-- GEO Engine: RLS helper functions and policy reference (Security architect, 2026-11-24)
 -- Design: docs/architecture/security.md, §3.
 --
 -- STATUS: reference, not a migration. The backend agent integrates it into supabase/migrations/.

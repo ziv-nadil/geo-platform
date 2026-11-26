@@ -40,7 +40,7 @@ export async function serpTop(keyword: string, limit: number): Promise<{ items: 
 
 async function fetchStructure(url: string): Promise<{ structure: PageStructure | null; error?: string }> {
   try {
-    const res = await safeFetch(url, { integration: 'scrape', timeoutMs: 12_000, maxBytes: 3_000_000, headers: { accept: 'text/html', 'user-agent': 'ASOEngine-Research/1.0 (+content research)' } });
+    const res = await safeFetch(url, { integration: 'scrape', timeoutMs: 12_000, maxBytes: 3_000_000, headers: { accept: 'text/html', 'user-agent': 'GEOEngine-Research/1.0 (+content research)' } });
     if (!res.ok) return { structure: null, error: `HTTP ${res.status}` };
     if (!/html/i.test(res.headers.get('content-type') ?? '')) return { structure: null, error: 'not html' };
     return { structure: analyzePage(await res.text()) };

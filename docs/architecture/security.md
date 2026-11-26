@@ -1,4 +1,4 @@
-# ASO Engine: Security Architecture
+# GEO Engine: Security Architecture
 
 Owner: Security architect agent (wave 1) · Date: 2026-11-24 · Status: **design, ready for build**.
 Wave 2's security review appends its findings at the end of this file.
@@ -39,7 +39,7 @@ additional privileges are on our plan is unconfirmed (verify). The fallback is t
 ### 1.1 Organization and projects
 
 ```
-Infisical org: "ASO Engine"                    (Infisical Cloud, US region (decided))
+Infisical org: "GEO Engine"                    (Infisical Cloud, US region (decided))
 ├── project: beacon-platform                    our own secrets: Stripe, LLM keys, intake JWE private key, DataForSEO
 │   └── env: prod, preview                      (preview = test-mode keys only)
 ├── project: beacon-<org-slug>                  one per client org (machine-usable credentials)
@@ -282,7 +282,7 @@ Tests run server-side only. The value never reaches the browser, the LLM, or Pos
 | `organizations` | Client accounts. `infisical_project_id`, `stripe_customer_id`, `status` are server-written columns | own org |
 | `memberships(org_id, user_id, role)` | role ∈ `owner > admin > member > viewer` | own org's members |
 | `invitations` | Hashed tokens | admins of the org |
-| `platform_admins(user_id, granted_by, disabled_at, note)` | ASO Engine staff. **Never** in `memberships` (trigger enforces) | **No** (no grants to anon/authenticated) |
+| `platform_admins(user_id, granted_by, disabled_at, note)` | GEO Engine staff. **Never** in `memberships` (trigger enforces) | **No** (no grants to anon/authenticated) |
 | `platform_access_grants(admin_user_id, org_id, mode view/act, reason, expires_at)` | Audited view-as / act-as sessions | **No** (staff can see their own) |
 | `platform_audit_log` | Append-only staff audit | **No** |
 | `audit_events` | Org audit shown to client admins; staff masked to "Agency team" | admins of the org |
@@ -342,7 +342,7 @@ then confirms. Index every `org_id`.
 - **View-as (read-only)**: staff picks an org, enters a reason (≥ 10 chars, optional ticket ref) → server inserts
   `platform_access_grants(mode='view', expires_at = now()+60 min)` and `platform_audit_log('admin.view_as.start')`.
   The admin's **own** Supabase session then passes RLS for that org via `admin_can_view(org_id)`, and nothing else does. The UI shows a
-  persistent amber banner "Viewing <Org> as ASO Engine staff — read-only — ends 14:32".
+  persistent amber banner "Viewing <Org> as GEO Engine staff — read-only — ends 14:32".
 - **Act-as (write)**: same flow with `mode='act'`, max 30 min, requires a second confirmation. Writes are stamped with the
   real staff uid in `platform_audit_log`. Client-visible `*_by` columns get `NULL` (rendered "Agency team"), via the
   backend's existing `client_visible_actor()` trigger.

@@ -84,7 +84,7 @@ export default function FeaturesPage() {
         <p className="text-xs font-semibold tracking-wide text-accent-ink uppercase">Features</p>
         <h1 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight text-ink md:text-4xl">Everything it takes to win the answer.</h1>
         <p className="mt-4 max-w-2xl text-md leading-relaxed text-ink-2">
-          ASO Engine watches the AI engines your buyers use, shows you why they choose who they choose, and gives you the work list to change it.
+          GEO Engine watches the AI engines your buyers use, shows you why they choose who they choose, and gives you the work list to change it.
         </p>
       </section>
 

@@ -23,8 +23,8 @@ export const test: Tester = async (ctx) => {
       detail: !a.data?.ok ? `auth.test: ${a.data?.error ?? a.status}` : lacking.length ? `missing ${lacking.join(', ')}` : `workspace ${a.data.team}` });
     lacking.forEach((s) => missing.push(`Slack scope ${s}`));
     if (a.data?.ok && channel) {
-      const p = await safeJson<{ ok: boolean; error?: string }>('https://slack.com/api/chat.postMessage', { integration: 'slack', method: 'POST', headers: h, body: JSON.stringify({ channel, text: 'ASO Engine is connected.' }) });
-      checks.push({ id: 'chat_post', label: 'Test message delivered', ok: !!p.data?.ok, detail: p.data?.ok ? `posted to #${channel}` : p.data?.error === 'not_in_channel' ? 'Invite @ASO Engine to the channel' : (p.data?.error ?? `HTTP ${p.status}`) });
+      const p = await safeJson<{ ok: boolean; error?: string }>('https://slack.com/api/chat.postMessage', { integration: 'slack', method: 'POST', headers: h, body: JSON.stringify({ channel, text: 'GEO Engine is connected.' }) });
+      checks.push({ id: 'chat_post', label: 'Test message delivered', ok: !!p.data?.ok, detail: p.data?.ok ? `posted to #${channel}` : p.data?.error === 'not_in_channel' ? 'Invite @GEO Engine to the channel' : (p.data?.error ?? `HTTP ${p.status}`) });
     } else if (!channel) missing.push('slack_channel');
   } catch (e) {
     checks.push({ id: 'chat_auth', label: 'Bot installed with the right scopes', ok: false, detail: errDetail(e) });

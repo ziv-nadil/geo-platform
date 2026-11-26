@@ -7,7 +7,7 @@ const geist = Geist({ variable: "--font-geist", subsets: ["latin"], display: "sw
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: "ASO Engine", template: "%s · ASO Engine" },
+  title: { default: "GEO Engine", template: "%s · GEO Engine" },
   description: "See and grow how AI engines like ChatGPT, Perplexity, Gemini, Claude and Google AI Overviews talk about your brand.",
 };
 

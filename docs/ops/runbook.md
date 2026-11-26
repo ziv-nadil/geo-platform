@@ -1,6 +1,6 @@
-# ASO Engine: Runbook
+# GEO Engine: Runbook
 
-How to run ASO Engine locally on real infrastructure, and how production gets provisioned once
+How to run GEO Engine locally on real infrastructure, and how production gets provisioned once
 credentials exist. Security design: `docs/architecture/security.md`.
 
 ## Local development (no Docker, no mocks)
@@ -77,7 +77,7 @@ It exits with a clear message listing any missing required variable.
 
 ### 3. Infisical (security.md §1)
 
-1. Org "ASO Engine" on Infisical Cloud (upgrade to Pro before the first real client credential: audit logs).
+1. Org "GEO Engine" on Infisical Cloud (upgrade to Pro before the first real client credential: audit logs).
 2. Project `beacon-platform` (env `prod`, `preview`) for our own secrets, including `INTAKE_JWE_PRIVATE_JWK`.
 3. Three machine identities: `beacon-provisioner` (org role allowed to create projects), `beacon-app-writer`, `beacon-worker`.
    Preferred auth: **OIDC** with Vercel (issuer `https://oidc.vercel.com/<team>`, subject

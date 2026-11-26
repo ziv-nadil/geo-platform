@@ -1,4 +1,4 @@
-# ASO Engine: monthly cost model
+# GEO Engine: monthly cost model
 
 As of 2026-11-24. Owner: Finance/Ops agent. Source of truth for budgets and upgrade decisions.
 

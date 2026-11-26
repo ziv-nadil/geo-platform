@@ -82,7 +82,7 @@ export async function createSlackBot(orgId: string): Promise<Result<{ installUrl
   if (tok.status === "not_configured") return { ok: false, error: `Not configured: ${tok.missing.join(", ")}.` };
   if (tok.status !== "ok") return { ok: false, error: "Add the Slack app configuration token in the onboarding Slack step first. It expires after 12 hours, so generate a fresh one." };
   const [org] = await withService((sql) => sql`select o.name, o.infisical_project_id, p.display_name from public.organizations o left join public.brand_profiles p on p.org_id = o.id where o.id = ${orgId}`);
-  const app = await createSlackApp(tok.value, appUrl, ((org?.display_name as string | null) || (org?.name as string)) ?? "ASO Engine");
+  const app = await createSlackApp(tok.value, appUrl, ((org?.display_name as string | null) || (org?.name as string)) ?? "GEO Engine");
   if (!app.ok) return { ok: false, error: `Slack refused the manifest: ${app.error}. The token may have expired.` };
   const target = resolveSecretTarget("chat", "slack_signing_secret", {});
   if ("error" in target || !org?.infisical_project_id) return { ok: false, error: "Could not store the signing secret (vault not provisioned)." };
