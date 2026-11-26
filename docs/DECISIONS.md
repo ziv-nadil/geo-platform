@@ -28,3 +28,4 @@
 | 2026-11-26 | User content domain | Free vercel.app subdomain for now (rename to ASO Engine name). | Revisit before launch |
 | 2026-11-26 | Accounts and branding (relayed by lead session, not asked by me) | No Explorium company accounts or branding; everything uses the owner's personal accounts (Claude is the only exception). Drop Explorium-branded options. Agency email, GitHub user, AWS principal and Google Ads MCC ID are the owner's personal/agency ones. | Applies to all account setup |
 | 2026-11-26 | GitHub skip confirmed (lead) | Git is used only to deliver content as a draft PR for Git-hosted blogs; non-Git CMS delivers via CMS API, so auto-skip is safe. | Closes the condition on the GitHub-skip decision |
+| 2026-11-26 | Platform name (correction, relayed by lead) | Final name is "GEO Engine", NOT "ASO Engine". Already renamed in code. Supersedes the earlier "ASO Engine" row. | Use "GEO Engine" everywhere |
