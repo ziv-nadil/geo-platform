@@ -22,3 +22,7 @@
 | 2026-11-26 | Google Indexing API | Drop the API. Use sitemap plus a browser agent that opens GSC and clicks "Request indexing" for each new blog URL. | Remove Indexing API from step 9; add browser-agent indexing task. Needs a GSC UI login/session, which counts as a "last resort" stored login: lead to design |
 | 2026-11-26 | Bing role | Administrator = Owner-equivalent. | Confirm UI path with a real login later |
 | 2026-11-26 | Platform name | "ASO Engine" (replaces Beacon GEO). Real agency email NOT given yet. | Rename across app/docs; still need agency email, GitHub user, AWS principal, Google Ads MCC ID |
+| 2026-11-26 | Agency email | Not decided yet. | Wizard can't go live without it; keep placeholder |
+| 2026-11-26 | Agency GitHub login / Google Ads MCC ID | Owner asked "why do we need it?" Explanation: GitHub login = account clients invite as collaborator on blog repo (needed only for Git CMS clients); MCC ID + developer token = access to Google Keyword Planner via Ads API (only for keyword data). Both only matter for those specific steps. Still unanswered. | Make both optional/deferred; ask again when a client needs them |
+| 2026-11-26 | AWS principal | Create the AWS account when the first client needs it. | AWS step deferred/blocked until then |
+| 2026-11-26 | User content domain | Free vercel.app subdomain for now (rename to ASO Engine name). | Revisit before launch |
