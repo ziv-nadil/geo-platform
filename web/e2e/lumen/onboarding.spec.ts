@@ -71,7 +71,7 @@ test.describe("onboarding wizard (Lumen owner, org in onboarding)", () => {
     await expect(page.getByText("Email of the user you created for us")).toHaveCount(0);
     await radios.nth(1).click(); // domain user
     await expect(page.getByText("Email of the user you created for us").first()).toBeVisible();
-    await expect(page.getByText("Password", { exact: true })).toBeVisible();
+    await expect(page.getByText("Password (last resort only)", { exact: true })).toBeVisible();
     await radios.nth(0).click(); // restore
     await expect(page.getByText("Email of the user you created for us")).toHaveCount(0);
   });
