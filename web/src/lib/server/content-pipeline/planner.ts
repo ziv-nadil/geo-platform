@@ -52,7 +52,7 @@ export async function planContent(sql: TxSql, orgId: string, opts: { limit?: num
     personas: ctx.personas, already_published_or_planned_titles: existing,
     gaps: gaps.map((g) => ({ gap_id: g.id, label: g.label, funnel: g.funnel, score: Number(g.score), sample_prompts: g.sample_prompts, competitors_ai_recommends: (g.competitors as { name: string; mentions: number }[]).slice(0, 5), sources_ai_cites: (g.top_domains as { domain: string; citations: number }[]).slice(0, 6) })),
   });
-  const r: LlmJson = await claudeJson({ system, user, schema: SUGGEST_SCHEMA as unknown as Record<string, unknown>, maxTokens: 6000, effort: 'low' });
+  const r: LlmJson = await claudeJson({ system, user, schema: SUGGEST_SCHEMA as unknown as Record<string, unknown>, maxTokens: 6000, effort: 'low', provenance: [{ orgId, source: 'content_gaps' }, { orgId: ctx.brand.orgId, source: 'brand_context' }] });
   if (r.status === 'not_configured') return { status: 'not_configured', suggestions: 0, gaps: gaps.length, missing: r.missing, suggestionIds: [] };
   if (r.status === 'error') return { status: 'error', suggestions: 0, gaps: gaps.length, message: r.message, suggestionIds: [] };
   const valid = new Map(gaps.map((g) => [g.id as string, g]));

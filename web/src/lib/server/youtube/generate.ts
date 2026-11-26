@@ -43,7 +43,7 @@ export async function generateVideoPlan(o: { article: ArticleDoc; blogUrl: strin
   const brand = o.ctx.brand.name;
   const say = o.ctx.brand.say.length ? `Say: ${o.ctx.brand.say.slice(0, 15).join('; ')}` : '';
   const dont = o.ctx.brand.dontSay.length ? `Never say: ${o.ctx.brand.dontSay.slice(0, 15).map((d) => d.term).join('; ')}` : '';
-  const r = await claudeJson({ system: videoSystemPrompt(brand, o.persona), user: [`Brand: ${brand}`, say, dont, '', digest(o.article)].filter(Boolean).join('\n'), schema: SCHEMA as unknown as Record<string, unknown>, maxTokens: 6000, effort: 'medium' });
+  const r = await claudeJson({ system: videoSystemPrompt(brand, o.persona), user: [`Brand: ${brand}`, say, dont, '', digest(o.article)].filter(Boolean).join('\n'), schema: SCHEMA as unknown as Record<string, unknown>, maxTokens: 6000, effort: 'medium', provenance: [{ orgId: o.ctx.brand.orgId, source: 'brand_context+article' }] });
   if (r.status !== 'ok') return r;
   const d = r.data as Record<string, unknown>;
   const script0 = parseScript(d.script, o.article.charts.map((c) => c.id));

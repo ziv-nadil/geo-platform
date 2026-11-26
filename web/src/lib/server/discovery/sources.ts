@@ -1,6 +1,7 @@
 import 'server-only';
 import Anthropic from '@anthropic-ai/sdk';
 import { allowlistedFetch } from '../../engines/http';
+import { guardPrompt } from '../isolation/job-context';
 import { gscEligible, type Candidate } from '../../discovery/engine';
 import { safeJson } from '../net/safe-fetch';
 import { agencyGoogleToken, bearer } from '../integrations/google';
@@ -73,6 +74,7 @@ export async function fromPaa(seeds: string[]): Promise<SourceOutcome> {
 
 /** Matrix of ICP company profile x persona x funnel stage, generated with Haiku from the brand book. */
 export async function fromLlm(brand: BrandContext, personas: { name: string; role: string | null; pains: string[] }[], topics: string[]): Promise<SourceOutcome> {
+  guardPrompt([{ orgId: brand.orgId, source: 'brand_context' }]);
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) return nc('llm', ['ANTHROPIC_API_KEY']);
   const stages = ['awareness', 'consideration', 'decision'] as const;

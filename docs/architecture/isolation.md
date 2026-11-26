@@ -1,6 +1,7 @@
 # GEO Engine: Per-Client Isolation Design
 
-Status: **proposal, design only** (2026-11-25). Owner requirement: **hard per-client separation**. Each client's agents
+Status: **approved 2026-11-26 (launch A + D); launch plan implemented in code, not yet live** (no Infisical Pro or GitHub
+tokens yet; every path returns `not_configured` without them). See §7 for implementation status. Design dated 2026-11-25.
 (content, social pulse, YouTube, monitoring) may reach only that client's credentials and data, even if an agent is
 compromised or prompt-injected.
 Builds on [`security.md`](./security.md) §1.2–1.6 and §5, and on [`../ops/costs.md`](../ops/costs.md).
@@ -276,3 +277,41 @@ which has read on every client project, and logs to `secret_access_log`.
 | Shared LLM provider account | All clients use our API keys | Provenance checks, per-org sessions, zero-data-retention where offered. Keys are never in prompts. |
 | Audit gap on Pro (30 d) | Plan limit | Nightly export. C removes this. |
 | Vendor facts tagged S | Prices and plan gates not fully confirmed | Re-check at purchase: Infisical identity cap, GitHub environment features on Team, AWS rates |
+
+---
+
+## 7. Implementation status (2026-11-26)
+
+Launch plan **A + D** is in code. Nothing is live: no Infisical Pro, no GitHub admin/dispatch tokens. Every new path
+returns `not_configured` without its env. Scale plan **C** (AWS) is designed only (§2 C, §5 Phase 4).
+
+| Item | Where | Status |
+|---|---|---|
+| Migration flag `ISOLATION_MODE=per_client\|shared` (default `per_client` when `VERCEL_ENV=production`; unknown values fail closed to `per_client`) | `web/src/lib/server/isolation/mode.ts` | Done |
+| Pure provisioning plan: `reader-<slug>` (org role `no-access`), OIDC auth bound to the exact `sub` + `environment` claim, TTL 600 s, `viewer` on **only** that project, app-writer membership, legacy worker only in `shared` | `isolation/plan.ts` | Done, tested |
+| Provisioner executes the plan on org creation, stores `reader_identity_id`, `runner_environment`, `runner_oidc_subject` (ids only) | `infisical.ts` `provisionVault` / `provisionReaderIdentity`, `POST /api/admin/orgs`, migration `20261126000200_per_client_isolation.sql` | Done (needs `INFISICAL_ORG_ID`) |
+| GitHub environment `client-<slug>` (branch `main` only; vars `ORG_ID`, `ORG_SLUG`, `INFISICAL_IDENTITY_ID`; no secrets); OIDC `sub` prefix read from the repo | `isolation/github-env.ts`; org creation; `scripts/github-environments.ts` (backfill, `--dry-run`) | Done, tested with a fake GitHub |
+| Per-client runner: workflow `client-job.yml` (`environment: client-${org_slug}`, `id-token: write`), entry `web/scripts/client-job.ts`, `jobs/runner.ts` (env vars must match dispatch input and DB row) | `.github/workflows/client-job.yml`, `web/src/lib/server/jobs/` | Done, not run live |
+| Vault session: GitHub OIDC (audience `infisical`) → login as `reader-<slug>`; self-check of the token's `environment` claim | `isolation/vault-session.ts` | Done |
+| Broker: job session → per-client identity; `assertJobOrg` on every read; `shared` → legacy worker; `per_client` outside a job → **no secret reads** (`not_configured`). `secret_access_log.runner_sub` recorded | `secrets/broker.ts` | Done, tested |
+| Cron routes content, social-pulse, youtube, monitoring (crawlers): `per_client` = select due orgs and dispatch one run per org (needs `GITHUB_DISPATCH_TOKEN`); `shared` = same per-org functions inline | `jobs/cron.ts`, `jobs/types.ts`, `app/api/cron/*` | Done |
+| One job = one org: immutable `JobContext` (AsyncLocalStorage), no nesting, `assertJobOrg` | `isolation/job-context.ts` | Done, tested |
+| LLM context separation: `guardPrompt` provenance check (throws on mixed orgs anywhere; inside a job on another org's or untagged material) wired into `claudeJson`, social-pulse analysis, content-gaps listicle, discovery | `isolation/job-context.ts` + call sites | Done, tested |
+
+**Known gaps / follow-ups (in order):**
+1. **Vercel request paths that still read client secrets** get `not_configured` in `per_client` mode: Slack interactions
+   (signing secret + bot token), Slack notifications, connection re-tests, YouTube OAuth token in interactive actions,
+   content-gaps publish. Each must become a dispatched runner job (or, for Slack request verification, a non-client
+   app-level secret). Until then run those orgs with `ISOLATION_MODE=shared` only in non-production.
+2. Runner DB access still uses the service-role key from the environment secrets (§5 step 7, job JWT + `job_worker`
+   RLS, not built). The vault boundary holds; the DB boundary is enforced in code (`assertJobOrg`, per-org queries) only.
+3. The 5-minute `worker` cron (prompt runs) stays on Vercel: it uses platform engine keys, never client secrets.
+   The `monitoring` client job also drains that org's queue (`processBatch({ orgId })`; `skip locked` makes both safe).
+4. App-writer write-only privilege still applied by hand (unchanged).
+5. Phase 3 (delete `beacon-worker`, CI check that `sdkAs('worker')` is gone), nightly reconciliation (§3.4), Infisical
+   audit export: not started.
+6. Scale (C + D, AWS Secrets Manager per-client IAM roles): designed, not built. Swap `VaultSession` only.
+
+**Cost gate.** Infisical **Pro is required before the first real client credential** (Free caps at 5 identities and has
+no audit log). Launch cost ≈ $230/mo at 5 clients (§4). Runbook: `docs/ops/runbook.md` §3.
+

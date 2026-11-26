@@ -73,7 +73,7 @@ export async function runPulseForOrg(orgId: string, opts: { force?: boolean } = 
   await withService((sql) => sql`insert into public.social_pulse_settings (org_id, last_run_on) values (${orgId}, current_date) on conflict (org_id) do update set last_run_on = current_date`);
   if (items.length === 0) return { status: 'ok', insights: 0, items: 0, costUsd, notes: [...notes, 'No new discussions in the last 24 hours.'] };
 
-  const a = await analyzeSocial({ brand: inp.brand, keywords: inp.queries, prompts: inp.prompts, competitors: inp.competitors, items });
+  const a = await analyzeSocial({ orgId, brand: inp.brand, keywords: inp.queries, prompts: inp.prompts, competitors: inp.competitors, items });
   if (a.status === 'not_configured') return { status: 'not_configured', message: 'Set ANTHROPIC_API_KEY.', missing: a.missing };
   if (a.status === 'error') return { status: 'error', message: a.message };
   await withService(async (sql) => {

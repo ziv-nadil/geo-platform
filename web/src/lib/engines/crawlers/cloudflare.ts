@@ -85,7 +85,7 @@ export interface CrawlerOrgReport {
 
 export async function pollCloudflare(
   sql: Sql,
-  opts: { now?: Date; broker?: SecretBroker; fetchImpl?: typeof fetch; jobId?: string } = {},
+  opts: { now?: Date; broker?: SecretBroker; fetchImpl?: typeof fetch; jobId?: string; orgId?: string } = {},
 ): Promise<CrawlerOrgReport[]> {
   const now = opts.now ?? new Date();
   const broker = opts.broker ?? getSecretBroker();
@@ -95,7 +95,8 @@ export async function pollCloudflare(
     from public.secret_refs r
     join public.organizations o on o.id = r.org_id and o.status in ('active', 'onboarding')
     left join public.onboarding_progress op on op.org_id = r.org_id and op.step_id = r.step_id
-    where r.step_id in ${sql(STEP_IDS)} and r.field_id = 'cf_api_token'`;
+    where r.step_id in ${sql(STEP_IDS)} and r.field_id = 'cf_api_token'
+      ${opts.orgId ? sql`and r.org_id = ${opts.orgId}` : sql``}`;
 
   const reports: CrawlerOrgReport[] = [];
   for (const o of orgs) {

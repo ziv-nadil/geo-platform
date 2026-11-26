@@ -1,6 +1,7 @@
 import 'server-only';
 import Anthropic from '@anthropic-ai/sdk';
 import { allowlistedFetch } from '../../engines/http';
+import { guardPrompt, type PromptBlock } from '../isolation/job-context';
 
 export const CONTENT_MODEL = 'claude-sonnet-5-5';
 
@@ -10,7 +11,9 @@ export type LlmJson =
   | { status: 'error'; message: string };
 
 /** One structured-output call. Server-side fallback is opted in; a refusal chain surfaces as an error. */
-export async function claudeJson(o: { system: string; user: string; schema: Record<string, unknown>; maxTokens?: number; effort?: 'low' | 'medium' | 'high' }): Promise<LlmJson> {
+export async function claudeJson(o: { system: string; user: string; schema: Record<string, unknown>; maxTokens?: number; effort?: 'low' | 'medium' | 'high'; provenance?: PromptBlock[] }): Promise<LlmJson> {
+  // One job = one org: throws on cross-org or untagged client material inside a job (isolation.md §3.2).
+  guardPrompt(o.provenance ?? []);
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) return { status: 'not_configured', missing: ['ANTHROPIC_API_KEY'] };
   try {

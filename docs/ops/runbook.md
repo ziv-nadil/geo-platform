@@ -75,18 +75,52 @@ It does, in order:
 4. `vercel deploy --prod`.
 It exits with a clear message listing any missing required variable.
 
-### 3. Infisical (security.md §1)
+### 3. Infisical (security.md §1) and per-client isolation (architecture/isolation.md)
 
-1. Org "GEO Engine" on Infisical Cloud (upgrade to Pro before the first real client credential: audit logs).
+**Cost gate: Infisical Pro is required before the first real client credential is stored** (owner decision 2026-11-26,
+DECISIONS.md). Free allows 5 identities in total; per-client isolation needs one reader identity per client
+(~$23/identity/mo monthly billing, ~$20 annual). Do not store a real client credential on Free.
+
+1. Org "GEO Engine" on Infisical Cloud, **Pro**. Note the org id → `INFISICAL_ORG_ID`.
 2. Project `beacon-platform` (env `prod`, `preview`) for our own secrets, including `INTAKE_JWE_PRIVATE_JWK`.
-3. Three machine identities: `beacon-provisioner` (org role allowed to create projects), `beacon-app-writer`, `beacon-worker`.
+3. Vercel-side machine identities (only these two in production): `beacon-provisioner` (org permission to create
+   projects **and identities**; token TTL 300 s, alert on every use) and `beacon-app-writer` (write-only intake).
    Preferred auth: **OIDC** with Vercel (issuer `https://oidc.vercel.com/<team>`, subject
    `owner:<team>:project:beacon-geo:environment:production`). Set `INFISICAL_<ROLE>_IDENTITY_ID`.
    Fallback: Universal Auth, set `INFISICAL_<ROLE>_CLIENT_ID` + `INFISICAL_<ROLE>_CLIENT_SECRET`.
    Also set `INFISICAL_<ROLE>_MACHINE_IDENTITY_ID` (used to add identities to client projects / self-removal).
-4. Per client, `POST /api/admin/orgs` creates the project `beacon-<slug>`, its folders, adds the writer
-   and worker, and removes the provisioner. The write-only **additional privilege** for app-writer is
-   applied by hand until verified on our plan (the response lists it as a pending step).
+   `beacon-worker` (shared reader) exists only for `ISOLATION_MODE=shared` (dev / migration week); see step 9.
+4. Vercel env: `ISOLATION_MODE=per_client` (the default when `VERCEL_ENV=production`), `GITHUB_REPOSITORY=<owner>/geo-platform`,
+   `GITHUB_DISPATCH_TOKEN` (fine-grained, this repo only, **Actions: write**), `GITHUB_ADMIN_TOKEN` (fine-grained, this repo
+   only, **Administration + Environments + Variables: write**; used only by org creation), optional
+   `GITHUB_OIDC_SUB_PREFIX` (otherwise read from `GET /repos/{owner}/{repo}/actions/oidc/customization/sub`; repos created
+   after 2026-07-15 use an id-based prefix), optional `INFISICAL_CLIENT_READER_PROJECT_ROLE` (default `viewer`; must be read-only).
+   Every one of these is optional for the app to boot: without them the features report `not_configured`.
+5. GitHub: org on **Team** (environments in a private repo). Protect `main` (required review; CODEOWNERS on
+   `.github/workflows/**`, `web/src/lib/server/secrets/**`, `web/src/lib/server/isolation/**`, `web/src/lib/server/jobs/**`).
+6. **Per client, on org creation** (`POST /api/admin/orgs`), the provisioner, in order:
+   1. creates project `beacon-<slug>` (env `prod` only) and its folders;
+   2. creates identity `reader-<slug>` (org role `no-access`);
+   3. attaches **OIDC auth** to it: issuer `https://token.actions.githubusercontent.com`, audience `infisical`,
+      subject exactly `<prefix>:environment:client-<slug>`, claim `environment=client-<slug>`, TTL 600 s;
+   4. adds `reader-<slug>` to `beacon-<slug>` **only**, role `viewer` (read-only); adds `beacon-app-writer` (`no-access`
+      plus the write-only privilege, still applied by hand: the response lists it as pending);
+   5. removes itself from the project;
+   6. creates GitHub environment `client-<slug>` (deployment branch `main` only; vars `ORG_ID`, `ORG_SLUG`,
+      `INFISICAL_IDENTITY_ID`; **no secrets**);
+   7. stores `organizations.infisical_project_id`, `reader_identity_id`, `runner_environment`, `runner_oidc_subject` (ids only).
+   The response shows every step (`vault.steps`, `github.steps`). Any `ok: false` step: fix and re-run step 7 below.
+7. **Environments backfill / repair** (idempotent):
+   `GITHUB_ADMIN_TOKEN=… GITHUB_REPOSITORY=… DATABASE_URL=… node --experimental-strip-types scripts/github-environments.ts [--dry-run] [--slug acme]`.
+   It prints `not_configured` without the token. Orgs that predate isolation also need steps 6.2–6.4 (identity) once;
+   run them by re-creating the reader through the provisioner (`provisionReaderIdentity`) and then this script.
+8. **Per client environment secrets** (Settings → Environments → `client-<slug>`): only platform keys the job needs
+   (`DATABASE_URL`, `SUPABASE_SECRET_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `ANTHROPIC_API_KEY`, `APIFY_TOKEN`). **Never** a
+   client credential: those are read at runtime from that client's vault project via OIDC. Optional var `INFISICAL_SITE_URL`.
+9. **Cut-over** (isolation.md §5 Phase 3): after a week side by side, remove `beacon-worker` from every client project
+   and delete it. From then on no Vercel runtime can read a client secret value.
+10. Verify per client: Actions → `client-job` → Run workflow (`org_slug`, `job_type=monitoring`). The run must use
+    environment `client-<slug>`; `secret_access_log.runner_sub` must equal `organizations.runner_oidc_subject`.
 
 ### 4. Intake key
 

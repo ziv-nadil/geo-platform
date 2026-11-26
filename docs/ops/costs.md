@@ -1,5 +1,11 @@
 # GEO Engine: monthly cost model
 
+> **Update 2026-11-26 (owner decision, DECISIONS.md; design in ../architecture/isolation.md):** the per-client isolation
+> launch plan replaces the "stay on Free / fixed shared identity set" decision below. **Infisical Pro is required before
+> the first real client credential is stored.** Launch needs one reader identity per client plus app-writer, provisioner
+> and humans (≈ $207/mo at 5 clients, monthly billing), plus GitHub Team for per-client environments. Beyond ~10 clients
+> move to AWS Secrets Manager with one IAM role per client (designed, not built).
+
 As of 2026-11-24. Owner: Finance/Ops agent. Source of truth for budgets and upgrade decisions.
 
 **Verification status.** The official pricing pages (infisical.com, vercel.com, supabase.com, stripe.com, dataforseo.com, docs.perplexity.ai, openai.com, ai.google.dev) did not resolve from this session, so every third-party price below comes from search snippets and third-party teardowns. Each row carries a confidence tag: **V** = consistent across several sources, **S** = single or conflicting secondary source, **A** = assumption. Re-check each **S** row against the official page before committing budget.

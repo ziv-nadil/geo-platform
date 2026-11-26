@@ -3,6 +3,9 @@ import { InfisicalSDK } from '@infisical/sdk';
 import { getVercelOidcToken } from '@vercel/oidc';
 import { optionalEnv, notConfigured, type NotConfigured } from './env';
 import { safeJson } from './net/safe-fetch';
+import { clientEnvironmentName, defaultSubPrefix, githubAdminConfig, readSubPrefix } from './isolation/github-env';
+import { isolationMode, type IsolationMode } from './isolation/mode';
+import { buildProvisionPlan } from './isolation/plan';
 
 /**
  * Infisical access for GEO Engine (docs/architecture/security.md §1).
@@ -11,7 +14,9 @@ import { safeJson } from './net/safe-fetch';
  * Three machine identities, each used for one job only:
  *   provisioner  creates client projects (POST /api/admin/orgs)
  *   app-writer   write-only: upserts secrets from the intake route
- *   worker       read-only: used ONLY by ./secrets/broker.ts (connection tests, jobs)
+ *   worker       LEGACY shared reader, used only when ISOLATION_MODE=shared (./isolation/mode.ts)
+ *   reader-<slug> one per client: read-only on that client's project only, OIDC-bound to the GitHub environment
+ *                client-<slug>; used only inside the per-client runner (isolation.md)
  *
  * Login: OIDC with the Vercel OIDC token (preferred, no static secret), else Universal Auth.
  * Env per identity (ROLE = PROVISIONER | APP_WRITER | WORKER):
@@ -68,8 +73,7 @@ const tokenCache = new Map<InfisicalRole, Cached>();
 async function login(role: InfisicalRole): Promise<Cached> {
   const p = `INFISICAL_${ROLE_ENV[role]}`;
   const identityId = optionalEnv(`${p}_IDENTITY_ID`);
-  const host = siteHost();
-  const extraHosts = [host];
+  const extraHosts = [siteHost()];
 
   if (identityId) {
     let jwt: string | undefined;
@@ -78,17 +82,7 @@ async function login(role: InfisicalRole): Promise<Cached> {
     } catch {
       jwt = undefined;
     }
-    if (jwt) {
-      const res = await safeJson<{ accessToken: string; expiresIn: number }>(`${siteUrl()}/api/v1/auth/oidc-auth/login`, {
-        integration: 'infisical',
-        extraHosts,
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ identityId, jwt }),
-      });
-      if (!res.ok || !res.data?.accessToken) throw new InfisicalError('login_failed', `OIDC login failed (${res.status})`);
-      return { token: res.data.accessToken, expiresAt: Date.now() + res.data.expiresIn * 1000 };
-    }
+    if (jwt) return oidcLogin(identityId, jwt);
     // No OIDC token (local dev / non-Vercel): fall through to Universal Auth if configured.
   }
 
@@ -121,6 +115,28 @@ export async function getAccessToken(role: InfisicalRole): Promise<string> {
   return fresh.token;
 }
 
+/** OIDC login for any identity with a caller-supplied JWT (the per-client runner passes its GitHub OIDC token). */
+export async function oidcLogin(identityId: string, jwt: string): Promise<Cached> {
+  const res = await safeJson<{ accessToken: string; expiresIn: number }>(`${siteUrl()}/api/v1/auth/oidc-auth/login`, {
+    integration: 'infisical',
+    extraHosts: [siteHost()],
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ identityId, jwt }),
+  });
+  if (!res.ok || !res.data?.accessToken) throw new InfisicalError('login_failed', `OIDC login failed (${res.status})`);
+  return { token: res.data.accessToken, expiresAt: Date.now() + res.data.expiresIn * 1000 };
+}
+
+export function infisicalSiteUrl(): string {
+  return siteUrl();
+}
+
+/** SDK client for an already-obtained access token (per-client VaultSession). */
+export function sdkWithToken(token: string): InfisicalSDK {
+  return new InfisicalSDK({ siteUrl: siteUrl() }).auth().accessToken(token);
+}
+
 /** SDK client authenticated as `role`. */
 export async function sdkAs(role: InfisicalRole): Promise<InfisicalSDK> {
   const token = await getAccessToken(role);
@@ -144,9 +160,9 @@ export async function infisicalRest<T>(role: InfisicalRole, method: string, path
 // ---------------------------------------------------------------------------
 export type ProvisionStep = { step: string; ok: boolean; detail?: string };
 
-export async function provisionVault(org: { id: string; slug: string }): Promise<
+export async function provisionVault(org: { id: string; slug: string }, opts: { mode?: IsolationMode } = {}): Promise<
   | NotConfigured
-  | { status: 'ok' | 'partial'; projectId: string; steps: ProvisionStep[] }
+  | { status: 'ok' | 'partial'; projectId: string; steps: ProvisionStep[]; isolation: IsolationRecord }
   | { status: 'failed'; steps: ProvisionStep[] }
 > {
   const cfg = infisicalConfigured('provisioner');
@@ -199,20 +215,9 @@ export async function provisionVault(org: { id: string; slug: string }): Promise
     steps.push({ step: 'folders.create', ok: false, detail: errMsg(e) });
   }
 
-  // 5-6. add app-writer and worker with least privilege (role slugs configurable; see ISSUES)
-  for (const [role, envName, roleSlug] of [
-    ['app-writer', 'INFISICAL_APP_WRITER_MACHINE_IDENTITY_ID', optionalEnv('INFISICAL_APP_WRITER_PROJECT_ROLE') ?? 'no-access'],
-    ['worker', 'INFISICAL_WORKER_MACHINE_IDENTITY_ID', optionalEnv('INFISICAL_WORKER_PROJECT_ROLE') ?? 'viewer'],
-  ] as const) {
-    const identityId = optionalEnv(envName) ?? optionalEnv(`INFISICAL_${ROLE_ENV[role]}_IDENTITY_ID`);
-    if (!identityId) {
-      steps.push({ step: `identity.add:${role}`, ok: false, detail: `${envName} not set` });
-      continue;
-    }
-    const res = await infisicalRest('provisioner', 'POST',
-      `/api/v2/workspace/${encodeURIComponent(projectId)}/identity-memberships/${encodeURIComponent(identityId)}`, { role: roleSlug });
-    steps.push({ step: `identity.add:${role}`, ok: res.ok, detail: res.ok ? `role=${roleSlug}` : `HTTP ${res.status}` });
-  }
+  // 5-6. per-client reader identity (OIDC, bound to client-<slug>) + app-writer; legacy worker only in shared mode.
+  const iso = await provisionReaderIdentity(org, projectId, opts);
+  steps.push(...iso.steps);
   // The write-only "additional privilege" for app-writer is plan-dependent (security.md D3) and is
   // applied by a human until verified on our plan; recorded as a pending step.
   steps.push({ step: 'privilege.app-writer.write-only', ok: false, detail: 'manual: apply additional privilege (create/edit/describeSecret) in Infisical' });
@@ -227,7 +232,77 @@ export async function provisionVault(org: { id: string; slug: string }): Promise
     steps.push({ step: 'identity.remove:provisioner', ok: false, detail: 'INFISICAL_PROVISIONER_MACHINE_IDENTITY_ID not set' });
   }
 
-  return { status: steps.every((s) => s.ok) ? 'ok' : 'partial', projectId, steps };
+  return { status: steps.every((s) => s.ok) ? 'ok' : 'partial', projectId, steps, isolation: iso.isolation };
+}
+
+export type IsolationRecord = { readerIdentityId: string | null; environment: string; boundSubject: string | null; mode: IsolationMode };
+
+/** Sub prefix: explicit env, else the repo's customization endpoint (admin token), else `repo:<GITHUB_REPOSITORY>`. */
+export async function resolveSubPrefix(): Promise<string | null> {
+  const explicit = optionalEnv('GITHUB_OIDC_SUB_PREFIX');
+  if (explicit) return explicit;
+  const gh = githubAdminConfig();
+  if (!('status' in gh)) {
+    try { return await readSubPrefix(gh); } catch { /* fall through */ }
+  }
+  const repo = optionalEnv('GITHUB_REPOSITORY');
+  return repo ? defaultSubPrefix(repo) : null;
+}
+
+/**
+ * Executes the identity part of buildProvisionPlan (isolation.md §5 step 4) as beacon-provisioner. Idempotent when
+ * opts.existingReaderIdentityId is passed (backfill). Stores nothing itself; the caller persists `isolation`.
+ */
+export async function provisionReaderIdentity(
+  org: { id: string; slug: string },
+  projectId: string,
+  opts: { existingReaderIdentityId?: string | null; mode?: IsolationMode } = {},
+): Promise<{ steps: ProvisionStep[]; isolation: IsolationRecord }> {
+  const mode = opts.mode ?? isolationMode();
+  const steps: ProvisionStep[] = [];
+  const environment = clientEnvironmentName(org.slug);
+  const subPrefix = await resolveSubPrefix();
+  if (!subPrefix) {
+    steps.push({ step: 'reader.plan', ok: false, detail: 'GITHUB_REPOSITORY or GITHUB_OIDC_SUB_PREFIX not set' });
+    return { steps, isolation: { readerIdentityId: opts.existingReaderIdentityId ?? null, environment, boundSubject: null, mode } };
+  }
+  const plan = buildProvisionPlan({
+    orgId: org.id, slug: org.slug, projectId, subPrefix, mode,
+    readerRole: optionalEnv('INFISICAL_CLIENT_READER_PROJECT_ROLE'),
+    appWriterRole: optionalEnv('INFISICAL_APP_WRITER_PROJECT_ROLE'),
+    workerRole: optionalEnv('INFISICAL_WORKER_PROJECT_ROLE'),
+    existingReaderIdentityId: opts.existingReaderIdentityId,
+  });
+  let readerId = opts.existingReaderIdentityId ?? null;
+
+  for (const st of plan.steps) {
+    if (st.kind === 'identity.create') {
+      const orgIdInf = optionalEnv('INFISICAL_ORG_ID');
+      if (!orgIdInf) { steps.push({ step: 'reader.create', ok: false, detail: 'INFISICAL_ORG_ID not set' }); break; }
+      const r = await infisicalRest<{ identity?: { id: string } }>('provisioner', 'POST', '/api/v1/identities', { name: st.name, organizationId: orgIdInf, role: st.orgRole });
+      readerId = r.ok ? r.data?.identity?.id ?? null : null;
+      steps.push({ step: 'reader.create', ok: !!readerId, detail: readerId ? st.name : `HTTP ${r.status}` });
+      if (!readerId) break;
+    } else if (st.kind === 'identity.oidc-auth') {
+      const { kind: _k, ...body } = st;
+      void _k;
+      let r = await infisicalRest('provisioner', 'POST', `/api/v1/auth/oidc-auth/identities/${encodeURIComponent(readerId!)}`, body);
+      if (!r.ok && (r.status === 400 || r.status === 409)) r = await infisicalRest('provisioner', 'PATCH', `/api/v1/auth/oidc-auth/identities/${encodeURIComponent(readerId!)}`, body);
+      steps.push({ step: 'reader.oidc-auth', ok: r.ok, detail: r.ok ? `sub=${st.boundSubject}` : `HTTP ${r.status}` });
+    } else if (st.kind === 'project.membership') {
+      const identityId = st.identity === 'reader' ? readerId
+        : st.identity === 'app-writer' ? optionalEnv('INFISICAL_APP_WRITER_MACHINE_IDENTITY_ID') ?? optionalEnv('INFISICAL_APP_WRITER_IDENTITY_ID')
+        : optionalEnv('INFISICAL_WORKER_MACHINE_IDENTITY_ID') ?? optionalEnv('INFISICAL_WORKER_IDENTITY_ID');
+      const label = st.identity === 'reader' ? 'reader' : st.identity;
+      if (!identityId) { steps.push({ step: `identity.add:${label}`, ok: false, detail: 'identity id not set' }); continue; }
+      const r = await infisicalRest('provisioner', 'POST',
+        `/api/v2/workspace/${encodeURIComponent(st.projectId)}/identity-memberships/${encodeURIComponent(identityId)}`, { role: st.role });
+      const ok = r.ok || r.status === 409;
+      steps.push({ step: `identity.add:${label}`, ok, detail: ok ? `role=${st.role}` : `HTTP ${r.status}` });
+    }
+    // github.environment is executed by the caller (ensureClientEnvironment) once readerId is known.
+  }
+  return { steps, isolation: { readerIdentityId: readerId, environment, boundSubject: plan.boundSubject, mode } };
 }
 
 // ---------------------------------------------------------------------------

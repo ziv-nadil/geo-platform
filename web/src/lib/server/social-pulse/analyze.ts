@@ -1,6 +1,7 @@
 import 'server-only';
 import Anthropic from '@anthropic-ai/sdk';
 import { allowlistedFetch } from '../../engines/http';
+import { guardPrompt } from '../isolation/job-context';
 import { ANALYSIS_MODEL, type Platform } from './config';
 import type { SocialItem } from './normalize';
 
@@ -11,7 +12,7 @@ export interface Insight {
   sources: { platform: Platform; url: string; title: string }[];
   titles: { title: string; rationale: string; prompt: string | null }[];
 }
-export interface AnalysisInput { brand: string; keywords: string[]; prompts: string[]; competitors: string[]; items: SocialItem[] }
+export interface AnalysisInput { /** provenance tag for the one-org guard */ orgId?: string; brand: string; keywords: string[]; prompts: string[]; competitors: string[]; items: SocialItem[] }
 
 export const INSIGHTS_SCHEMA = {
   type: 'object', additionalProperties: false, required: ['insights'],
@@ -74,6 +75,7 @@ export function parseInsights(raw: unknown, items: SocialItem[], prompts: string
 export type AnalysisResult = { status: 'ok'; insights: Insight[]; usage: { input: number; output: number } } | { status: 'not_configured'; missing: string[] } | { status: 'error'; message: string };
 
 export async function analyzeSocial(i: AnalysisInput): Promise<AnalysisResult> {
+  guardPrompt([{ orgId: i.orgId, source: 'social_pulse' }]);
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) return { status: 'not_configured', missing: ['ANTHROPIC_API_KEY'] };
   if (i.items.length === 0) return { status: 'ok', insights: [], usage: { input: 0, output: 0 } };

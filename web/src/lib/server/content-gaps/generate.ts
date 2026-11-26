@@ -1,4 +1,5 @@
 import 'server-only';
+import { guardPrompt } from '../isolation/job-context';
 import Anthropic from '@anthropic-ai/sdk';
 import { allowlistedFetch } from '../../engines/http';
 import { buildJsonLd } from '../../content-gaps/jsonld';
@@ -8,6 +9,8 @@ import type { TxSql } from '../db';
 export const LISTICLE_MODEL = 'claude-sonnet-5-5';
 
 export interface BrandContext {
+  /** Provenance tag for the LLM one-org guard (isolation/job-context.ts guardPrompt). */
+  orgId?: string;
   name: string; domain: string | null; description: string | null; tagline: string | null;
   say: string[]; dontSay: { term: string; replacement: string | null }[];
   messaging: { kind: string; title: string | null; content: string }[]; // pillars, claims (claimed numbers), proof points
@@ -23,6 +26,7 @@ export async function loadBrandContext(sql: TxSql, orgId: string): Promise<Brand
   const messaging = await sql`select kind::text as kind, title, content from public.brand_messaging where org_id = ${orgId} and kind in ('pillar','claim','proof_point','faq') order by sort_order`;
   const comps = await sql`select name, domain from public.competitors where org_id = ${orgId} and active order by name`;
   return {
+    orgId,
     name: (p?.display_name as string) || (org?.name as string) || 'The brand', domain: (org?.website as string | null) ?? null,
     description: (p?.description as string | null) ?? null, tagline: (p?.tagline as string | null) ?? null,
     say: voice.filter((v) => v.kind === 'use').map((v) => v.term as string),
@@ -56,6 +60,7 @@ export type GenerateResult =
   | { status: 'error'; message: string };
 
 export async function generateListicle(gap: GapInput, brand: BrandContext): Promise<GenerateResult> {
+  guardPrompt([{ orgId: brand.orgId, source: 'brand_context' }]);
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) return { status: 'not_configured', missing: ['ANTHROPIC_API_KEY'] };
   const { system, user } = buildPrompt(gap, brand);

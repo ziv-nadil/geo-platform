@@ -50,15 +50,17 @@ const POLL_FIRST_MS = 5 * 60_000;
 const POLL_AGAIN_MS = 3 * 60_000;
 const ASYNC_GIVE_UP_MS = 24 * 3600_000;
 
-export async function claimRuns(sql: Sql, limit: number): Promise<ClaimedRun[]> {
+export async function claimRuns(sql: Sql, limit: number, orgId?: string): Promise<ClaimedRun[]> {
+  const orgFilter = orgId ? sql`and org_id = ${orgId}` : sql``;
   await sql`
     update public.prompt_runs set status = 'queued', next_attempt_at = now()
     where status = 'running' and external_job_id is null and started_at < now() - ${`${STALE_MINUTES} minutes`}::interval`;
   return sql<ClaimedRun[]>`
     with due as (
       select id from public.prompt_runs
-      where (status = 'queued' and (next_attempt_at is null or next_attempt_at <= now()))
-         or (status = 'running' and external_job_id is not null and next_attempt_at <= now())
+      where ((status = 'queued' and (next_attempt_at is null or next_attempt_at <= now()))
+         or (status = 'running' and external_job_id is not null and next_attempt_at <= now()))
+      ${orgFilter}
       order by (trigger = 'manual') desc, coalesce(next_attempt_at, run_at)
       limit ${limit}
       for update skip locked
@@ -83,14 +85,14 @@ async function runWithLimit<T>(items: readonly T[], limit: number, fn: (t: T) =>
 
 export async function processBatch(
   sql: Sql,
-  opts: { limit?: number; deadlineMs?: number } & WorkerDeps = {},
+  opts: { limit?: number; deadlineMs?: number; orgId?: string } & WorkerDeps = {},
 ): Promise<WorkerReport> {
   const getAdapter = opts.getAdapter ?? defaultGetAdapter;
   const pickJudge = opts.pickJudge ?? defaultPickJudge;
   const deadline = Date.now() + (opts.deadlineMs ?? 240_000);
   const report: WorkerReport = { claimed: 0, succeeded: 0, failed: 0, requeued: 0, skipped: 0, submitted: 0, pending: 0, costUsd: 0, errors: [] };
 
-  const runs = await claimRuns(sql, opts.limit ?? 20);
+  const runs = await claimRuns(sql, opts.limit ?? 20, opts.orgId);
   report.claimed = runs.length;
   const orgCache = new Map<string, Promise<OrgContext>>();
   const budgetCache = new Map<string, Promise<boolean>>();

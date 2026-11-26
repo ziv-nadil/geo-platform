@@ -1,0 +1,73 @@
+# Per-client job runner (docs/architecture/isolation.md, launch design A + D).
+#
+# One run = one job = one org. The job declares `environment: client-<slug>`, so its GitHub OIDC token has
+#   sub = <repo sub prefix>:environment:client-<slug>
+# and the ONLY Infisical identity that accepts that subject is reader-<slug>, which is read-only on that client's
+# project. A compromised or prompt-injected job can therefore read only this client's secrets.
+#
+# Dispatched per org by the app's cron routes (ISOLATION_MODE=per_client) via POST .../actions/workflows/client-job.yml/dispatches.
+# Environment vars (set by provisioning / scripts/github-environments.ts): ORG_ID, ORG_SLUG, INFISICAL_IDENTITY_ID.
+# Environment secrets (per environment, app-level platform keys only, never client credentials): DATABASE_URL,
+#   SUPABASE_SECRET_KEY, NEXT_PUBLIC_SUPABASE_URL, ANTHROPIC_API_KEY, APIFY_TOKEN, ...
+# Deployment branch policy on every client environment: main only.
+name: client-job
+
+on:
+  workflow_dispatch:
+    inputs:
+      org_slug:
+        description: "Org slug (must equal the environment's ORG_SLUG var)"
+        required: true
+        type: string
+      job_type:
+        description: "Job type"
+        required: true
+        type: choice
+        options: [content, social-pulse, youtube, monitoring]
+      job_id:
+        description: "Job id (from the dispatcher)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: client-job-${{ inputs.org_slug }}-${{ inputs.job_type }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: client-${{ inputs.org_slug }}
+    permissions:
+      contents: read
+      id-token: write   # GitHub OIDC -> this client's Infisical identity; no static vault secrets exist
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: pnpm/action-setup@v4
+        with: { package_json_file: web/package.json }
+      - name: Install
+        working-directory: web
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Run job
+        working-directory: web
+        env:
+          ISOLATION_MODE: per_client
+          ORG_ID: ${{ vars.ORG_ID }}
+          ORG_SLUG: ${{ vars.ORG_SLUG }}
+          INFISICAL_IDENTITY_ID: ${{ vars.INFISICAL_IDENTITY_ID }}
+          INFISICAL_SITE_URL: ${{ vars.INFISICAL_SITE_URL }}
+          INPUT_ORG_SLUG: ${{ inputs.org_slug }}
+          JOB_TYPE: ${{ inputs.job_type }}
+          JOB_ID: ${{ inputs.job_id }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: npx -y tsx@4.19.2 --conditions=react-server scripts/client-job.ts

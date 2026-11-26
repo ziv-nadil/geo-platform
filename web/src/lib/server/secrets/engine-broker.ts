@@ -1,13 +1,12 @@
 import 'server-only';
 import { registerSecretBroker, type SecretBroker } from '@/lib/engines';
 import { handle } from '@/lib/engines/crawlers/broker';
-import { infisicalConfigured } from '../infisical';
-import { readSecret } from './broker';
+import { readSecret, secretReadsAvailable } from './broker';
 
 /** Adapts the backend vault broker (readSecret) to the engines' SecretBroker seam. Called from instrumentation.ts. */
 export const backendBroker: SecretBroker = {
   get configured() {
-    return 'ok' in infisicalConfigured('worker');
+    return secretReadsAvailable();
   },
   async get(ctx, ref) {
     const out = await readSecret({ orgId: ctx.orgId, purpose: ctx.purpose === 'crawler_poll' ? 'job' : 'connection_test', jobId: undefined, worker: 'beacon-crawler' }, ref);

@@ -29,6 +29,6 @@ export async function writeBrief(o: { title: string; promptText: string; targetW
     competing_pages: o.research.sources.filter((x) => x.structure).map((x) => ({ url: x.url, kind: x.kind, rank: x.rank, ai_citations: x.citations, words: x.structure!.words, h2: x.structure!.h2, tables: x.structure!.tables, faq: x.structure!.faq, stats: x.structure!.stats, schema: x.structure!.schemaTypes, age_days: x.structure!.ageDays, headings: x.structure!.headings.slice(0, 10) })),
     research_notes: o.research.notes,
   });
-  const r = await claudeJson({ system, user, schema: BRIEF_SCHEMA as unknown as Record<string, unknown>, maxTokens: 6000, effort: 'medium' });
+  const r = await claudeJson({ system, user, schema: BRIEF_SCHEMA as unknown as Record<string, unknown>, maxTokens: 6000, effort: 'medium', provenance: [{ orgId: o.ctx.brand.orgId, source: 'brand_context+research' }] });
   return r.status === 'ok' ? ({ status: 'ok', brief: r.data as Brief } as const) : r;
 }

@@ -37,7 +37,7 @@ export async function writeArticle(o: { title: string; promptText: string; targe
   let feedback = '';
   let best: ArticleDoc | null = null;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const r = await claudeJson({ system, user: JSON.stringify(feedback ? { ...base, revision_note: feedback } : base), schema: ARTICLE_SCHEMA as unknown as Record<string, unknown>, maxTokens: Math.min(30_000, Math.round(o.targetWords * 4 + 4000)), effort: 'medium' });
+    const r = await claudeJson({ system, user: JSON.stringify(feedback ? { ...base, revision_note: feedback } : base), schema: ARTICLE_SCHEMA as unknown as Record<string, unknown>, maxTokens: Math.min(30_000, Math.round(o.targetWords * 4 + 4000)), effort: 'medium', provenance: [{ orgId: o.ctx.brand.orgId, source: 'brand_context+brief+research' }] });
     if (r.status !== 'ok') return best ? finish(best, usage) : r;
     usage.input += r.usage.input; usage.output += r.usage.output;
     const doc = parseArticle(r.data);
