@@ -79,7 +79,7 @@ export function SocialPulseView({ orgId, role, data }: { orgId: string; role: st
       </Card>
 
       <Card>
-        <CardHeader title="Settings" description={`Sources: ${data.actors.map((a) => `${a.label} (${a.id})`).join(", ")}. Public data only; Beacon never logs in to social accounts.`} />
+        <CardHeader title="Settings" description={`Sources: ${data.actors.map((a) => `${a.label} (${a.id})`).join(", ")}. Public data only; ASO Engine never logs in to social accounts.`} />
         <CardBody className="grid gap-4 sm:grid-cols-3">
           <label className="flex items-center gap-2 text-sm sm:col-span-3"><input type="checkbox" checked={f.enabled} disabled={!isAdmin} onChange={(e) => setF({ ...f, enabled: e.target.checked })} /> Run daily</label>
           <fieldset className="flex gap-4 text-sm sm:col-span-3" disabled={!isAdmin}>

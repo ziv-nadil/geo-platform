@@ -1,5 +1,6 @@
 "use server";
 
+import { notifyPublished } from "@/lib/server/indexing";
 import { revalidatePath } from "next/cache";
 import { requireOrgAccess, type OrgRole } from "@/lib/server/auth";
 import { withRls } from "@/lib/server/db";
@@ -105,6 +106,7 @@ export async function publishToClientSite(orgId: string, itemId: string, target:
     await withRls(a.claims, (sql) => sql`
       update public.content_items set status = 'published', cms_platform = ${r.platform}, cms_post_id = ${r.postId}, cms_post_url = ${r.postUrl}, published_url = ${r.postUrl}, publish_error = null
       where id = ${itemId} and org_id = ${orgId}`);
+    await notifyPublished(orgId, r.postUrl);
     done(); return { ok: true, data: { url: r.postUrl } };
   } catch (e) { return dbErr(e); }
 }

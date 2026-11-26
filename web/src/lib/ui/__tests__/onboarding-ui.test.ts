@@ -51,7 +51,7 @@ describe("placeholders and variant labels (B4)", () => {
     expect(variantSelector(gsc)).toBeUndefined();
     expect(variantLabel(gsc, undefined, "agency_email")).toBe("Add our agency email as Owner");
     const access = ONBOARDING_STEPS.find((s) => s.id === "access_method")!;
-    expect(variantLabel(access, variantSelector(access), "domain_user")).toBe("Create a user for us in our domain");
+    expect(variantLabel(access, variantSelector(access), "domain_user")).toBe("You create a dedicated email for us in your domain");
     expect(variantLabel(gsc, undefined, "some_key")).toBe("Some key");
   });
 });

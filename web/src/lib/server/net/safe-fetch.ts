@@ -22,16 +22,16 @@ export type Integration =
 
 const ALLOW: Record<Integration, (string | RegExp)[]> = {
   scrape: [/.*/], // any public host, never with credentials
-  infisical: ['app.infisical.com', 'eu.infisical.com'],
+  infisical: ['app.infisical.com'],
   supabase: [/^[a-z0-9]+\.supabase\.co$/],
   stripe: ['api.stripe.com'],
   github: ['api.github.com'],
   google: [
     'oauth2.googleapis.com', 'www.googleapis.com', 'searchconsole.googleapis.com',
     'analyticsadmin.googleapis.com', 'analyticsdata.googleapis.com', 'serviceusage.googleapis.com',
-    'indexing.googleapis.com', 'pagespeedonline.googleapis.com', 'googleads.googleapis.com', 'youtube.googleapis.com',
+    'pagespeedonline.googleapis.com', 'googleads.googleapis.com', 'youtube.googleapis.com',
   ],
-  bing: ['ssl.bing.com'],
+  bing: ['ssl.bing.com', 'api.indexnow.org'],
   cloudflare: ['api.cloudflare.com'],
   slack: ['slack.com'],
   apify: ['api.apify.com'],

@@ -30,7 +30,7 @@ export type Target = 'auto' | 'cms' | 'github';
 export async function publishDraft(orgId: string, doc: ListicleDoc, target: Target = 'auto'): Promise<PublishResult> {
   const data = await stepData(orgId);
   const cmsPlatform = str(data.cms?.cms_platform);
-  const cmsUsable = !!cmsPlatform && !['other', 'framer'].includes(cmsPlatform);
+  const cmsUsable = !!cmsPlatform && !['other', 'framer', 'git'].includes(cmsPlatform);
   const ghUsable = !!str(data.github?.github_repo);
   const pick = target === 'cms' ? (cmsUsable ? 'cms' : null) : target === 'github' ? (ghUsable ? 'github' : null) : cmsUsable ? 'cms' : ghUsable ? 'github' : null;
   if (!pick) return { status: 'not_configured', missing: ['A connected CMS (WordPress, Ghost, Sanity, Webflow) or GitHub blog repo: finish the CMS or GitHub step in onboarding'] };
@@ -138,7 +138,7 @@ async function toGithub(orgId: string, d: Record<string, unknown>, doc: Listicle
   if (!put.ok) return fail(`Could not commit the file (HTTP ${put.status})`);
   const pr = await safeJson<{ html_url?: string; number?: number }>(`${api}/pulls`, {
     integration: 'github', method: 'POST', headers,
-    body: JSON.stringify({ title: `Draft: ${doc.title}`, head: branch, base, draft: true, body: 'Draft listicle prepared by Beacon GEO. Review, edit and merge to publish. Nothing goes live until you merge.' }),
+    body: JSON.stringify({ title: `Draft: ${doc.title}`, head: branch, base, draft: true, body: 'Draft listicle prepared by ASO Engine. Review, edit and merge to publish. Nothing goes live until you merge.' }),
   });
   if (!pr.ok || !pr.data?.html_url) return fail(`Branch pushed but the pull request failed (HTTP ${pr.status})`);
   return { status: 'ok', platform: 'github', postId: String(pr.data.number), postUrl: pr.data.html_url };
@@ -155,7 +155,7 @@ const fileName = (slug: string, im: ArticleImage) => `${slug}-${im.id}.${im.mime
 export async function publishArticleDraft(orgId: string, doc: ArticleDoc, images: ArticleImage[], brandName: string, target: Target = 'auto'): Promise<PublishResult> {
   const data = await stepData(orgId);
   const cmsPlatform = str(data.cms?.cms_platform);
-  const cmsUsable = !!cmsPlatform && !['other', 'framer'].includes(cmsPlatform);
+  const cmsUsable = !!cmsPlatform && !['other', 'framer', 'git'].includes(cmsPlatform);
   const ghUsable = !!str(data.github?.github_repo);
   const pick = target === 'cms' ? (cmsUsable ? 'cms' : null) : target === 'github' ? (ghUsable ? 'github' : null) : cmsUsable ? 'cms' : ghUsable ? 'github' : null;
   if (!pick) return { status: 'not_configured', missing: ['A connected CMS (WordPress, Ghost, Sanity, Webflow) or GitHub blog repo: finish the CMS or GitHub step in onboarding'] };
@@ -290,7 +290,7 @@ async function articleToGithub(orgId: string, d: Record<string, unknown>, doc: A
   const front = ['---', `title: ${JSON.stringify(doc.title)}`, `description: ${JSON.stringify(doc.metaDescription)}`, `slug: ${doc.slug}`, `date: ${new Date().toISOString().slice(0, 10)}`, ...(assets.hero ? [`image: ${JSON.stringify(assets.hero.url)}`, `imageAlt: ${JSON.stringify(assets.hero.alt)}`] : []), 'draft: true', '---', ''].join('\n');
   const md = renderArticleMarkdown(doc, noHero(assets)) + '\n' + jsonLdScript(buildArticleJsonLd(doc, { publisher: brandName, author: brandName }) as never) + '\n';
   await commit(`${dir}/${doc.slug}.md`, Buffer.from(front + md), `Add draft: ${doc.title}`);
-  const pr = await safeJson<{ html_url?: string; number?: number }>(`${api}/pulls`, { integration: 'github', method: 'POST', headers, body: JSON.stringify({ title: `Draft: ${doc.title}`, head: branch, base, draft: true, body: 'Draft article prepared by Beacon GEO, with images. Review, edit and merge to publish. Nothing goes live until you merge.' }) });
+  const pr = await safeJson<{ html_url?: string; number?: number }>(`${api}/pulls`, { integration: 'github', method: 'POST', headers, body: JSON.stringify({ title: `Draft: ${doc.title}`, head: branch, base, draft: true, body: 'Draft article prepared by ASO Engine, with images. Review, edit and merge to publish. Nothing goes live until you merge.' }) });
   if (!pr.ok || !pr.data?.html_url) return fail(`Branch pushed but the pull request failed (HTTP ${pr.status})`);
   return { status: 'ok', platform: 'github', postId: String(pr.data.number), postUrl: pr.data.html_url };
 }

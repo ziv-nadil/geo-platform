@@ -1,6 +1,6 @@
-# Beacon GEO: Runbook
+# ASO Engine: Runbook
 
-How to run Beacon GEO locally on real infrastructure, and how production gets provisioned once
+How to run ASO Engine locally on real infrastructure, and how production gets provisioned once
 credentials exist. Security design: `docs/architecture/security.md`.
 
 ## Local development (no Docker, no mocks)
@@ -53,7 +53,7 @@ Add each value in the cloud environment settings (never paste in chat):
 | `INFISICAL_*` | see step 3 |
 | `INTAKE_JWE_PRIVATE_JWK` | step 4 |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Stripe > Developers (webhook endpoint `https://<app>/api/stripe/webhook`; events `checkout.session.completed`, `customer.subscription.*`) |
-| `DNS_VERIFY_SECRET`, `AWS_EXTERNAL_ID_SECRET` | `openssl rand -hex 32` each; never rotate casually (they derive per-client TXT values and ExternalIds) |
+| `DNS_VERIFY_SECRET`, `AWS_EXTERNAL_ID_SECRET`, `INDEXNOW_SECRET` (derives per-client IndexNow keys) | `openssl rand -hex 32` each; never rotate casually (they derive per-client TXT values and ExternalIds) |
 | Agency identities (optional per integration) | `GOOGLE_CLIENT_ID/SECRET` + `AGENCY_GOOGLE_REFRESH_TOKEN` + `AGENCY_GOOGLE_EMAIL`, `AGENCY_EMAIL`, `AGENCY_GITHUB_TOKEN`, `AGENCY_BING_API_KEY`, `AWS_ACCESS_KEY_ID/SECRET_ACCESS_KEY` (our principal for AssumeRole), `GOOGLE_ADS_DEVELOPER_TOKEN`/`GOOGLE_ADS_LOGIN_CUSTOMER_ID`/`GOOGLE_ADS_API_VERSION` |
 
 In the Supabase project, create the new-style API keys (Project Settings > API Keys: publishable +
@@ -77,7 +77,7 @@ It exits with a clear message listing any missing required variable.
 
 ### 3. Infisical (security.md §1)
 
-1. Org "Beacon GEO" on Infisical Cloud (upgrade to Pro before the first real client credential: audit logs).
+1. Org "ASO Engine" on Infisical Cloud (upgrade to Pro before the first real client credential: audit logs).
 2. Project `beacon-platform` (env `prod`, `preview`) for our own secrets, including `INTAKE_JWE_PRIVATE_JWK`.
 3. Three machine identities: `beacon-provisioner` (org role allowed to create projects), `beacon-app-writer`, `beacon-worker`.
    Preferred auth: **OIDC** with Vercel (issuer `https://oidc.vercel.com/<team>`, subject

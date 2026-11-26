@@ -129,8 +129,16 @@ export function applicableTests(step: OnboardingStep, values: StepValues): TestD
   }));
 }
 
+/** Git is only used for draft-PR delivery: the GitHub step is skipped automatically unless the chosen CMS is Git-based. */
+export function autoSkipReason(step: OnboardingStep, st: WizardState): string | null {
+  if (step.id !== "github") return null;
+  const cms = st.values.cms?.cms_platform;
+  if (typeof cms === "string" && cms !== "" && cms !== "git") return "Your CMS is not Git-based, so we do not need a repository. Skipped automatically.";
+  return null;
+}
+
 export function stepStatus(step: OnboardingStep, st: WizardState): StepStatus {
-  if (st.skipped[step.id]) return "skipped";
+  if (st.skipped[step.id] || autoSkipReason(step, st)) return "skipped";
   const computed = computedStatus(step, st);
   const server = st.serverStatus?.[step.id];
   if (server && server !== "idle" && (computed === "idle" || computed === "pending")) return server;

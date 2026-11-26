@@ -1,12 +1,12 @@
 /**
- * Beacon GEO — client onboarding wizard config (consumed by the UI).
+ * ASO Engine — client onboarding wizard config (consumed by the UI).
  * Human-readable twin: docs/product/onboarding-spec.md (generated from this file).
  *
  * Conventions for the UI:
  * - Instruction text may contain these placeholders; substitute them per client before rendering:
  *     {{AGENCY_EMAIL}}          our dedicated agency Google/Microsoft identity (placeholder geo-ops@<yourdomain>)
  *     {{AGENCY_GITHUB_USER}}    our GitHub bot/user login
- *     {{SERVICE_ACCOUNT_EMAIL}} the per-client Google service account (created in step 9)
+ *     {{SERVICE_ACCOUNT_EMAIL}} the per-client Google service account (created in the Google Cloud step)
  *     {{DNS_TXT_NAME}} / {{DNS_TXT_VALUE}}  per-client DNS verification record
  *     {{AWS_PRINCIPAL_ARN}} / {{AWS_EXTERNAL_ID}}  our AWS principal and the per-client ExternalId
  *     {{ADS_MANAGER_ID}}        our Google Ads manager (MCC) customer ID
@@ -224,17 +224,17 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     short: 'Access method',
     icon: 'KeyRound',
     group: 'access',
-    why: 'Most tools below let you add a person. You choose whether we are added as a guest using our agency email (simplest, fully revocable, nothing for you to store) or whether you create a dedicated user in your own domain.',
+    why: 'Most tools below let you add a person. You choose how we get in: (a) we are added as a guest using our dedicated agency email (simplest, fully revocable), or (b) you create a dedicated email/user for us in your own domain. We never use or ask for access through any personal account. Stored logins are a last resort, used only for a tool that has no OAuth or API option.',
     fields: [
       {
         id: 'access_method', label: 'Access method', type: 'radio', required: true,
         options: [
-          { value: 'agency_email', label: 'Grant access to our agency email (recommended)' },
-          { value: 'domain_user', label: 'Create a user for us in our domain' },
+          { value: 'agency_email', label: 'Add our dedicated agency email (recommended)' },
+          { value: 'domain_user', label: 'You create a dedicated email for us in your domain' },
         ],
       },
-      { id: 'domain_user_email', label: 'Email of the user you created for us', type: 'email', required: true, placeholder: 'beacon@acme.com', showIf: { field: 'access_method', equals: 'domain_user' } },
-      { id: 'domain_user_password', label: 'Password', type: 'secret', required: true, help: 'Stored encrypted in our vault, visible to no one at the agency except the automated workers.', showIf: { field: 'access_method', equals: 'domain_user' } },
+      { id: 'domain_user_email', label: 'Email of the user you created for us', type: 'email', required: true, placeholder: 'asoengine@acme.com', showIf: { field: 'access_method', equals: 'domain_user' } },
+      { id: 'domain_user_password', label: 'Password (last resort only)', type: 'secret', help: 'Leave empty unless a tool has no OAuth or API option and can only be reached by logging in. Stored encrypted in our vault, visible to no one at the agency except the automated workers.', showIf: { field: 'access_method', equals: 'domain_user' } },
       { id: 'domain_user_totp', label: 'Two-factor (TOTP) secret key, if enabled', type: 'secret', help: 'The text key shown under the QR code when you set up an authenticator app. Not the 6-digit code.', showIf: { field: 'access_method', equals: 'domain_user' } },
     ],
     instructions: [
@@ -250,13 +250,13 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
       },
       {
         variant: 'domain_user',
-        title: 'Option B: create a user in your domain',
+        title: 'Option B: create a dedicated email for us',
         steps: [
-          'Ask your IT admin to create one dedicated user, e.g. beacon@yourcompany.com (Google Workspace Admin Console > Directory > Users > Add new user, or Microsoft 365 admin center > Users > Active users > Add a user).',
+          'Ask your IT admin to create one dedicated user, e.g. asoengine@yourcompany.com (Google Workspace Admin Console > Directory > Users > Add new user, or Microsoft 365 admin center > Users > Active users > Add a user).',
           'Give it a license that includes email so verification emails arrive. A shared mailbox is not enough for Google.',
           'Exclude the user from SSO redirects and conditional access that require a managed device, or we cannot log in from our servers.',
           'If two-factor is required, enroll an authenticator app and copy the text setup key (the text shown beside the QR code) into the TOTP field.',
-          'Enter the email and password in the secure fields. They go directly to our encrypted vault, not into this form record.',
+          'Enter the email above. Add a password (and TOTP key) only if a tool has no OAuth or API access and can only be reached by logging in; it goes directly to our encrypted vault, not into this form record. Never share a personal account.',
           'In each following step, grant that user the permissions shown, or assign it the same roles as your other admins.',
         ],
       },
@@ -267,6 +267,139 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     ],
   },
 
+  // 5 ----------------------------------------------------------------------
+  {
+    id: 'cms',
+    title: 'CMS (publishing)',
+    short: 'CMS',
+    icon: 'PenSquare',
+    group: 'stack',
+    why: 'We create articles as drafts inside your CMS so your team can review and publish. We never publish without your approval unless you enable auto-publish later.',
+    fields: [
+      {
+        id: 'cms_platform', label: 'Which CMS do you use?', type: 'select', required: true,
+        options: [
+          { value: 'wordpress', label: 'WordPress' }, { value: 'webflow', label: 'Webflow' }, { value: 'wix', label: 'Wix' },
+          { value: 'sanity', label: 'Sanity' }, { value: 'contentful', label: 'Contentful' }, { value: 'hubspot', label: 'HubSpot' },
+          { value: 'framer', label: 'Framer' }, { value: 'shopify', label: 'Shopify' }, { value: 'ghost', label: 'Ghost' }, { value: 'git', label: 'Git-based (Markdown/MDX in a repository)' }, { value: 'other', label: 'Other' },
+        ],
+      },
+      { id: 'cms_site_url', label: 'Site / admin URL', type: 'url', required: true, placeholder: 'https://www.acme.com', help: 'WordPress/Ghost: your site address. Shopify: your-store.myshopify.com. Others: your live site.' },
+      { id: 'cms_username', label: 'Username', type: 'text', placeholder: 'beacon', showIf: { field: 'cms_platform', equals: 'wordpress' }, help: 'The WordPress user that owns the Application Password.' },
+      { id: 'cms_project_id', label: 'Project / Space / Site ID', type: 'text', placeholder: 'abc123', showIf: { field: 'cms_platform', equals: ['webflow', 'wix', 'sanity', 'contentful', 'framer'] }, help: 'Webflow Site ID; Wix Site ID; Sanity Project ID; Contentful Space ID; Framer project ID.' },
+      { id: 'cms_dataset', label: 'Dataset / collection / environment', type: 'text', placeholder: 'production', showIf: { field: 'cms_platform', equals: ['sanity', 'contentful', 'webflow'] }, help: 'Sanity dataset; Contentful environment; Webflow blog collection ID.' },
+      { id: 'cms_api_credential', label: 'API token / key / application password', type: 'secret', required: true, help: 'What to paste depends on your CMS; see the instructions for your CMS.', showIf: { field: 'cms_platform', equals: ['wordpress', 'webflow', 'wix', 'sanity', 'contentful', 'hubspot', 'framer', 'shopify', 'ghost'] } },
+      { id: 'cms_other_notes', label: 'Tell us about your CMS', type: 'textarea', required: true, help: 'Name, whether it has a REST/GraphQL API, and how your team publishes today. We will reply within 1 business day with next steps.', showIf: { field: 'cms_platform', equals: 'other' } },
+    ],
+    instructions: [
+      {
+        variant: 'wordpress', title: 'WordPress',
+        steps: [
+          'Log in to wp-admin as an Administrator. Self-hosted WordPress 5.6+ or WordPress.com Business plan required (REST API and Application Passwords).',
+          'Users > Add New User. Username: beacon, Email: {{AGENCY_EMAIL}}, Role: Editor (can create and edit posts and media; cannot install plugins). Uncheck "Send the user an email" if you do not want us to receive one.',
+          'Open Users > All Users > beacon > Edit. Scroll to Application Passwords, type the name "ASO Engine", click Add Application Password, and copy the generated password (spaces are fine).',
+          'Enter the username and that application password in the form. The site must be served over HTTPS.',
+          'If a security plugin or host (Wordfence, Cloudflare WAF, WP Engine) blocks /wp-json/, ask your host to allow our IP range, which we will email you.',
+        ],
+        links: [{ label: 'WordPress: Application Passwords', href: 'https://make.wordpress.org/core/2020/11/05/application-passwords-integration-guide/' }],
+      },
+      {
+        variant: 'webflow', title: 'Webflow',
+        steps: [
+          'You need to be a Workspace Admin or Site Admin.',
+          'Open the Webflow Dashboard > the site > Site settings (gear) > Apps & integrations > scroll to API access > Generate API token.',
+          'Name it "ASO Engine". Select scopes: Sites = Read-only, CMS = Read and write, Pages = Read-only. Leave everything else off.',
+          'Generate and copy the token into the secure field.',
+          'Blog collection ID: Webflow Designer > CMS > Blog Posts collection > Collection settings > copy the ID (or enter the collection name and we will resolve it).',
+        ],
+        links: [{ label: 'Webflow Data API: site tokens', href: 'https://developers.webflow.com/data/docs/authentication' }],
+      },
+      {
+        variant: 'wix', title: 'Wix',
+        steps: [
+          'You must be the account owner or co-owner.',
+          'Wix account settings: manage.wix.com > profile menu > Account settings > API keys > Generate API Key (steps may show under "Headless" or "API keys manager" depending on your account).',
+          'Name: ASO Engine. Permissions: under Wix Blog choose Read and Manage Blog (posts and categories). Account-level scope = Access to the one site you choose.',
+          'Copy the key and your Site ID (the URL segment after /dashboard/ when you are inside the site dashboard).',
+          'This requires the Wix Blog app on the site. Tell us if your site has no Wix Blog.',
+        ],
+        links: [{ label: 'Wix API keys', href: 'https://dev.wix.com/docs/rest/articles/getting-started/api-keys' }],
+      },
+      {
+        variant: 'sanity', title: 'Sanity',
+        steps: [
+          'Open sanity.io/manage > select your project.',
+          'Go to API > Tokens > Add API token.',
+          'Name: ASO Engine. Permissions: Editor (create and edit, cannot change project settings). Viewer is "partial" (read only).',
+          'Copy the token once and paste it in the secure field. Enter the Project ID (shown on the project page) and the dataset (usually production).',
+          'Tell us your blog document type name (e.g. post) by reply; we map fields automatically if it has title, slug and body.',
+        ],
+        links: [{ label: 'Sanity: API tokens', href: 'https://www.sanity.io/docs/content-lake/http-auth' }],
+      },
+      {
+        variant: 'contentful', title: 'Contentful',
+        steps: [
+          'Open app.contentful.com > Settings (top bar) > CMA tokens > Create personal access token. Create it while logged in as a user with at least the Editor role on the space (Space Admin is not needed).',
+          'Name it "ASO Engine", copy the token. Personal tokens act as that user: prefer creating a dedicated user for us (Settings > Users > Invite {{AGENCY_EMAIL}} with the Editor role) and generating the token from that user, then enter it here.',
+          'Space ID: Settings > General settings. Environment: usually master.',
+        ],
+        links: [{ label: 'Contentful: CMA tokens', href: 'https://www.contentful.com/developers/docs/references/authentication/' }],
+      },
+      {
+        variant: 'hubspot', title: 'HubSpot',
+        steps: [
+          'You need Super Admin or the Marketplace/App permissions.',
+          'In HubSpot: Settings (gear) > Integrations > Private Apps > Create private app. (HubSpot may label this "Service keys" or direct you to developer projects on newer accounts. If so, use the same scopes.)',
+          'Name: ASO Engine. Scopes tab: content (Content: read and write blog posts and landing pages). Do not add CRM scopes.',
+          'Create the app, then copy the access token into the secure field.',
+          'Requires a Marketing Hub (or CMS Hub) subscription with the HubSpot blog enabled.',
+        ],
+        links: [{ label: 'HubSpot: private apps', href: 'https://developers.hubspot.com/docs/api/private-apps' }],
+      },
+      {
+        variant: 'framer', title: 'Framer',
+        steps: [
+          'Framer\'s publishing API is new and its UI changes often; confirm with us if a label below is missing.',
+          'Open your project > Site Settings (gear top right) > General (or Integrations) > API Keys > Create key. Name "ASO Engine". Scope: CMS read and write.',
+          'Copy the key into the secure field and enter the Framer project ID (the long ID in the project URL).',
+          'If you cannot see API Keys: invite {{AGENCY_EMAIL}} as an Editor (Project > Share > Invite) and tell us; we will use the CMS plugin flow and you publish manually.',
+        ],
+        links: [{ label: 'Framer Server API', href: 'https://www.framer.com/developers/' }],
+      },
+      {
+        variant: 'shopify', title: 'Shopify',
+        steps: [
+          'Log in as the store owner or staff with "Develop apps" permission.',
+          'Dev Dashboard route (Shopify now requires this for new custom apps): dev.shopify.com > Create app > Name "ASO Engine" > Configuration > Admin API access scopes: read_content, write_content (blog articles and pages). Install it on your store.',
+          'Legacy route if your store still shows it: Shopify admin > Settings > Apps and sales channels > Develop apps > Create an app > Configure Admin API scopes: read_content and write_content > Install app > Reveal token once.',
+          'Copy the Admin API access token (starts with shpat_) into the secure field. The site URL is your-store.myshopify.com.',
+        ],
+        links: [{ label: 'Shopify Admin API access scopes', href: 'https://shopify.dev/docs/api/usage/access-scopes' }],
+      },
+      {
+        variant: 'ghost', title: 'Ghost',
+        steps: [
+          'Log in to Ghost Admin as Owner or Administrator.',
+          'Settings (gear bottom left) > Advanced > Integrations > Add custom integration. Name: ASO Engine > Create.',
+          'Copy the Admin API key (format id:secret) into the secure field, and the API URL into the Site URL field.',
+          'The integration key can create and edit posts. It cannot access member data unless you add it.',
+        ],
+        links: [{ label: 'Ghost Admin API', href: 'https://ghost.org/docs/admin-api/' }],
+      },
+      {
+        variant: 'other', title: 'Other CMS',
+        steps: [
+          'Describe your CMS in the notes field. The fastest paths we support: (1) a REST/GraphQL API token with create and edit rights, (2) a Git-backed repository (use step 4), (3) a user seat with Editor role (use the access method from step 3) where a human-in-the-loop flow is acceptable.',
+          'Include links to the CMS API docs if you have them.',
+        ],
+      },
+    ],
+    tests: [
+      { id: 'cms_auth', label: 'Credential valid', description: 'Authenticated read on the CMS identity or site endpoint (WP GET /wp-json/wp/v2/users/me; Webflow GET /v2/sites; Wix POST /blog/v3/posts/query; Sanity GET /v2021-06-07/projects/{id}; Contentful GET /spaces/{id}; HubSpot GET /cms/v3/blogs/posts?limit=1; Shopify GET /admin/api/2025-10/blogs.json; Ghost GET /ghost/api/admin/site/). Failed: 401/403.', requires: ['cms_platform', 'cms_site_url'] },
+      { id: 'cms_draft_write', label: 'Can create a draft', description: 'Creates a draft titled "ASO Engine connection test", reads it back, then deletes it. Partial: read works but the draft create is denied (token is read-only, e.g. Sanity Viewer, WordPress Contributor, Webflow CMS read-only).', requires: ['cms_platform', 'cms_site_url'] },
+    ],
+  },
+
   // 4 ----------------------------------------------------------------------
   {
     id: 'github',
@@ -274,7 +407,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     short: 'GitHub',
     icon: 'GitBranch',
     group: 'stack',
-    why: 'If your blog or docs live in a Git repository (Markdown/MDX, Next.js, Astro, Hugo...), we open pull requests with new and updated articles. You review and merge; we never push to your main branch.',
+    why: 'Only needed when your CMS is Git-based (this step is skipped automatically for every other CMS). Git is used only to deliver draft pull requests. If your blog or docs live in a Git repository (Markdown/MDX, Next.js, Astro, Hugo...), we open pull requests with new and updated articles. You review and merge; we never push to your main branch.',
     fields: [
       { id: 'github_repo', label: 'Repository (owner/name)', type: 'text', required: true, placeholder: 'acme/website' },
       { id: 'github_branch', label: 'Default branch', type: 'text', placeholder: 'main' },
@@ -327,139 +460,6 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     ],
   },
 
-  // 5 ----------------------------------------------------------------------
-  {
-    id: 'cms',
-    title: 'CMS (publishing)',
-    short: 'CMS',
-    icon: 'PenSquare',
-    group: 'stack',
-    why: 'We create articles as drafts inside your CMS so your team can review and publish. We never publish without your approval unless you enable auto-publish later.',
-    fields: [
-      {
-        id: 'cms_platform', label: 'Which CMS do you use?', type: 'select', required: true,
-        options: [
-          { value: 'wordpress', label: 'WordPress' }, { value: 'webflow', label: 'Webflow' }, { value: 'wix', label: 'Wix' },
-          { value: 'sanity', label: 'Sanity' }, { value: 'contentful', label: 'Contentful' }, { value: 'hubspot', label: 'HubSpot' },
-          { value: 'framer', label: 'Framer' }, { value: 'shopify', label: 'Shopify' }, { value: 'ghost', label: 'Ghost' }, { value: 'other', label: 'Other' },
-        ],
-      },
-      { id: 'cms_site_url', label: 'Site / admin URL', type: 'url', required: true, placeholder: 'https://www.acme.com', help: 'WordPress/Ghost: your site address. Shopify: your-store.myshopify.com. Others: your live site.' },
-      { id: 'cms_username', label: 'Username', type: 'text', placeholder: 'beacon', showIf: { field: 'cms_platform', equals: 'wordpress' }, help: 'The WordPress user that owns the Application Password.' },
-      { id: 'cms_project_id', label: 'Project / Space / Site ID', type: 'text', placeholder: 'abc123', showIf: { field: 'cms_platform', equals: ['webflow', 'wix', 'sanity', 'contentful', 'framer'] }, help: 'Webflow Site ID; Wix Site ID; Sanity Project ID; Contentful Space ID; Framer project ID.' },
-      { id: 'cms_dataset', label: 'Dataset / collection / environment', type: 'text', placeholder: 'production', showIf: { field: 'cms_platform', equals: ['sanity', 'contentful', 'webflow'] }, help: 'Sanity dataset; Contentful environment; Webflow blog collection ID.' },
-      { id: 'cms_api_credential', label: 'API token / key / application password', type: 'secret', required: true, help: 'What to paste depends on your CMS; see the instructions for your CMS.', showIf: { field: 'cms_platform', equals: ['wordpress', 'webflow', 'wix', 'sanity', 'contentful', 'hubspot', 'framer', 'shopify', 'ghost'] } },
-      { id: 'cms_other_notes', label: 'Tell us about your CMS', type: 'textarea', required: true, help: 'Name, whether it has a REST/GraphQL API, and how your team publishes today. We will reply within 1 business day with next steps.', showIf: { field: 'cms_platform', equals: 'other' } },
-    ],
-    instructions: [
-      {
-        variant: 'wordpress', title: 'WordPress',
-        steps: [
-          'Log in to wp-admin as an Administrator. Self-hosted WordPress 5.6+ or WordPress.com Business plan required (REST API and Application Passwords).',
-          'Users > Add New User. Username: beacon, Email: {{AGENCY_EMAIL}}, Role: Editor (can create and edit posts and media; cannot install plugins). Uncheck "Send the user an email" if you do not want us to receive one.',
-          'Open Users > All Users > beacon > Edit. Scroll to Application Passwords, type the name "Beacon GEO", click Add Application Password, and copy the generated password (spaces are fine).',
-          'Enter the username and that application password in the form. The site must be served over HTTPS.',
-          'If a security plugin or host (Wordfence, Cloudflare WAF, WP Engine) blocks /wp-json/, ask your host to allow our IP range, which we will email you.',
-        ],
-        links: [{ label: 'WordPress: Application Passwords', href: 'https://make.wordpress.org/core/2020/11/05/application-passwords-integration-guide/' }],
-      },
-      {
-        variant: 'webflow', title: 'Webflow',
-        steps: [
-          'You need to be a Workspace Admin or Site Admin.',
-          'Open the Webflow Dashboard > the site > Site settings (gear) > Apps & integrations > scroll to API access > Generate API token.',
-          'Name it "Beacon GEO". Select scopes: Sites = Read-only, CMS = Read and write, Pages = Read-only. Leave everything else off.',
-          'Generate and copy the token into the secure field.',
-          'Blog collection ID: Webflow Designer > CMS > Blog Posts collection > Collection settings > copy the ID (or enter the collection name and we will resolve it).',
-        ],
-        links: [{ label: 'Webflow Data API: site tokens', href: 'https://developers.webflow.com/data/docs/authentication' }],
-      },
-      {
-        variant: 'wix', title: 'Wix',
-        steps: [
-          'You must be the account owner or co-owner.',
-          'Wix account settings: manage.wix.com > profile menu > Account settings > API keys > Generate API Key (steps may show under "Headless" or "API keys manager" depending on your account).',
-          'Name: Beacon GEO. Permissions: under Wix Blog choose Read and Manage Blog (posts and categories). Account-level scope = Access to the one site you choose.',
-          'Copy the key and your Site ID (the URL segment after /dashboard/ when you are inside the site dashboard).',
-          'This requires the Wix Blog app on the site. Tell us if your site has no Wix Blog.',
-        ],
-        links: [{ label: 'Wix API keys', href: 'https://dev.wix.com/docs/rest/articles/getting-started/api-keys' }],
-      },
-      {
-        variant: 'sanity', title: 'Sanity',
-        steps: [
-          'Open sanity.io/manage > select your project.',
-          'Go to API > Tokens > Add API token.',
-          'Name: Beacon GEO. Permissions: Editor (create and edit, cannot change project settings). Viewer is "partial" (read only).',
-          'Copy the token once and paste it in the secure field. Enter the Project ID (shown on the project page) and the dataset (usually production).',
-          'Tell us your blog document type name (e.g. post) by reply; we map fields automatically if it has title, slug and body.',
-        ],
-        links: [{ label: 'Sanity: API tokens', href: 'https://www.sanity.io/docs/content-lake/http-auth' }],
-      },
-      {
-        variant: 'contentful', title: 'Contentful',
-        steps: [
-          'Open app.contentful.com > Settings (top bar) > CMA tokens > Create personal access token. Create it while logged in as a user with at least the Editor role on the space (Space Admin is not needed).',
-          'Name it "Beacon GEO", copy the token. Personal tokens act as that user: prefer creating a dedicated user for us (Settings > Users > Invite {{AGENCY_EMAIL}} with the Editor role) and generating the token from that user, then enter it here.',
-          'Space ID: Settings > General settings. Environment: usually master.',
-        ],
-        links: [{ label: 'Contentful: CMA tokens', href: 'https://www.contentful.com/developers/docs/references/authentication/' }],
-      },
-      {
-        variant: 'hubspot', title: 'HubSpot',
-        steps: [
-          'You need Super Admin or the Marketplace/App permissions.',
-          'In HubSpot: Settings (gear) > Integrations > Private Apps > Create private app. (HubSpot may label this "Service keys" or direct you to developer projects on newer accounts. If so, use the same scopes.)',
-          'Name: Beacon GEO. Scopes tab: content (Content: read and write blog posts and landing pages). Do not add CRM scopes.',
-          'Create the app, then copy the access token into the secure field.',
-          'Requires a Marketing Hub (or CMS Hub) subscription with the HubSpot blog enabled.',
-        ],
-        links: [{ label: 'HubSpot: private apps', href: 'https://developers.hubspot.com/docs/api/private-apps' }],
-      },
-      {
-        variant: 'framer', title: 'Framer',
-        steps: [
-          'Framer\'s publishing API is new and its UI changes often; confirm with us if a label below is missing.',
-          'Open your project > Site Settings (gear top right) > General (or Integrations) > API Keys > Create key. Name "Beacon GEO". Scope: CMS read and write.',
-          'Copy the key into the secure field and enter the Framer project ID (the long ID in the project URL).',
-          'If you cannot see API Keys: invite {{AGENCY_EMAIL}} as an Editor (Project > Share > Invite) and tell us; we will use the CMS plugin flow and you publish manually.',
-        ],
-        links: [{ label: 'Framer Server API', href: 'https://www.framer.com/developers/' }],
-      },
-      {
-        variant: 'shopify', title: 'Shopify',
-        steps: [
-          'Log in as the store owner or staff with "Develop apps" permission.',
-          'Dev Dashboard route (Shopify now requires this for new custom apps): dev.shopify.com > Create app > Name "Beacon GEO" > Configuration > Admin API access scopes: read_content, write_content (blog articles and pages). Install it on your store.',
-          'Legacy route if your store still shows it: Shopify admin > Settings > Apps and sales channels > Develop apps > Create an app > Configure Admin API scopes: read_content and write_content > Install app > Reveal token once.',
-          'Copy the Admin API access token (starts with shpat_) into the secure field. The site URL is your-store.myshopify.com.',
-        ],
-        links: [{ label: 'Shopify Admin API access scopes', href: 'https://shopify.dev/docs/api/usage/access-scopes' }],
-      },
-      {
-        variant: 'ghost', title: 'Ghost',
-        steps: [
-          'Log in to Ghost Admin as Owner or Administrator.',
-          'Settings (gear bottom left) > Advanced > Integrations > Add custom integration. Name: Beacon GEO > Create.',
-          'Copy the Admin API key (format id:secret) into the secure field, and the API URL into the Site URL field.',
-          'The integration key can create and edit posts. It cannot access member data unless you add it.',
-        ],
-        links: [{ label: 'Ghost Admin API', href: 'https://ghost.org/docs/admin-api/' }],
-      },
-      {
-        variant: 'other', title: 'Other CMS',
-        steps: [
-          'Describe your CMS in the notes field. The fastest paths we support: (1) a REST/GraphQL API token with create and edit rights, (2) a Git-backed repository (use step 4), (3) a user seat with Editor role (use the access method from step 3) where a human-in-the-loop flow is acceptable.',
-          'Include links to the CMS API docs if you have them.',
-        ],
-      },
-    ],
-    tests: [
-      { id: 'cms_auth', label: 'Credential valid', description: 'Authenticated read on the CMS identity or site endpoint (WP GET /wp-json/wp/v2/users/me; Webflow GET /v2/sites; Wix POST /blog/v3/posts/query; Sanity GET /v2021-06-07/projects/{id}; Contentful GET /spaces/{id}; HubSpot GET /cms/v3/blogs/posts?limit=1; Shopify GET /admin/api/2025-10/blogs.json; Ghost GET /ghost/api/admin/site/). Failed: 401/403.', requires: ['cms_platform', 'cms_site_url'] },
-      { id: 'cms_draft_write', label: 'Can create a draft', description: 'Creates a draft titled "Beacon connection test", reads it back, then deletes it. Partial: read works but the draft create is denied (token is read-only, e.g. Sanity Viewer, WordPress Contributor, Webflow CMS read-only).', requires: ['cms_platform', 'cms_site_url'] },
-    ],
-  },
-
   // 6 ----------------------------------------------------------------------
   {
     id: 'gsc',
@@ -467,7 +467,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     short: 'Search Console',
     icon: 'Search',
     group: 'access',
-    why: 'Search Console shows which queries and pages bring Google traffic, including AI Overviews clicks. Owner is required so we can add our service account (for the Indexing API and URL inspection) and re-verify the property if something breaks.',
+    why: 'Search Console shows which queries and pages bring Google traffic, including AI Overviews clicks. Owner is required so we can use URL inspection and sitemap submission and re-verify the property if something breaks.',
     fields: [
       { id: 'gsc_property', label: 'Search Console property', type: 'text', required: true, placeholder: 'sc-domain:acme.com  or  https://www.acme.com/', help: 'Domain property (sc-domain:) is best. Copy it from the property dropdown in Search Console.' },
     ],
@@ -476,7 +476,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
         title: 'Required permission',
         steps: [
           'Permission level: Owner (a "delegated owner" is fine and is what you create for us). Full, Restricted and Associate are not enough.',
-          'Why not Full: only Owners can add other users and service accounts, and the Indexing API requires the caller to be an Owner of the property.',
+          'Why not Full: only Owners can add other users and service accounts.',
         ],
       },
       {
@@ -499,7 +499,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     ],
     tests: [
       { id: 'gsc_property_visible', label: 'Property visible to us', description: 'Search Console API sites.list (webmasters.readonly or webmasters scope) with our agency identity must include gsc_property. Failed: property not in list (user not added or wrong property type).', requires: ['gsc_property'] },
-      { id: 'gsc_owner_level', label: 'Owner permission level', description: 'Read permissionLevel from sites.list/sites.get. Expected siteOwner. Partial: "siteFullUser" shows as "GSC access is Full, not Owner"; "siteRestrictedUser" shows "Restricted". Also confirms the Indexing API service account (step 9) is listed as Owner when step 9 is done.', requires: ['gsc_property'] },
+      { id: 'gsc_owner_level', label: 'Owner permission level', description: 'Read permissionLevel from sites.list/sites.get. Expected siteOwner. Partial: "siteFullUser" shows as "GSC access is Full, not Owner"; "siteRestrictedUser" shows "Restricted".', requires: ['gsc_property'] },
       { id: 'gsc_data_flowing', label: 'Search data available', description: 'searchanalytics.query for the last 7 days (dimension: query, rowLimit 5). Partial: 0 rows (property is new, less than 2 days old, or has no impressions), or the property was verified less than 48 hours ago.', requires: ['gsc_property'] },
     ],
   },
@@ -520,7 +520,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
       {
         title: 'Required permission',
         steps: [
-          'Highest role: Administrator (shown as Owner in older docs). A site is owned by whoever verified it; additional users can be Administrator, Read/Write, or Read-only.',
+          'Highest role: Administrator. Confirmed: Bing Webmaster Administrator is the Owner-equivalent role (older docs say Owner). A site is owned by whoever verified it; additional users can be Administrator, Read/Write, or Read-only.',
           'We need Administrator to submit URLs and sitemaps, read the full API and manage users. Read/Write is partial.',
         ],
       },
@@ -604,11 +604,11 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   // 9 ----------------------------------------------------------------------
   {
     id: 'google_cloud',
-    title: 'Google Cloud (YouTube, Ads, Indexing)',
+    title: 'Google Cloud (YouTube, Ads)',
     short: 'Google Cloud',
     icon: 'CloudCog',
     group: 'access',
-    why: 'These APIs give us YouTube creators and video mentions, Google Keyword Planner search volumes, and instant indexing requests. They run inside a Google Cloud project you control, with a service account whose key you can revoke any time.',
+    why: 'These APIs give us YouTube creators and video mentions, Google Keyword Planner search volumes, and Search Console data. They run inside a Google Cloud project you control, with a service account whose key you can revoke any time.',
     fields: [
       { id: 'gcp_project_id', label: 'Google Cloud project ID', type: 'text', required: true, placeholder: 'acme-beacon-geo' },
       { id: 'gcp_service_account_key', label: 'Service account key (JSON)', type: 'secret', required: true, help: 'Paste the whole JSON file contents. Stored encrypted; we never show it again.' },
@@ -620,50 +620,40 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
         steps: [
           'In your project: you need Owner or (Project IAM Admin + Service Usage Admin + Service Account Admin + Service Account Key Admin) to do this setup.',
           'The service account itself needs no IAM role on the project (API enablement is project-level). Do not grant it Owner/Editor.',
-          'Enabled APIs: YouTube Data API v3 (youtube.googleapis.com), Google Ads API (googleads.googleapis.com), Web Search Indexing API (indexing.googleapis.com). Optional: Search Console API (searchconsole.googleapis.com), Google Analytics Data and Admin APIs (analyticsdata / analyticsadmin) for step 8.',
+          'Enabled APIs: YouTube Data API v3 (youtube.googleapis.com), Google Ads API (googleads.googleapis.com). Optional: Search Console API (searchconsole.googleapis.com), Google Analytics Data and Admin APIs (analyticsdata / analyticsadmin) for step 8.',
         ],
       },
       {
         title: '1. Create or choose a project',
         steps: [
-          'Go to console.cloud.google.com. Click the project picker (top bar) > New project. Name: "Beacon GEO". Select your organization. Create.',
+          'Go to console.cloud.google.com. Click the project picker (top bar) > New project. Name: "ASO Engine". Select your organization. Create.',
         ],
         links: [{ label: 'Google Cloud console', href: 'https://console.cloud.google.com/' }],
       },
       {
-        title: '2. Enable the three APIs',
+        title: '2. Enable the two APIs',
         steps: [
           'Left menu (hamburger) > APIs & Services > Library.',
           'Search "YouTube Data API v3" > Enable.',
           'Search "Google Ads API" > Enable.',
-          'Search "Web Search Indexing API" (may appear as "Indexing API") > Enable.',
         ],
         links: [
           { label: 'YouTube Data API v3', href: 'https://console.cloud.google.com/apis/library/youtube.googleapis.com' },
           { label: 'Google Ads API', href: 'https://console.cloud.google.com/apis/library/googleads.googleapis.com' },
-          { label: 'Indexing API', href: 'https://console.cloud.google.com/apis/library/indexing.googleapis.com' },
         ],
       },
       {
         title: '3. Create the service account and a key',
         steps: [
-          'Left menu > IAM & Admin > Service Accounts > Create service account. Name: beacon-geo. Skip the optional role and user-access steps. Done.',
-          'Copy the service account email (looks like beacon-geo@PROJECT.iam.gserviceaccount.com). It is also shown below as {{SERVICE_ACCOUNT_EMAIL}}.',
+          'Left menu > IAM & Admin > Service Accounts > Create service account. Name: aso-engine. Skip the optional role and user-access steps. Done.',
+          'Copy the service account email (looks like aso-engine@PROJECT.iam.gserviceaccount.com). It is also shown below as {{SERVICE_ACCOUNT_EMAIL}}.',
           'Open the account > Keys > Add key > Create new key > JSON > Create. A file downloads. Paste its entire contents into the secure field here, then delete the downloaded file.',
           'If "Create key" is blocked, your organization enforces the policy iam.disableServiceAccountKeyCreation. Ask your Cloud admin to allow it for this project, or tell us and we will use Workload Identity Federation instead.',
         ],
         links: [{ label: 'Google: service account keys', href: 'https://cloud.google.com/iam/docs/keys-create-delete' }],
       },
       {
-        title: '4. Let the service account use Search Console (Indexing API)',
-        steps: [
-          'Search Console > Settings > Users and permissions > Add user. Enter the service account email, Permission: Owner. (The Indexing API only works when the caller is an Owner of the property.)',
-          'Note: Google officially supports the Indexing API only for job-posting and livestream pages. We use it for those page types and for non-supported pages on a best-effort basis; Google may ignore other pages.',
-        ],
-        links: [{ label: 'Google: Indexing API quickstart', href: 'https://developers.google.com/search/apis/indexing-api/v3/quickstart' }],
-      },
-      {
-        title: '5. Google Ads / Keyword Planner',
+        title: '4. Google Ads / Keyword Planner',
         steps: [
           'Keyword Planner needs a Google Ads account (no spend needed). Create one at ads.google.com if you do not have one (choose "Switch to Expert Mode" to skip a campaign).',
           'Copy your Customer ID (top right of the Ads UI, format 123-456-7890) into the field above.',
@@ -675,10 +665,9 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     ],
     tests: [
       { id: 'gcp_service_account_valid', label: 'Service account key valid', description: 'Exchange the JWT for an access token (oauth2.googleapis.com/token) and check client_email matches the project. Failed: invalid or revoked key, JSON malformed. Partial: key valid but the project differs from gcp_project_id.', requires: ['gcp_project_id', 'gcp_service_account_key'] },
-      { id: 'gcp_apis_enabled', label: 'Three APIs enabled', description: 'serviceusage.services.batchGet for youtube.googleapis.com, googleads.googleapis.com, indexing.googleapis.com; each must be ENABLED. Partial: lists which are still disabled and gives the one-click enable link.', requires: ['gcp_project_id', 'gcp_service_account_key'] },
+      { id: 'gcp_apis_enabled', label: 'Two APIs enabled', description: 'serviceusage.services.batchGet for youtube.googleapis.com, googleads.googleapis.com; each must be ENABLED. Partial: lists which are still disabled and gives the one-click enable link.', requires: ['gcp_project_id', 'gcp_service_account_key'] },
       { id: 'youtube_api_call', label: 'YouTube Data API call', description: 'GET youtube/v3/videoCategories?part=snippet&regionCode=US (1 quota unit). Failed: 403 accessNotConfigured (API disabled) or quotaExceeded.', requires: ['gcp_project_id', 'gcp_service_account_key'] },
       { id: 'ads_keyword_ideas', label: 'Keyword Planner call', description: 'KeywordPlanIdeaService.generateKeywordIdeas with one seed keyword via our developer token and manager login-customer-id. Partial: customer ID given but the manager link is still pending ("USER_PERMISSION_DENIED"), or account is not yet active.', requires: ['gcp_project_id'] },
-      { id: 'indexing_api_owner', label: 'Indexing API permission', description: 'urlNotifications.getMetadata for the home page URL with the service account. 200/404 (never notified) = OK. Partial: 403 "Permission denied. Failed to verify the URL ownership" = service account is not an Owner in Search Console (step 6 + instruction 4).', requires: ['gcp_service_account_key', 'gsc_property'] },
     ],
   },
 
@@ -894,14 +883,14 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
         variant: 'azure', title: 'Azure equivalent',
         steps: [
           'Create a storage account and a container "assets". Put Azure Front Door/CDN in front of it.',
-          'Create an app registration "Beacon GEO" (Entra ID > App registrations) with a client secret, or a federated credential.',
+          'Create an app registration "ASO Engine" (Entra ID > App registrations) with a client secret, or a federated credential.',
           'Role assignments: Storage Blob Data Contributor scoped to that one container, and CDN Endpoint Contributor (or Front Door Contributor) scoped to that one profile only.',
           'Enter tenant ID, client ID, storage account and endpoint in the notes field; paste the client secret in a secure field (tell us and we add one).',
         ],
       },
       {
         variant: 'none', title: 'No cloud account',
-        steps: ['No problem. We host assets on our CDN under a Beacon domain (or a subdomain you point to us). Mention it in the review step.'],
+        steps: ['No problem. We host assets on our CDN under an ASO Engine domain (or a subdomain you point to us). Mention it in the review step.'],
       },
     ],
     tests: [
@@ -949,7 +938,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
         variant: 'cloudflare', title: 'Create the token',
         steps: [
           'dash.cloudflare.com > My Profile (top right avatar) > API Tokens > Create Token > Create Custom Token > Get started.',
-          'Token name: Beacon GEO crawler monitoring. Add the permission rows listed above using the dropdowns (Zone / Account, then the permission, then Read).',
+          'Token name: ASO Engine crawler monitoring. Add the permission rows listed above using the dropdowns (Zone / Account, then the permission, then Read).',
           'Zone Resources > Include > Specific zone > your zone. Account Resources > Include > your account.',
           'Continue to summary > Create Token. Copy the token once and paste it in the secure field.',
           'AI Crawl Control is available on all plans for viewing, but some metrics need Pro or higher. If the dashboard menu is missing, open your domain > AI Crawl Control (it may sit under Security).',
@@ -1000,7 +989,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
       { id: 'slack_bot_token', label: 'Bot token or incoming webhook URL', type: 'secret', required: true, help: 'Create a Slack app in your own workspace and install it (xoxb-... bot token), or add an Incoming Webhook to a channel and paste its URL. We do not run an agency-registered Slack app.', showIf: { field: 'chat_platform', equals: 'slack' } },
       { id: 'social_channel', label: 'Social pulse channel', type: 'text', required: false, placeholder: 'geo-social-pulse', help: 'Dedicated channel for the daily Social pulse: one message per insight, with title suggestions you can approve. We create it if the bot is allowed to.', showIf: { field: 'chat_platform', equals: 'slack' } },
       { id: 'slack_config_token', label: 'Slack app configuration token (optional)', type: 'secret', required: false, help: 'Only needed to create a dedicated Social pulse bot for you from an app manifest. A Slack admin generates it at api.slack.com/apps under "Your App Configuration Tokens". It expires after 12 hours and is only used once.', showIf: { field: 'chat_platform', equals: 'slack' } },
-      { id: 'slack_signing_secret', label: 'Slack signing secret (optional)', type: 'secret', required: false, help: 'Filled automatically when we create the bot. Paste it yourself only if you created the Slack app by hand: Basic Information > App Credentials. It lets Beacon verify that button clicks come from Slack.', showIf: { field: 'chat_platform', equals: 'slack' } },
+      { id: 'slack_signing_secret', label: 'Slack signing secret (optional)', type: 'secret', required: false, help: 'Filled automatically when we create the bot. Paste it yourself only if you created the Slack app by hand: Basic Information > App Credentials. It lets ASO Engine verify that button clicks come from Slack.', showIf: { field: 'chat_platform', equals: 'slack' } },
       { id: 'teams_tenant_id', label: 'Microsoft Entra tenant ID', type: 'text', required: true, showIf: { field: 'chat_platform', equals: 'teams' } },
       { id: 'teams_team_channel', label: 'Team and channel name', type: 'text', required: true, placeholder: 'Marketing > GEO', showIf: { field: 'chat_platform', equals: 'teams' } },
     ],
@@ -1025,9 +1014,9 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
         steps: [
           'Go to api.slack.com/apps > Create New App > From scratch, in your workspace. Add the scopes above (or, for posting only, enable Incoming Webhooks and add one for your channel).',
           'Click Install to Workspace. If your workspace requires app approval, a Workspace Admin approves it under Tools & settings > Manage apps > Requests. Copy the Bot User OAuth Token (or webhook URL) into the field above.',
-          'In the target channel, type /invite @Beacon GEO (needed for private channels).',
-          'Click Test in this wizard to see a "Beacon is connected" message appear in your channel.',
-          'Social pulse bot (optional): a Slack admin opens api.slack.com/apps > Your App Configuration Tokens > Generate Token, picks this workspace, and pastes the token above. In Beacon open Social pulse > Create Slack bot. Then install the new app to the workspace with the link we show, copy its Bot User OAuth Token into the bot token field, and Beacon creates the channel and posts. Interactivity (the Approve buttons) points to /api/slack/interactions automatically.',
+          'In the target channel, type /invite @ASO Engine (needed for private channels).',
+          'Click Test in this wizard to see a "ASO Engine is connected" message appear in your channel.',
+          'Social pulse bot (optional): a Slack admin opens api.slack.com/apps > Your App Configuration Tokens > Generate Token, picks this workspace, and pastes the token above. In ASO Engine open Social pulse > Create Slack bot. Then install the new app to the workspace with the link we show, copy its Bot User OAuth Token into the bot token field, and ASO Engine creates the channel and posts. Interactivity (the Approve buttons) points to /api/slack/interactions automatically.',
         ],
         links: [{ label: 'Slack: manage app approvals', href: 'https://slack.com/help/articles/222386767-Manage-app-approval-for-your-workspace' }],
       },
@@ -1036,7 +1025,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
         steps: [
           'A Global Administrator or Application Administrator must grant admin consent. Entra admin center (entra.microsoft.com) > Identity > Applications > Enterprise applications > Consent and permissions, or follow the admin-consent link we send.',
           'Application permissions requested: ChannelMessage.Send (post to a channel), Channel.ReadBasic.All (list channels), Team.ReadBasic.All (list teams). We do not request read access to messages.',
-          'Teams admin center (admin.teams.microsoft.com) > Teams apps > Manage apps > upload or allow "Beacon GEO", then add it to the team: Teams > the team > Manage team > Apps > Add an app.',
+          'Teams admin center (admin.teams.microsoft.com) > Teams apps > Manage apps > upload or allow "ASO Engine", then add it to the team: Teams > the team > Manage team > Apps > Add an app.',
           'Enter your tenant ID (Entra admin center > Overview > Tenant ID) and the channel in the form.',
         ],
         links: [{ label: 'Microsoft: grant tenant-wide admin consent', href: 'https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/grant-admin-consent' }],
@@ -1045,7 +1034,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     ],
     tests: [
       { id: 'chat_auth', label: 'Bot installed with the right scopes', description: 'Slack auth.test and read the x-oauth-scopes response header; all scopes above must be present. Partial: lists missing scopes (e.g. "missing files:write"). Teams: acquire a client-credentials token for tenant and decode the roles claim (ChannelMessage.Send, Channel.ReadBasic.All, Team.ReadBasic.All).', requires: ['chat_platform'] },
-      { id: 'chat_post', label: 'Test message delivered', description: 'Slack chat.postMessage to the channel then delete it (or leave "Beacon is connected"). Partial: not_in_channel (bot not invited to a private channel) or channel_not_found. Teams: POST /teams/{id}/channels/{id}/messages.', requires: ['chat_platform'] },
+      { id: 'chat_post', label: 'Test message delivered', description: 'Slack chat.postMessage to the channel then delete it (or leave "ASO Engine is connected"). Partial: not_in_channel (bot not invited to a private channel) or channel_not_found. Teams: POST /teams/{id}/channels/{id}/messages.', requires: ['chat_platform'] },
     ],
   },
 
@@ -1071,7 +1060,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
           'Click your avatar > Create a channel, and choose a Brand Account so ownership can move between people.',
           'Name it as in the field above. Add the avatar and banner from your brand assets. In About, say the videos use an AI presenter voice and put your blog link first.',
           'Verify the channel by phone (required for custom thumbnails). Defaults: category Education, made for kids: No.',
-          'Open the YouTube tab in Beacon and press Connect channel. Pick the Brand Account channel in Google\'s account picker and accept. We request upload and manage-captions access only; the token is stored in your vault and you can revoke it at myaccount.google.com/permissions.',
+          'Open the YouTube tab in ASO Engine and press Connect channel. Pick the Brand Account channel in Google\'s account picker and accept. We request upload and manage-captions access only; the token is stored in your vault and you can revoke it at myaccount.google.com/permissions.',
           'Click Test here to confirm the channel is reachable.',
         ],
         links: [{ label: 'YouTube: create a channel with a Brand Account', href: 'https://support.google.com/youtube/answer/1646861' }],

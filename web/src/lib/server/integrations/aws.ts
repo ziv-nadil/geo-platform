@@ -60,7 +60,7 @@ export const test: Tester = async (ctx) => {
     try {
       const s3 = new AwsClient({ ...creds, service: 's3', region });
       const base = `https://${bucket}.s3.${region}.amazonaws.com`;
-      const put = await send(s3, `${base}/${key}`, { method: 'PUT', body: 'Beacon GEO connection test', headers: { 'content-type': 'text/plain' } });
+      const put = await send(s3, `${base}/${key}`, { method: 'PUT', body: 'ASO Engine connection test', headers: { 'content-type': 'text/plain' } });
       const get = put.ok ? await send(s3, `${base}/${key}`) : null;
       const outside = await send(s3, `${base}/_beacon-outside-test.txt`, { method: 'PUT', body: 'x' });
       if (outside.ok) await send(s3, `${base}/_beacon-outside-test.txt`, { method: 'DELETE' });

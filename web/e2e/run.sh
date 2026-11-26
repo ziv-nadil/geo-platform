@@ -10,7 +10,7 @@ LUMEN=00000000-0000-4000-a000-000000000021    # Lumen owner (org in onboarding)
 ADMIN=00000000-0000-4000-a000-000000000001    # platform admin
 run() { # name userId aal suite
   pkill -f "next dev" 2>/dev/null; pkill -f next-server 2>/dev/null; sleep 2
-  env -u NEXT_PUBLIC_SUPABASE_URL -u NEXT_PUBLIC_SUPABASE_ANON_KEY \
+  env -u NEXT_PUBLIC_SUPABASE_URL -u NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY \
     ${2:+DEV_AUTH_USER_ID=$2} ${3:+DEV_AUTH_AAL=$3} nohup npx next dev -p $PORT >"/tmp/e2e-$1.log" 2>&1 &
   for i in $(seq 60); do curl -s -o /dev/null localhost:$PORT/login && break; sleep 1; done
   curl -s -o /dev/null localhost:$PORT/app/northwind   # warm

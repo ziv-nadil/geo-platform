@@ -1,4 +1,4 @@
--- Beacon GEO demo seed (LOCAL / PREVIEW ONLY: `supabase db reset` loads it; never push it to prod).
+-- ASO Engine demo seed (LOCAL / PREVIEW ONLY: `supabase db reset` loads it; never push it to prod).
 --
 -- Everything here is fictional demo data, flagged with settings.demo = true on the orgs and
 -- raw.demo = true on responses. Domains use the reserved .example TLD.
@@ -22,7 +22,7 @@ insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at,
                         raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 values
   ('00000000-0000-0000-0000-000000000000', '00000000-0000-4000-a000-000000000001', 'authenticated', 'authenticated',
-   'admin@beacon-geo.example', now(), '', '', '', '', '{"provider":"email","providers":["email"]}', '{"full_name":"Beacon Super Admin (placeholder)"}', now(), now()),
+   'admin@beacon-geo.example', now(), '', '', '', '', '{"provider":"email","providers":["email"]}', '{"full_name":"ASO Engine Super Admin (placeholder)"}', now(), now()),
   ('00000000-0000-0000-0000-000000000000', '00000000-0000-4000-a000-000000000011', 'authenticated', 'authenticated',
    'dana@northwind.example', now(), '', '', '', '', '{"provider":"email","providers":["email"]}', '{"full_name":"Dana Whitfield"}', now(), now()),
   ('00000000-0000-0000-0000-000000000000', '00000000-0000-4000-a000-000000000012', 'authenticated', 'authenticated',

@@ -238,7 +238,7 @@ Group: stack · Icon: PenSquare · Required · 2 live test(s)
 
 1. Log in to wp-admin as an Administrator. Self-hosted WordPress 5.6+ or WordPress.com Business plan required (REST API and Application Passwords).
 2. Users > Add New User. Username: beacon, Email: {{AGENCY_EMAIL}}, Role: Editor (can create and edit posts and media; cannot install plugins). Uncheck "Send the user an email" if you do not want us to receive one.
-3. Open Users > All Users > beacon > Edit. Scroll to Application Passwords, type the name "Beacon GEO", click Add Application Password, and copy the generated password (spaces are fine).
+3. Open Users > All Users > beacon > Edit. Scroll to Application Passwords, type the name "ASO Engine", click Add Application Password, and copy the generated password (spaces are fine).
 4. Enter the username and that application password in the form. The site must be served over HTTPS.
 5. If a security plugin or host (Wordfence, Cloudflare WAF, WP Engine) blocks /wp-json/, ask your host to allow our IP range, which we will email you.
 
@@ -248,7 +248,7 @@ Group: stack · Icon: PenSquare · Required · 2 live test(s)
 
 1. You need to be a Workspace Admin or Site Admin.
 2. Open the Webflow Dashboard > the site > Site settings (gear) > Apps & integrations > scroll to API access > Generate API token.
-3. Name it "Beacon GEO". Select scopes: Sites = Read-only, CMS = Read and write, Pages = Read-only. Leave everything else off.
+3. Name it "ASO Engine". Select scopes: Sites = Read-only, CMS = Read and write, Pages = Read-only. Leave everything else off.
 4. Generate and copy the token into the secure field.
 5. Blog collection ID: Webflow Designer > CMS > Blog Posts collection > Collection settings > copy the ID (or enter the collection name and we will resolve it).
 
@@ -258,7 +258,7 @@ Group: stack · Icon: PenSquare · Required · 2 live test(s)
 
 1. You must be the account owner or co-owner.
 2. Wix account settings: manage.wix.com > profile menu > Account settings > API keys > Generate API Key (steps may show under "Headless" or "API keys manager" depending on your account).
-3. Name: Beacon GEO. Permissions: under Wix Blog choose Read and Manage Blog (posts and categories). Account-level scope = Access to the one site you choose.
+3. Name: ASO Engine. Permissions: under Wix Blog choose Read and Manage Blog (posts and categories). Account-level scope = Access to the one site you choose.
 4. Copy the key and your Site ID (the URL segment after /dashboard/ when you are inside the site dashboard).
 5. This requires the Wix Blog app on the site. Tell us if your site has no Wix Blog.
 
@@ -268,7 +268,7 @@ Group: stack · Icon: PenSquare · Required · 2 live test(s)
 
 1. Open sanity.io/manage > select your project.
 2. Go to API > Tokens > Add API token.
-3. Name: Beacon GEO. Permissions: Editor (create and edit, cannot change project settings). Viewer is "partial" (read only).
+3. Name: ASO Engine. Permissions: Editor (create and edit, cannot change project settings). Viewer is "partial" (read only).
 4. Copy the token once and paste it in the secure field. Enter the Project ID (shown on the project page) and the dataset (usually production).
 5. Tell us your blog document type name (e.g. post) by reply; we map fields automatically if it has title, slug and body.
 
@@ -277,7 +277,7 @@ Group: stack · Icon: PenSquare · Required · 2 live test(s)
 **Contentful** _(variant: contentful)_
 
 1. Open app.contentful.com > Settings (top bar) > CMA tokens > Create personal access token. Create it while logged in as a user with at least the Editor role on the space (Space Admin is not needed).
-2. Name it "Beacon GEO", copy the token. Personal tokens act as that user: prefer creating a dedicated user for us (Settings > Users > Invite {{AGENCY_EMAIL}} with the Editor role) and generating the token from that user, then enter it here.
+2. Name it "ASO Engine", copy the token. Personal tokens act as that user: prefer creating a dedicated user for us (Settings > Users > Invite {{AGENCY_EMAIL}} with the Editor role) and generating the token from that user, then enter it here.
 3. Space ID: Settings > General settings. Environment: usually master.
 
 - [Contentful: CMA tokens](https://www.contentful.com/developers/docs/references/authentication/)
@@ -286,7 +286,7 @@ Group: stack · Icon: PenSquare · Required · 2 live test(s)
 
 1. You need Super Admin or the Marketplace/App permissions.
 2. In HubSpot: Settings (gear) > Integrations > Private Apps > Create private app. (HubSpot may label this "Service keys" or direct you to developer projects on newer accounts. If so, use the same scopes.)
-3. Name: Beacon GEO. Scopes tab: content (Content: read and write blog posts and landing pages). Do not add CRM scopes.
+3. Name: ASO Engine. Scopes tab: content (Content: read and write blog posts and landing pages). Do not add CRM scopes.
 4. Create the app, then copy the access token into the secure field.
 5. Requires a Marketing Hub (or CMS Hub) subscription with the HubSpot blog enabled.
 
@@ -295,7 +295,7 @@ Group: stack · Icon: PenSquare · Required · 2 live test(s)
 **Framer** _(variant: framer)_
 
 1. Framer's publishing API is new and its UI changes often; confirm with us if a label below is missing.
-2. Open your project > Site Settings (gear top right) > General (or Integrations) > API Keys > Create key. Name "Beacon GEO". Scope: CMS read and write.
+2. Open your project > Site Settings (gear top right) > General (or Integrations) > API Keys > Create key. Name "ASO Engine". Scope: CMS read and write.
 3. Copy the key into the secure field and enter the Framer project ID (the long ID in the project URL).
 4. If you cannot see API Keys: invite {{AGENCY_EMAIL}} as an Editor (Project > Share > Invite) and tell us; we will use the CMS plugin flow and you publish manually.
 
@@ -304,7 +304,7 @@ Group: stack · Icon: PenSquare · Required · 2 live test(s)
 **Shopify** _(variant: shopify)_
 
 1. Log in as the store owner or staff with "Develop apps" permission.
-2. Dev Dashboard route (Shopify now requires this for new custom apps): dev.shopify.com > Create app > Name "Beacon GEO" > Configuration > Admin API access scopes: read_content, write_content (blog articles and pages). Install it on your store.
+2. Dev Dashboard route (Shopify now requires this for new custom apps): dev.shopify.com > Create app > Name "ASO Engine" > Configuration > Admin API access scopes: read_content, write_content (blog articles and pages). Install it on your store.
 3. Legacy route if your store still shows it: Shopify admin > Settings > Apps and sales channels > Develop apps > Create an app > Configure Admin API scopes: read_content and write_content > Install app > Reveal token once.
 4. Copy the Admin API access token (starts with shpat_) into the secure field. The site URL is your-store.myshopify.com.
 
@@ -313,7 +313,7 @@ Group: stack · Icon: PenSquare · Required · 2 live test(s)
 **Ghost** _(variant: ghost)_
 
 1. Log in to Ghost Admin as Owner or Administrator.
-2. Settings (gear bottom left) > Advanced > Integrations > Add custom integration. Name: Beacon GEO > Create.
+2. Settings (gear bottom left) > Advanced > Integrations > Add custom integration. Name: ASO Engine > Create.
 3. Copy the Admin API key (format id:secret) into the secure field, and the API URL into the Site URL field.
 4. The integration key can create and edit posts. It cannot access member data unless you add it.
 
@@ -329,14 +329,14 @@ Group: stack · Icon: PenSquare · Required · 2 live test(s)
 | Test ID | What it proves | API call, and what "partial" looks like |
 |---|---|---|
 | `cms_auth` | Credential valid | Authenticated read on the CMS identity or site endpoint (WP GET /wp-json/wp/v2/users/me; Webflow GET /v2/sites; Wix POST /blog/v3/posts/query; Sanity GET /v2021-06-07/projects/{id}; Contentful GET /spaces/{id}; HubSpot GET /cms/v3/blogs/posts?limit=1; Shopify GET /admin/api/2025-10/blogs.json; Ghost GET /ghost/api/admin/site/). Failed: 401/403. |
-| `cms_draft_write` | Can create a draft | Creates a draft titled "Beacon connection test", reads it back, then deletes it. Partial: read works but the draft create is denied (token is read-only, e.g. Sanity Viewer, WordPress Contributor, Webflow CMS read-only). |
+| `cms_draft_write` | Can create a draft | Creates a draft titled "ASO Engine connection test", reads it back, then deletes it. Partial: read works but the draft create is denied (token is read-only, e.g. Sanity Viewer, WordPress Contributor, Webflow CMS read-only). |
 
 
 ## 7. Google Search Console
 
 Group: access · Icon: Search · Required · 3 live test(s)
 
-**Why we need it:** Search Console shows which queries and pages bring Google traffic, including AI Overviews clicks. Owner is required so we can add our service account (for the Indexing API and URL inspection) and re-verify the property if something breaks.
+**Why we need it:** Search Console shows which queries and pages bring Google traffic, including AI Overviews clicks. Owner is required so we can use URL inspection and sitemap submission and re-verify the property if something breaks.
 
 ### Fields
 
@@ -349,7 +349,7 @@ Group: access · Icon: Search · Required · 3 live test(s)
 **Required permission**
 
 1. Permission level: Owner (a "delegated owner" is fine and is what you create for us). Full, Restricted and Associate are not enough.
-2. Why not Full: only Owners can add other users and service accounts, and the Indexing API requires the caller to be an Owner of the property.
+2. Why not Full: only Owners can add other users and service accounts.
 
 **Add our agency email as Owner** _(variant: agency_email)_
 
@@ -467,7 +467,7 @@ Group: access · Icon: BarChart3 · Required · 4 live test(s)
 | `ga4_data_flowing` | Data is flowing | Data API runReport last 28 days: sessions > 0 and eventCount for the key event > 0. Partial: sessions exist but the key event has zero count (not tracking yet). |
 
 
-## 10. Google Cloud (YouTube, Ads, Indexing)
+## 10. Google Cloud (YouTube, Ads)
 
 Group: access · Icon: CloudCog · Required · 5 live test(s)
 
@@ -487,24 +487,22 @@ Group: access · Icon: CloudCog · Required · 5 live test(s)
 
 1. In your project: you need Owner or (Project IAM Admin + Service Usage Admin + Service Account Admin + Service Account Key Admin) to do this setup.
 2. The service account itself needs no IAM role on the project (API enablement is project-level). Do not grant it Owner/Editor.
-3. Enabled APIs: YouTube Data API v3 (youtube.googleapis.com), Google Ads API (googleads.googleapis.com), Web Search Indexing API (indexing.googleapis.com). Optional: Search Console API (searchconsole.googleapis.com), Google Analytics Data and Admin APIs (analyticsdata / analyticsadmin) for step 8.
+3. Enabled APIs: YouTube Data API v3 (youtube.googleapis.com), Google Ads API (googleads.googleapis.com). Optional: Search Console API (searchconsole.googleapis.com), Google Analytics Data and Admin APIs (analyticsdata / analyticsadmin) for step 8.
 
 **1. Create or choose a project**
 
-1. Go to console.cloud.google.com. Click the project picker (top bar) > New project. Name: "Beacon GEO". Select your organization. Create.
+1. Go to console.cloud.google.com. Click the project picker (top bar) > New project. Name: "ASO Engine". Select your organization. Create.
 
 - [Google Cloud console](https://console.cloud.google.com/)
 
-**2. Enable the three APIs**
+**2. Enable the two APIs**
 
 1. Left menu (hamburger) > APIs & Services > Library.
 2. Search "YouTube Data API v3" > Enable.
 3. Search "Google Ads API" > Enable.
-4. Search "Web Search Indexing API" (may appear as "Indexing API") > Enable.
 
 - [YouTube Data API v3](https://console.cloud.google.com/apis/library/youtube.googleapis.com)
 - [Google Ads API](https://console.cloud.google.com/apis/library/googleads.googleapis.com)
-- [Indexing API](https://console.cloud.google.com/apis/library/indexing.googleapis.com)
 
 **3. Create the service account and a key**
 
@@ -515,14 +513,8 @@ Group: access · Icon: CloudCog · Required · 5 live test(s)
 
 - [Google: service account keys](https://cloud.google.com/iam/docs/keys-create-delete)
 
-**4. Let the service account use Search Console (Indexing API)**
 
-1. Search Console > Settings > Users and permissions > Add user. Enter the service account email, Permission: Owner. (The Indexing API only works when the caller is an Owner of the property.)
-2. Note: Google officially supports the Indexing API only for job-posting and livestream pages. We use it for those page types and for non-supported pages on a best-effort basis; Google may ignore other pages.
-
-- [Google: Indexing API quickstart](https://developers.google.com/search/apis/indexing-api/v3/quickstart)
-
-**5. Google Ads / Keyword Planner**
+**4. Google Ads / Keyword Planner**
 
 1. Keyword Planner needs a Google Ads account (no spend needed). Create one at ads.google.com if you do not have one (choose "Switch to Expert Mode" to skip a campaign).
 2. Copy your Customer ID (top right of the Ads UI, format 123-456-7890) into the field above.
@@ -536,10 +528,9 @@ Group: access · Icon: CloudCog · Required · 5 live test(s)
 | Test ID | What it proves | API call, and what "partial" looks like |
 |---|---|---|
 | `gcp_service_account_valid` | Service account key valid | Exchange the JWT for an access token (oauth2.googleapis.com/token) and check client_email matches the project. Failed: invalid or revoked key, JSON malformed. Partial: key valid but the project differs from gcp_project_id. |
-| `gcp_apis_enabled` | Three APIs enabled | serviceusage.services.batchGet for youtube.googleapis.com, googleads.googleapis.com, indexing.googleapis.com; each must be ENABLED. Partial: lists which are still disabled and gives the one-click enable link. |
+| `gcp_apis_enabled` | Two APIs enabled | serviceusage.services.batchGet for youtube.googleapis.com, googleads.googleapis.com; each must be ENABLED. Partial: lists which are still disabled and gives the one-click enable link. |
 | `youtube_api_call` | YouTube Data API call | GET youtube/v3/videoCategories?part=snippet&regionCode=US (1 quota unit). Failed: 403 accessNotConfigured (API disabled) or quotaExceeded. |
 | `ads_keyword_ideas` | Keyword Planner call | KeywordPlanIdeaService.generateKeywordIdeas with one seed keyword via our developer token and manager login-customer-id. Partial: customer ID given but the manager link is still pending ("USER_PERMISSION_DENIED"), or account is not yet active. |
-| `indexing_api_owner` | Indexing API permission | urlNotifications.getMetadata for the home page URL with the service account. 200/404 (never notified) = OK. Partial: 403 "Permission denied. Failed to verify the URL ownership" = service account is not an Owner in Search Console (step 6 + instruction 4). |
 
 
 ## 11. DNS verification (TXT record)
@@ -756,21 +747,21 @@ Group: stack · Icon: Database · Optional · 4 live test(s)
 }
 ```
 
-3. Next > skip attaching managed policies > name the role BeaconGeoAssets > Create role.
-4. Open the role > Permissions > Add permissions > Create inline policy > JSON. Paste the policy below, replacing YOUR_BUCKET, ACCOUNT_ID and YOUR_DISTRIBUTION_ID. Name it BeaconGeoAssetsLeastPrivilege > Create policy.
+3. Next > skip attaching managed policies > name the role ASO EngineGeoAssets > Create role.
+4. Open the role > Permissions > Add permissions > Create inline policy > JSON. Paste the policy below, replacing YOUR_BUCKET, ACCOUNT_ID and YOUR_DISTRIBUTION_ID. Name it ASO EngineGeoAssetsLeastPrivilege > Create policy.
 ```json
 {
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "ListBucketOnlyBeaconPrefix",
+      "Sid": "ListBucketOnlyASO EnginePrefix",
       "Effect": "Allow",
       "Action": ["s3:ListBucket", "s3:GetBucketLocation"],
       "Resource": "arn:aws:s3:::YOUR_BUCKET",
       "Condition": { "StringLike": { "s3:prefix": ["beacon/*"] } }
     },
     {
-      "Sid": "ReadWriteDeleteBeaconObjects",
+      "Sid": "ReadWriteDeleteASO EngineObjects",
       "Effect": "Allow",
       "Action": ["s3:PutObject", "s3:GetObject", "s3:DeleteObject", "s3:AbortMultipartUpload"],
       "Resource": "arn:aws:s3:::YOUR_BUCKET/beacon/*"
@@ -799,13 +790,13 @@ Group: stack · Icon: Database · Optional · 4 live test(s)
 **Azure equivalent** _(variant: azure)_
 
 1. Create a storage account and a container "assets". Put Azure Front Door/CDN in front of it.
-2. Create an app registration "Beacon GEO" (Entra ID > App registrations) with a client secret, or a federated credential.
+2. Create an app registration "ASO Engine" (Entra ID > App registrations) with a client secret, or a federated credential.
 3. Role assignments: Storage Blob Data Contributor scoped to that one container, and CDN Endpoint Contributor (or Front Door Contributor) scoped to that one profile only.
 4. Enter tenant ID, client ID, storage account and endpoint in the notes field; paste the client secret in a secure field (tell us and we add one).
 
 **No cloud account** _(variant: none)_
 
-1. No problem. We host assets on our CDN under a Beacon domain (or a subdomain you point to us). Mention it in the review step.
+1. No problem. We host assets on our CDN under an ASO Engine domain (or a subdomain you point to us). Mention it in the review step.
 
 ### Live tests
 
@@ -849,7 +840,7 @@ Group: stack · Icon: ShieldCheck · Optional · 4 live test(s)
 **Create the token** _(variant: cloudflare)_
 
 1. dash.cloudflare.com > My Profile (top right avatar) > API Tokens > Create Token > Create Custom Token > Get started.
-2. Token name: Beacon GEO crawler monitoring. Add the permission rows listed above using the dropdowns (Zone / Account, then the permission, then Read).
+2. Token name: ASO Engine crawler monitoring. Add the permission rows listed above using the dropdowns (Zone / Account, then the permission, then Read).
 3. Zone Resources > Include > Specific zone > your zone. Account Resources > Include > your account.
 4. Continue to summary > Create Token. Copy the token once and paste it in the secure field.
 5. AI Crawl Control is available on all plans for viewing, but some metrics need Pro or higher. If the dashboard menu is missing, open your domain > AI Crawl Control (it may sit under Security).
@@ -919,8 +910,8 @@ Group: stack · Icon: MessageSquare · Optional · 2 live test(s)
 
 1. Go to api.slack.com/apps > Create New App > From scratch, in your workspace. Add the scopes above (or, for posting only, enable Incoming Webhooks and add one for your channel).
 2. Click Install to Workspace. If your workspace requires app approval, a Workspace Admin approves it under Tools & settings > Manage apps > Requests. Copy the Bot User OAuth Token (or webhook URL) into the field above.
-3. In the target channel, type /invite @Beacon GEO (needed for private channels).
-4. Click Test in this wizard to see a "Beacon is connected" message appear in your channel.
+3. In the target channel, type /invite @ASO Engine (needed for private channels).
+4. Click Test in this wizard to see a "ASO Engine is connected" message appear in your channel.
 
 - [Slack: manage app approvals](https://slack.com/help/articles/222386767-Manage-app-approval-for-your-workspace)
 
@@ -928,7 +919,7 @@ Group: stack · Icon: MessageSquare · Optional · 2 live test(s)
 
 1. A Global Administrator or Application Administrator must grant admin consent. Entra admin center (entra.microsoft.com) > Identity > Applications > Enterprise applications > Consent and permissions, or follow the admin-consent link we send.
 2. Application permissions requested: ChannelMessage.Send (post to a channel), Channel.ReadBasic.All (list channels), Team.ReadBasic.All (list teams). We do not request read access to messages.
-3. Teams admin center (admin.teams.microsoft.com) > Teams apps > Manage apps > upload or allow "Beacon GEO", then add it to the team: Teams > the team > Manage team > Apps > Add an app.
+3. Teams admin center (admin.teams.microsoft.com) > Teams apps > Manage apps > upload or allow "ASO Engine", then add it to the team: Teams > the team > Manage team > Apps > Add an app.
 4. Enter your tenant ID (Entra admin center > Overview > Tenant ID) and the channel in the form.
 
 - [Microsoft: grant tenant-wide admin consent](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/grant-admin-consent)
@@ -942,7 +933,7 @@ Group: stack · Icon: MessageSquare · Optional · 2 live test(s)
 | Test ID | What it proves | API call, and what "partial" looks like |
 |---|---|---|
 | `chat_auth` | Bot installed with the right scopes | Slack auth.test and read the x-oauth-scopes response header; all scopes above must be present. Partial: lists missing scopes (e.g. "missing files:write"). Teams: acquire a client-credentials token for tenant and decode the roles claim (ChannelMessage.Send, Channel.ReadBasic.All, Team.ReadBasic.All). |
-| `chat_post` | Test message delivered | Slack chat.postMessage to the channel then delete it (or leave "Beacon is connected"). Partial: not_in_channel (bot not invited to a private channel) or channel_not_found. Teams: POST /teams/{id}/channels/{id}/messages. |
+| `chat_post` | Test message delivered | Slack chat.postMessage to the channel then delete it (or leave "ASO Engine is connected"). Partial: not_in_channel (bot not invited to a private channel) or channel_not_found. Teams: POST /teams/{id}/channels/{id}/messages. |
 
 
 ## 16. YouTube channel (education)
@@ -967,7 +958,7 @@ Group: stack · Icon: Video · Optional · 1 live test(s)
 2. Click your avatar > Create a channel, and choose a Brand Account so ownership can move between people.
 3. Name it as in the field above. Add the avatar and banner from your brand assets. In About, say the videos use an AI presenter voice and put your blog link first.
 4. Verify the channel by phone (required for custom thumbnails). Defaults: category Education, made for kids: No.
-5. Open the YouTube tab in Beacon and press Connect channel. Pick the Brand Account channel in Google's account picker and accept. We request upload and manage-captions access only; the token is stored in your vault and you can revoke it at myaccount.google.com/permissions.
+5. Open the YouTube tab in ASO Engine and press Connect channel. Pick the Brand Account channel in Google's account picker and accept. We request upload and manage-captions access only; the token is stored in your vault and you can revoke it at myaccount.google.com/permissions.
 6. Click Test here to confirm the channel is reachable.
 
 - [YouTube: create a channel with a Brand Account](https://support.google.com/youtube/answer/1646861)
