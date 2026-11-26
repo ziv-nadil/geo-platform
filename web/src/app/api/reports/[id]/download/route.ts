@@ -1,6 +1,7 @@
 import { json, notConfiguredResponse, requireOrgAccess, isUuid } from '@/lib/server/auth';
 import { withService } from '@/lib/server/db';
 import { createSupabaseAdminClient } from '@/lib/server/supabase/admin';
+import { ownedPath } from '@/lib/server/storage-path';
 
 const TABLES = new Set(['kpis', 'engines', 'trend', 'gaps', 'competitor_movers']);
 
@@ -13,6 +14,8 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
   const auth = await requireOrgAccess(rep.org_id as string, 'viewer');
   if (!auth.ok) return auth.response;
   if (rep.status !== 'succeeded' || !rep.storage_path) return json({ error: 'not_ready' }, 409);
+  const base = ownedPath(rep.org_id as string, rep.storage_path);
+  if (!base) return json({ error: 'not_found' }, 404);
 
   const url = new URL(request.url);
   const csv = url.searchParams.get('format') === 'csv';
@@ -21,7 +24,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
   const file = csv ? `${table}.csv` : 'report.pdf';
   const admin = createSupabaseAdminClient();
   if (!admin) return notConfiguredResponse(['SUPABASE_SECRET_KEY']);
-  const { data, error } = await admin.storage.from('reports').createSignedUrl(`${rep.storage_path}/${file}`, 60, { download: `beacon-${csv ? table : 'report'}.${csv ? 'csv' : 'pdf'}` });
+  const { data, error } = await admin.storage.from('reports').createSignedUrl(`${base}/${file}`, 60, { download: `beacon-${csv ? table : 'report'}.${csv ? 'csv' : 'pdf'}` });
   if (error || !data) return json({ error: 'not_found' }, 404);
   return Response.redirect(data.signedUrl, 307);
 }

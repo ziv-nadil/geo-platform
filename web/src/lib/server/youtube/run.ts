@@ -11,6 +11,7 @@ import { articleBlogUrl, generateVideoPlan } from './generate';
 import { orgAccessToken } from './google';
 import { synthLines } from './tts';
 import { isQuotaError, ensurePlaylist, uploadAll } from './upload';
+import { ownedPath } from '../storage-path';
 
 export type Step<T = undefined> = { ok: true; data: T } | { ok: false; error: string; notConfigured?: string[] };
 const fail = (error: string, notConfigured?: string[]) => ({ ok: false as const, error, notConfigured });
@@ -158,7 +159,7 @@ export async function uploadVideo(run: Runner, orgId: string, videoId: string): 
   if (tok.status === 'error') return fail(tok.message);
   await run((sql) => sql`update public.youtube_videos set status = 'uploading', error = null where id = ${videoId} and status = 'rendered'`);
   try {
-    const dl = async (p: string) => { const { data } = await admin.storage.from(BUCKET).download(p); return data ? { bytes: Buffer.from(await data.arrayBuffer()), mime: data.type || 'image/jpeg' } : null; };
+    const dl = async (raw: string) => { const p = ownedPath(orgId, raw); if (!p) return null; const { data } = await admin.storage.from(BUCKET).download(p); return data ? { bytes: Buffer.from(await data.arrayBuffer()), mime: data.type || 'image/jpeg' } : null; };
     const video = await dl(v.video_path as string);
     if (!video) throw new Error('The rendered video file is missing from storage.');
     const thumb = v.thumb_path ? await dl(v.thumb_path as string) : null;

@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { requireOrgAccess } from "@/lib/server/auth";
 import { withRls } from "@/lib/server/db";
 import { createSupabaseAdminClient } from "@/lib/server/supabase/admin";
+import { ownedPath } from "@/lib/server/storage-path";
 import { BUCKET, eligibleArticles } from "@/lib/server/youtube/run";
 import { youtubeMissing } from "@/lib/server/youtube/google";
 import { QUOTA_COSTS, FULL_PLAN, quotaModelFromEnv, videoCost } from "@/lib/youtube/quota";
@@ -36,7 +37,7 @@ async function Youtube(props: RouteProps) {
     id: r.id as string, status: r.status as string, articleTitle: r.article_title as string, script: r.script as YtVideo["script"], meta: r.metadata as YtVideo["meta"],
     lint: ((r.metadata as { lint?: string[] }).lint ?? []), youtubeId: (r.youtube_video_id as string | null), privacyStatus: (r.privacy_status as string | null), error: (r.error as string | null),
     durationSec: r.duration_sec ? Number(r.duration_sec) : null, createdAt: (r.created_at as Date).toISOString(),
-    previewUrl: admin && r.video_path ? (await admin.storage.from(BUCKET).createSignedUrl(r.video_path as string, 3600)).data?.signedUrl ?? null : null,
+    previewUrl: admin && ownedPath(org.id, r.video_path) ? (await admin.storage.from(BUCKET).createSignedUrl(r.video_path as string, 3600)).data?.signedUrl ?? null : null,
   })));
   const model = quotaModelFromEnv(process.env.YOUTUBE_QUOTA_MODEL);
   const ch: YtChannel = {

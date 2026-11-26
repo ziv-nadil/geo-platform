@@ -7,7 +7,7 @@ import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { barGeometry, cardFilter, chartFilter, finalArgs, imageSceneArgs, solidArgs, thumbArgs } from './render-plan.mjs';
+import { barGeometry, cardFilter, chartFilter, cleanScenes, finalArgs, imageSceneArgs, solidArgs, thumbArgs } from './render-plan.mjs';
 
 const FFMPEG = process.env.FFMPEG_PATH || 'ffmpeg';
 const run = (args) => new Promise((resolve, reject) => {
@@ -69,6 +69,8 @@ async function main() {
     const r = await fetch(`${app}/api/youtube/worker`, { headers: h });
     const job = await r.json();
     if (job.status !== 'job') { console.log(`queue: ${job.status}`); return; }
+    if (!/^[0-9a-f-]{36}$/i.test(String(job.id))) { console.error('bad job id'); return; }
+    job.scenes = cleanScenes(job.scenes);
     const dir = await mkdtemp(join(tmpdir(), 'yt-'));
     try {
       const assets = { images: {}, audio: join(dir, 'voice.wav'), srt: join(dir, 'captions.srt'), thumbSource: null };

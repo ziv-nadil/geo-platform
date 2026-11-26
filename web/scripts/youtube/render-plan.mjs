@@ -64,3 +64,25 @@ export function thumbArgs(src, textFile, out, quality = 3) {
   if (textFile) vf.push(`drawbox=x=0:y=500:w=1280:h=220:color=black@0.55:t=fill`, text(textFile, 100, 'white', '(w-text_w)/2', '560', ':borderw=5:bordercolor=black'));
   return ['-y', '-i', src, '-vf', vf.join(','), '-frames:v', '1', '-q:v', String(quality), out];
 }
+
+/**
+ * Scene rows come from youtube_videos.scene_assets, which org members can write. Only well-typed scenes reach ffmpeg:
+ * `index` goes into file names inside filtergraphs and chart numbers into drawbox geometry, so a string there could
+ * inject filter options on the render runner. Text (titles, labels, onScreen) only ever goes through textfile=.
+ */
+export function cleanScenes(scenes) {
+  const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+  const str = (v) => (typeof v === 'string' ? v : '');
+  const out = [];
+  for (const s of Array.isArray(scenes) ? scenes : []) {
+    if (!s || !Number.isInteger(s.index) || s.index < 0 || s.index > 999) continue;
+    if (!['image', 'chart', 'card'].includes(s.kind)) continue;
+    const startSec = num(s.startSec), endSec = num(s.endSec);
+    if (startSec === null || endSec === null || startSec < 0 || endSec > 3600) continue;
+    const chart = s.kind === 'chart' && s.chart && Array.isArray(s.chart.points)
+      ? { title: str(s.chart.title), unit: str(s.chart.unit), points: s.chart.points.filter((p) => p && num(p.value) !== null).slice(0, 8).map((p) => ({ label: str(p.label), value: p.value })) }
+      : null;
+    out.push({ index: s.index, kind: s.kind, path: typeof s.path === 'string' ? s.path : null, url: typeof s.url === 'string' ? s.url : null, startSec, endSec, onScreen: str(s.onScreen), chart });
+  }
+  return out;
+}

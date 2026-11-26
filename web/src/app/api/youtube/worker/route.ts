@@ -2,6 +2,8 @@ import { checkCronAuth, cronError } from '@/lib/engines/pipeline/cron';
 import { withService } from '@/lib/server/db';
 import { createSupabaseAdminClient } from '@/lib/server/supabase/admin';
 import { BUCKET, type SceneAsset } from '@/lib/server/youtube/run';
+import { cleanScenes } from '../../../../../scripts/youtube/render-plan.mjs';
+import { ownedPath } from '@/lib/server/storage-path';
 
 /**
  * Render worker protocol (GitHub Actions, scripts/youtube-render.mjs). Auth: Bearer CRON_SECRET.
@@ -22,10 +24,10 @@ export async function GET(req: Request): Promise<Response> {
         order by created_at for update skip locked limit 1)
       returning id, org_id, audio_path, scene_assets, thumb_path, srt, metadata, duration_sec`)[0]);
     if (!job) return Response.json({ status: 'idle' });
-    const sign = async (p: string | null) => (p ? (await admin.storage.from(BUCKET).createSignedUrl(p, TTL)).data?.signedUrl ?? null : null);
+    const sign = async (raw: string | null) => { const p = ownedPath(job.org_id as string, raw); return p ? (await admin.storage.from(BUCKET).createSignedUrl(p, TTL)).data?.signedUrl ?? null : null; };
     const up = async (p: string) => (await admin.storage.from(BUCKET).createSignedUploadUrl(p, { upsert: true })).data?.signedUrl ?? null;
     const dir = `${job.org_id}/${job.id}`;
-    const scenes = await Promise.all((job.scene_assets as SceneAsset[]).map(async (s) => ({ ...s, url: await sign(s.path) })));
+    const scenes = await Promise.all((cleanScenes(job.scene_assets) as unknown as SceneAsset[]).map(async (s) => ({ ...s, url: await sign(s.path) })));
     return Response.json({
       status: 'job', id: job.id, durationSec: Number(job.duration_sec), srt: job.srt, audioUrl: await sign(job.audio_path as string), scenes,
       thumbSourceUrl: await sign(job.thumb_path as string | null), thumbText: (job.metadata as { thumbnailText?: string }).thumbnailText ?? '',

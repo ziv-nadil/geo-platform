@@ -422,6 +422,27 @@ begin
 end $$;
 rollback;
 
+-- ---------------------------------------------------------------- H3 (review 2): storage paths stay in the row's org
+begin;
+select set_config('request.jwt.claims', json_build_object('sub', :'dana', 'role', 'authenticated', 'aal', 'aal1')::text, true);
+set local role authenticated;
+do $$
+begin
+  begin
+    insert into public.reports (org_id, title, status, storage_path)
+    values ('10000000-0000-4000-b000-000000000001', 'x', 'succeeded', '10000000-0000-4000-b000-000000000002/r1');
+    raise exception 'FAIL: report row pointed at another org''s storage folder';
+  exception when check_violation then null; end;
+  begin
+    insert into public.reports (org_id, title, status, storage_path)
+    values ('10000000-0000-4000-b000-000000000001', 'x', 'succeeded', '10000000-0000-4000-b000-000000000001/../10000000-0000-4000-b000-000000000002/r1');
+    raise exception 'FAIL: report path escaped its org folder with ..';
+  exception when check_violation then null; end;
+  insert into public.reports (org_id, title, status, storage_path)
+  values ('10000000-0000-4000-b000-000000000001', 'ok', 'succeeded', '10000000-0000-4000-b000-000000000001/r1');
+end $$;
+rollback;
+
 -- ---------------------------------------------------------------- structural checks
 do $$
 declare n int;

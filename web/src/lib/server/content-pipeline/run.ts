@@ -6,6 +6,7 @@ import { writeBrief } from './brief';
 import { loadClientContext } from './context';
 import { writeArticle } from './copywriter';
 import { buildImages, downloadImage, type StoredImage } from './images';
+import { ownedPath } from '../storage-path';
 import { loadSettings, planContent } from './planner';
 import { runResearch, type Runner } from './research';
 
@@ -73,7 +74,7 @@ export async function deliverItem(run: Runner, orgId: string, itemId: string, ta
   const brandName = await run(async (sql) => ((await sql`select coalesce(p.display_name, o.name) as n from public.organizations o left join public.brand_profiles p on p.org_id = o.id where o.id = ${orgId}`)[0]?.n as string) ?? 'Our team');
   const stored = (item.images ?? []) as StoredImage[];
   const files: ArticleImage[] = [];
-  for (const s of stored) { const f = await downloadImage(s.path); if (f) files.push({ id: s.id, kind: s.kind, alt: s.alt, mime: s.mime, bytes: f.bytes }); }
+  for (const s of stored) { const p = ownedPath(orgId, s.path); const f = p ? await downloadImage(p) : null; if (f) files.push({ id: s.id, kind: s.kind, alt: s.alt, mime: s.mime, bytes: f.bytes }); }
   const r = await publishArticleDraft(orgId, doc, files, brandName, target);
   if (r.status === 'not_configured') return fail(`Connect your site first: ${r.missing.join('; ')}.`, r.missing);
   if (r.status === 'error') {

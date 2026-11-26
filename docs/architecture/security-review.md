@@ -42,3 +42,36 @@ cron auth and the Stripe webhook.
 - Staff visibility: `platform_admins`/`platform_audit_log` ungranted; grants need aal2 + unexpired grant; audit masks staff as `agency`; view-as grants are `view` only and audited.
 - Server actions in `app/[orgSlug]/actions.ts` all run under `withRls`; owner changes blocked by `tg_memberships_guard`.
 - `metrics_daily` (definer view over an unexposed matview) filters with `can_read` + MFA; other views are `security_invoker`.
+
+# Review 2 — 2026-11-26
+
+Scope: code added since review 1: content pipeline + content gaps (research scraping, CMS/GitHub delivery), GEO
+audit, Social pulse (Apify, Slack manifest, `/api/slack/interactions`, approval → content), YouTube engine (OAuth,
+render worker, upload, GitHub Actions), reports/digest/alerts, per-org locale, migrations `20261125000400`–`001300`.
+
+## Fixed in this branch (claude/security-review-2)
+
+| ID | Severity | Finding | Fix | Test |
+|----|----------|---------|-----|------|
+| H3 | High | **Cross-tenant storage read via client-writable paths.** `reports`, `content_items` and `youtube_videos` are member-writable (`apply_tenant_rls`), and the server uses their paths with the service role: `/api/reports/:id/download` signs `storage_path`, the dashboard signs `content_items.images[].path`, `deliverItem` downloads them and uploads to the org's CMS, the YouTube page/worker/upload sign or download `video_path`, `thumb_path`, `audio_path` and `scene_assets[].path`. A member pointing a row of their own org at `<other-org>/…` got another tenant's report PDF/CSV, images or video. | `lib/server/storage-path.ts` `ownedPath(orgId, path)` (must start with `<orgId>/`, no `..`/`.`/`//`/`\`) applied at every service-role sign/download of a row path. Migration `20261126000100_security_review_2.sql`: check constraints `reports_storage_path_in_org`, `youtube_videos_paths_in_org` (jsonb paths are app-checked only). | `storage-path.test.ts`; `rls_smoke.sql` "H3 (review 2)" (fails without the migration). |
+| H4 | High | **ffmpeg filtergraph injection on the render runner.** Members can write `youtube_videos.scene_assets` and `status` (e.g. set `assets_ready`). The worker interpolates `scene.index` into `textfile=` paths inside the filtergraph and chart values into `drawbox` geometry, so a string like `0:fontfile=…` or `,movie=/proc/self/environ` injected filter options on the GitHub Actions runner, which holds `CRON_SECRET` (platform-wide). | `cleanScenes()` in `scripts/youtube/render-plan.mjs`: integer `index`, known `kind`, finite numbers, numeric chart values, strings only for text (which goes through `textfile=`). Applied in `/api/youtube/worker` and again in `render.mjs`; job id must be a UUID. | `render-plan.test.ts` "cleanScenes". |
+
+## Open (medium / low)
+
+| ID | Severity | Finding | Suggested fix |
+|----|----------|---------|---------------|
+| M6 | Medium | **Members can redirect admin-stored credentials.** `onboarding_progress` is member-writable, and `cms_site_url` / `cms_platform` / `github_repo` there decide where `cms_api_credential` (WordPress app password, Ghost admin key) is sent by `publishDraft`/`publishArticleDraft` (member actions) and the onboarding test route. Secrets are admin-only to write, so a member can exfiltrate them to a host they control. (The test route predates review 1; the pipeline adds new paths.) | Make credential-routing fields admin-only (trigger on `onboarding_progress` for steps with secret fields), or store the target host on `secret_refs` when the admin saves the secret and refuse delivery when it differs. |
+| M7 | Medium | `youtube_videos` is writable by members on all columns: `status` can skip approval/lint (e.g. straight to `assets_ready`/`rendered`; upload re-lints metadata only), and `content_item_id` is only FK-checked, so a row can reference another org's article (its charts are read into the video by `buildAssets`, and the partial unique index blocks that org from making its own video). | Guard trigger: clients may set only `script`, `metadata`, `status in ('draft','approved','rejected')`, clear asset columns; `content_item_id` must belong to `org_id`. Or column grants + server-side writes. |
+| M8 | Medium | `social_pulse_settings.slack_app_id` is admin-writable via the Data API and not unique. An admin of org A can copy org B's app id; `/api/slack/interactions` then picks an arbitrary matching row, so B's genuine approvals fail signature checks (DoS). No cross-org action is possible (claims are scoped to the row's org). | Unique partial index on `slack_app_id`; revoke `update (slack_app_id)` from `authenticated` (it is only set by `createSlackBot` with the service role). |
+| L8 | Low | Any user in the client's Slack channel can approve a title, which runs the full content pipeline (LLM/Bria spend). Replays are harmless (first decision wins, 5-minute window). | Optional Slack user allowlist per org, or rely on the pipeline's per-org budget. |
+| L9 | Low | YouTube OAuth `state` is HS256 keyed from `YOUTUBE_CLIENT_SECRET` and not single-use (reusable by the same user for 10 min); the callback re-checks admin role and user binding, so impact is nil today. | Separate `OAUTH_STATE_SECRET` and a nonce cookie. |
+
+## Checked, no issue found (review 2)
+
+- Slack interactions: raw body HMAC with the org's signing secret from the broker, constant-time compare, 300 s window, action value UUID-checked, approval scoped by `org_id`, kill switch honoured.
+- Cron routes (`content`, `social-pulse`, `youtube`, `alerts`, `digest`) and `/api/youtube/worker` all use `checkCronAuth`; the worker gets signed URLs only (no service key, no YouTube token).
+- YouTube refresh token goes straight to Infisical; only `orgAccessToken()` reads it; callback requires the same admin user as the signed state.
+- GEO audit and research fetches use `safeFetch` (`scrape`: public hosts only, DNS-pinned, capped); Bria/DataForSEO/Apify go through allowlists; scraped pages feed only structural stats (headings/word counts) into prompts.
+- ffmpeg is spawned without a shell; all user/LLM text reaches drawtext via `textfile=` with `expansion=none`.
+- Reports: generation scoped by `requireOrgAccess`; `alert_events` service-only; `/api/me/digest` writes only the caller's profile.
+- Locale: `grant update (country, language)` on `organizations` is still behind the admin-only row policy and regex checks.

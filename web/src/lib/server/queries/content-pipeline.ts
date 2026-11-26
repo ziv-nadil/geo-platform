@@ -1,6 +1,7 @@
 import 'server-only';
 import type { ArticleDoc } from '../../content/article';
 import { createSupabaseAdminClient } from '../supabase/admin';
+import { ownedPath } from '../storage-path';
 import { iso, orgQuery } from './_run';
 import type { QueryResult } from './types';
 
@@ -33,7 +34,7 @@ export async function loadPipeline(orgId: string): Promise<QueryResult<PipelineD
   const admin = createSupabaseAdminClient();
   const articles: ArticleRow[] = [];
   for (const a of r.data.arts) {
-    const imgs = ((a.images ?? []) as { id: string; kind: string; path: string; alt: string; mime: string }[]);
+    const imgs = ((a.images ?? []) as { id: string; kind: string; path: string; alt: string; mime: string }[]).filter((i) => ownedPath(orgId, i.path));
     const urls = admin && imgs.length ? (await admin.storage.from('content-images').createSignedUrls(imgs.map((i) => i.path), 3600)).data ?? [] : [];
     const meta = (a.meta ?? {}) as { notes?: string[]; lint?: Record<string, number> };
     articles.push({
